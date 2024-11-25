@@ -1,0 +1,63 @@
+:root {
+    /* Light theme variables */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+    --chart-grid-color: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme {
+    /* Dark theme variables */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-color: #404040;
+    --chart-grid-color: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Apply theme variables */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.app-button {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.app-button:hover {
+    background-color: var(--bg-primary);
+}
+
+.dashboard-card {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.dropdown-menu {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-primary);
+}
+
+/* Chart theme adjustments */
+canvas {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Add more theme-specific styles as needed */

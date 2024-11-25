@@ -1,7 +1,14 @@
 class ChartManager {
   constructor() {
       this.chartContainer = document.getElementById('chart-container');
-      this.charts = {}; // Хранилище для графиков
+      this.charts = new Map(); // Хранилище для графиков
+      this.currentTheme = localStorage.getItem('theme') || 'light';
+      
+      // Listen for theme changes
+      window.addEventListener('themeChanged', (e) => {
+          this.currentTheme = e.detail.theme;
+          this.updateChartsTheme();
+      });
   }
 
   createChart(container, data, type) {
@@ -13,16 +20,16 @@ class ChartManager {
       }
 
       // Уничтожаем существующий график, если он есть
-      if (this.charts[container]) {
+      if (this.charts.get(container)) {
           console.log(`🗑️ [ChartManager.createChart] Destroying existing chart in ${container}`);
-          this.charts[container].destroy();
-          delete this.charts[container];
+          this.charts.get(container).destroy();
+          this.charts.delete(container);
       }
 
       const chartData = this.prepareChartData(data);
       console.log(`📊 [ChartManager.createChart] Chart data prepared:`, chartData);
 
-      this.charts[container] = new Chart(canvas, {
+      this.charts.set(container, new Chart(canvas, {
           type: 'line',
           data: chartData,
           options: {
@@ -121,7 +128,7 @@ class ChartManager {
                       borderWidth: 2
                   },
                   point: {
-                      radius: 4,
+                      radius: 0,
                       borderWidth: 2,
                       backgroundColor: '#fff',
                       hoverRadius: 6,
@@ -129,7 +136,7 @@ class ChartManager {
                   }
               }
           }
-      });
+      }));
       console.log(`✅ [ChartManager.createChart] Chart created in ${container}`);
   }
 
@@ -154,13 +161,13 @@ class ChartManager {
   clearCharts() {
       console.log('🗑️ [ChartManager.clearCharts] Clearing all charts');
       // Уничтожаем все графики перед очисткой
-      Object.keys(this.charts).forEach(containerId => {
-          if (this.charts[containerId]) {
-              console.log(`🗑️ [ChartManager.clearCharts] Destroying chart in ${containerId}`);
-              this.charts[containerId].destroy();
+      this.charts.forEach(chart => {
+          if (chart) {
+              console.log(`🗑️ [ChartManager.clearCharts] Destroying chart in ${chart.canvas.id}`);
+              chart.destroy();
           }
       });
-      this.charts = {}; // Очищаем сохраненные графики
+      this.charts.clear(); // Очищаем сохраненные графики
       if (this.chartContainer) {
           this.chartContainer.innerHTML = ''; // Очищаем контейнер с графиками
       }
@@ -177,22 +184,34 @@ class ChartManager {
       }
 
       try {
-        const months = Object.keys(data);
-        const statuses = ['created', 'unresolved', 'resolved', 'rejected', 'to_be_closed'];
+        const months = Object.keys(data)
+          .sort((a, b) => {
+            const [yearA, monthA] = a.split('-').map(Number);
+            const [yearB, monthB] = b.split('-').map(Number);
+            return yearA !== yearB ? yearA - yearB : monthA - monthB;
+          });
+        const statuses = [ 'unresolved', 'resolved', 'rejected', 'to_be_closed','created'];
         const statusColors = {
-          'unresolved': 'rgb(54, 162, 235)',
-          'resolved': 'rgb(75, 192, 192)',
+          'resolved': 'rgba(75, 192, 192, 0.7)',
           'created': 'rgb(255, 99, 132)',
+          'unresolved': 'rgb(255, 159, 64)',
           'delayed': 'rgb(153, 102, 255)',
-          'rejected': 'rgb(255, 159, 64)'
+          'rejected': '#4f4f4fbd',
         };
 
         const datasets = statuses.map(status => ({
-          label: status,
+          label: status === 'unresolved' ? 'бэклог' : status,
+          label: status === ' resolved' ? 'исправлены' : status === 'unresolved' ? 'бэклог' : status === 'rejected' ? 'отклонены' : status === 'to_be_closed' ? 'к закрытию' : status === 'created' ? 'созданы' : status,
+
           data: months.map(month => data[month][status] || 0),
           borderColor: statusColors[status],
-          backgroundColor: statusColors[status],
-          fill: false
+          backgroundColor: status === 'resolved' ? 'rgba(75, 192, 192, 1)' : 
+          status === 'бэклог' ? '#7070702F' :
+                         status === 'created' ? 'rgb(255, 99, 132)' :
+                         statusColors[status],
+          fill: status === 'resolved' || status === 'created' ,
+          borderWidth: 2,
+          tension: 0.4
         }));
 
         return {
@@ -206,5 +225,17 @@ class ChartManager {
           datasets: []
         };
       }
+  }
+
+  updateChartsTheme() {
+    this.charts.forEach(chart => {
+        if (chart && chart.options) {
+            chart.options.scales.x.grid.color = getComputedStyle(document.documentElement)
+                .getPropertyValue('--chart-grid-color');
+            chart.options.scales.y.grid.color = getComputedStyle(document.documentElement)
+                .getPropertyValue('--chart-grid-color');
+            chart.update();
+        }
+    });
   }
 }

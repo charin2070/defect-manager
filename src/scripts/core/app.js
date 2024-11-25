@@ -16,6 +16,8 @@ class App extends EventEmitter {
 
     this.dataManager = new DataManager(this.getDataPrefix());
     this.uiManager = new UIManager("app", this.theme);
+    this.chartManager = new ChartManager();
+    this.themeManager = new ThemeManager();
     this.analyticManager = null;
 
     console.log('App: binding event handlers');
