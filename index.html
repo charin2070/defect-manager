@@ -150,13 +150,19 @@ Babel для транспиляции
             </div>
         </div>
     </nav>
+
+
+    
     <div id="app" class="app-container mx-auto max-w-full px-4 py-16 pt-20">
         <div id="app-loader" class="view-section flex justify-center items-center h-screen">
             <div class="loader-container">
             </div>
         </div>
+
+        <div id="widgets-row-container" class="app-widgets-row"></div> 
+
         <div id="upload-data-view" class="view-section dashboard-card flex mb-8 p-6" style="display: none;">
-            <div id="custom-file-input" class="custom-file-input mb-4">
+            <div id="custom-file-input" class="custom-file-input">
                 <label class="block cursor-pointer">
                     <svg class="mx-auto h-20 w-20 text-gray-400 mb-3" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -169,7 +175,7 @@ Babel для транспиляции
         </div>
         <div id="backlog-line-view" class="view-section flex-col gap-2">
             <div class="chart-section">
-                <div class="chart-header flex justify-between items-center mb-4">
+                <div class="chart-header flex justify-between items-center">
                     <div id="teams-dropdown" class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle">Все команды</button>
                         <div class="dropdown-menu">
@@ -192,7 +198,7 @@ Babel для транспиляции
                 </div>
             </div>
     </div>
-        <div id="widgets-row-container" class="app-widgets-row"></div>
+   
         
     </div>
     <script src="src/scripts/utils/graphic-utils.js"></script>
