@@ -1,0 +1,196 @@
+root {
+    --main-color: #1a73e8;
+    --secondary-text-color: #1a73e;
+    --main-color-light: #1a73e8;
+    --main-color-dark: #1a73e8;
+    --text-color: #333;
+    --text-color-light: #333;
+    --text-color-dark: #ffffff;
+    --bg-color: #fff;
+    --bg-color-light: #fff;
+    --bg-color-dark: rgba(40, 44, 55, 0.8);
+    --bg-color-darker: rgba(24, 26, 32, 0.856);
+  
+    --navbar-height: 1em;
+  }
+
+/* App Widget */
+.app-widgets-row {
+box-sizing: border-box;
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 20px;
+gap: 2em;
+
+width: 100%;
+height: fitem;
+background-color: #FFFFFF;
+border: 1px solid #E6EDFF;
+border-radius: 12px;
+}
+
+.app-widget-top{
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: flex-start;
+padding: 0px;
+gap: 61px;
+
+width: max-content;
+height: fit-content;
+}
+
+.app-widget-top-text-wrapper {
+/* Text */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+margin: 0 auto;
+width: max-content;
+height: fit-content;
+
+color: #000000;
+}
+
+.app-widget-label-text{
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 150%;
+color: #000000;
+}
+
+.app-widget-bottom{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 0.5em;
+    width: 100%;
+    height: fit-content;
+    align-self: stretch;
+    align-content: center;
+    justify-content: flex-start;
+}
+
+.app-widget-bottom-text{
+font-family: 'Outfit';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 150%;
+/* identical to box height, or 21px */
+
+/* Secondary */
+color: #7C8DB5;
+}
+
+.app-widget-value-text{
+font-family: 'Roboto', sans-serif;
+
+font-weight: 600;
+font-size: 2em;
+line-height: 150%;
+color: #000000;
+}
+
+.app-widgets-row-divider{
+width: 102px;
+height: 0px;
+
+/* Border */
+border: 1px solid #E6EDFF;
+transform: rotate(90deg);
+}
+
+.app-widget-container {
+/* Card */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 1em;
+
+width: min-content;
+height: fit-content;
+}
+
+.app-widget-icon {
+  /* icon */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+/* padding: 10px; */
+gap: 10px;
+
+margin: 0 auto;
+width: 2em;
+height: 2em;
+
+background: #FFFFFF;
+box-shadow: 0px 2px 10px rgba(124, 141, 181, 0.12);
+border-radius: 12px;
+}
+
+.app-widget-icon-img{
+    /* users */
+
+width: 2em;
+height: 2em;
+
+}
+
+.app-widget-label-text {
+    font-size: 1em;
+    color: #888;
+}
+
+.app-widget-description-text {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.app-widget-positive-color {
+    color: green;
+}
+
+.app-widget-negative-color {
+    color: red;
+}
+
+    .dark-theme .chart-section {
+        background-color: var(--bg-color-dark) /* или любой другой цвет, который вы хотите использовать для тёмной темы */
+      }
+
+    .dark-theme .app-widgets-row {
+        background-color: var(--bg-color-dark) /* или любой другой цвет, который вы хотите использовать для тёмной темы */;
+        color: var(--text-color-dark);
+      }
+
+
+      .dark-theme .app-widget-value-text {
+        color: var(--text-color-dark);
+      }
+
+.chart-container {
+    display: flex;
+}
+
+#backlog-charts-container {
+    display: flex !important;
+}

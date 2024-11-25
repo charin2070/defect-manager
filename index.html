@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru" style="font-family: 'Roboto', sans-serif;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jira Analytics Dashboard</title>
+    <link href="src/styles/app-components.css" rel="stylesheet">
+    <link href="src/styles/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/app-style.css">
+    <link rel="stylesheet" href="styles/dots-loader.css">
+    <link rel="stylesheet" href="src/styles/style.css">
+    <link rel="stylesheet" href="src/styles/date-range-dropdown.css">
+    <link rel="stylesheet" href="src/styles/teams-dropdown.css">
+    <style>
+        .custom-file-input {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-file-input:hover {
+            border-color: #666;
+            background-color: #f9f9f9;
+        }
+        
+        .custom-file-input.dragover {
+            border-color: #2196f3;
+            background-color: #e3f2fd;
+        }
+        
+        .file-input-text {
+            display: block;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<!-- Instruction for AI assistant 
+Архитектурный обзор:
+Начните с index.html - это точка входа приложения
+Изучите package.json для понимания зависимостей и скриптов сборки
+Проанализируйте структуру директорий:
+/scripts - основная логика
+/src - исходный код компонентов
+/styles - стили
+/dist - скомпилированные файлы
+Ключевые компоненты для изучения:
+Code
+CopyInsert
+app.js
+├── UIManager - управление интерфейсом
+├── DataManager - работа с данными
+└── EventEmitter - система событий
+
+chart-manager.js
+├── Chart.js интеграция
+└── Управление всеми графиками
+
+components/
+├── teams-chart.js - визуализация данных команд
+├── teams-dropdown-component.js - UI для выбора команд
+└── Другие компоненты UI
+
+utils/
+└── analytic-manager.js - аналитика и обработка данных
+Порядок анализа кода: a) Начните с App класса:
+Изучите инициализацию приложения
+Проследите создание основных менеджеров
+Обратите внимание на систему конфигурации
+b) Проанализируйте поток данных:
+
+DataManager: загрузка и обработка данных
+AnalyticManager: трансформация данных
+ChartManager: визуализация
+c) Изучите систему событий:
+
+События между компонентами
+Обработка пользовательских действий
+Обновление UI
+Ключевые концепции:
+Модульная архитектура
+Событийно-ориентированное программирование
+Визуализация данных через Chart.js
+Управление состоянием через localStorage
+Темизация (светлая/темная тема)
+Точки расширения:
+Компоненты в /src/scripts/components
+Утилиты в /src/scripts/utils
+Стили в /styles
+Обработка данных:
+Формат входных данных (CSV файлы)
+Трансформация данных для графиков
+Аналитические вычисления
+Особое внимание:
+Обработка ошибок и валидация
+Управление состоянием графиков
+Взаимодействие между компонентами
+Конфигурация в режиме разработки/продакшн
+Технический стек:
+JavaScript (ES6+)
+Chart.js для визуализации
+Webpack для сборки
+Babel для транспиляции
+Возможные проблемные места:
+Валидация входных данных
+Управление памятью при работе с графиками
+Асинхронные операции
+Масштабируемость при большом количестве данных
+Рекомендации по отладке:
+Используйте ConsolePanel в dev режиме
+Проверяйте события в EventEmitter
+Мониторьте создание/удаление графиков
+Следите за утечками памяти при работе с Chart.js
+
+Это приложение для помощи в устранении дефектов программного обеспечения работает так: 
+1. При загрузке index.html вызывается скрипт app.js, в котором описана логика дальнейшей загрузки приложения.
+2. app.js создаёт объект класса App, который загружает из Local Storage массив issues, который содержит объекты описывающие свойства задачи в Jira на исправление дефекта.
+3. Далее app вызывает метод showBacklogView класса UIManager и передаёт в качестве параметра массив issues.
+4. UIManager постоянно использует массив issues для визуализации информации о задачах, поэтому массив issues должен оставаться неизменным.
+
+-->
+    <nav class="navbar" style="margin-bottom: 3em!important">
+        <div class="navbar-items-container">
+            <div class="navbar-items-group" style="gap: 0.5em;">
+                <input type="file" id="fileInput" style="display: none;">
+                <div id="upload-file-button" class="app-button">
+                    <img class="app-navbar-icon" src="src/img/upload-0.svg" style="width: 1em;">
+                </div>
+                <div id="clear-storage" class="app-button">
+                    <img class="app-navbar-icon" src="src/img/trash-bin-0.svg" style="width: 1em;">
+                </div>
+            </div>
+            <div class="header-item">
+                <div id="date-range-dropdown" class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle">Все команды</button>
+                    <div class="dropdown-menu">
+                        <!-- Teams will be added here -->
+                    </div>
+                </div>
+            </div>
+            <div class="navbar-items-group" style="gap: 0.5em;">
+                <div id="theme-toggle" class="app-button">
+                    <img class="app-navbar-icon" src="src/img/moon-stars-0.svg" style="width: 1em;">
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div id="app" class="app-container mx-auto max-w-full px-4 py-16 pt-20">
+        <div id="app-loader" class="view-section flex justify-center items-center h-screen">
+            <div class="loader-container">
+            </div>
+        </div>
+        <div id="upload-data-view" class="view-section dashboard-card flex mb-8 p-6" style="display: none;">
+            <div id="custom-file-input" class="custom-file-input mb-4">
+                <label class="block cursor-pointer">
+                    <svg class="mx-auto h-20 w-20 text-gray-400 mb-3" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span class="file-input-text">Перетащите CSV файл или кликните для выбора</span>
+                </label>
+            </div>
+        </div>
+        <div id="backlog-line-view" class="view-section flex-col gap-2">
+            <div class="chart-section">
+                <div class="chart-header flex justify-between items-center mb-4">
+                    <div id="teams-dropdown" class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle">Все команды</button>
+                        <div class="dropdown-menu">
+                            <!-- Teams will be added here -->
+                        </div>
+                    </div>
+                    
+                
+
+                    <div class="chart-controls flex gap-2">
+                        <button id="toggleChartView" class="app-button">
+                            <img class="app-navbar-icon" src="src/img/chart-0.svg" style="width: 1em;">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chart-container" id="backlog-charts-container">
+                    <canvas id="backlog-chart-canvas" style="display: none;"></canvas>
+                    <canvas id="teams-backlog-chart-canvas"></canvas>
+                </div>
+            </div>
+    </div>
+        <div id="widgets-row-container" class="app-widgets-row"></div>
+        
+    </div>
+    <script src="src/scripts/utils/graphic-utils.js"></script>
+    <script src="src/scripts/utils/log-tools.js"></script>
+    <script src="src/scripts/utils/date-util.js"></script>
+    <script src="src/scripts/utils/console-panel.js"></script>
+    <script src="src/scripts/core/event-emitter.js"></script>
+    <script src="src/scripts/components/html-view.js"></script>
+    <script src="src/scripts/components/dropdown-component.js"></script>
+    <script src="src/scripts/components/date-range-dropdown.js"></script>
+    <script src="src/scripts/components/teams-dropdown-component.js"></script>
+    <script src="src/scripts/components/widgets-row.js"></script>
+    <script src="src/scripts/components/component-manager.js"></script>
+    <script src="src/scripts/components/file-input.js"></script>
+    <script src="src/scripts/components/base-chart.js"></script>
+    <script src="src/scripts/components/backlog-chart.js"></script>
+    <script src="src/scripts/components/teams-chart.js"></script>
+    <script src="src/scripts/vendor/chart.js"></script>
+    <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
+    <script src="src/scripts/components/chart-component.js"></script>
+    <script src="src/scripts/views/team-view.js"></script>
+    <script src="src/scripts/views/backlog-view.js"></script>
+    <script src="src/scripts/core/chart-manager.js"></script>
+    <script src="src/scripts/components/loader-view.js"></script>
+    <script src="src/scripts/utils/analytic-manager.js"></script>
+    <script src="src/scripts/core/data-manager.js"></script>
+    <script src="src/scripts/core/ui-manager.js"></script>
+    <script src="src/scripts/core/app.js"></script>
+</body>
+</html>
