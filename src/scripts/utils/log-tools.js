@@ -1,5 +1,5 @@
 function logStyled(data, style) {
-  console.log(`%c${data}`, style);
+  // console.log(`%c${data}`, style);
 }
 
 // Логирование с описанием и вызовом из конкретной функции
@@ -8,18 +8,18 @@ function log(data, description) {
   const functionName = getCallingFunction();
 
   // Логирование метаданных
-  logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
+  // logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
 
   // Логирование описания
   if (description) {
-    logStyled(`${description}:`, 'font-weight: bold; font-size: 1em; color: lightgreen');
+    // logStyled(`${description}:`, 'font-weight: bold; font-size: 1em; color: lightgreen');
   }
 
   // Логирование данных
   if (dataType === "string") {
-    logStyled(data, 'color: orange; font-weight: 800; font-size: 1em');
+    // logStyled(data, 'color: orange; font-weight: 800; font-size: 1em');
   } else {
-    console.log(data);
+    // console.log(data);
   }
 
   // Получение имени вызывающей функции

@@ -2,7 +2,6 @@ class DropdownComponent {
     constructor(containerId, buttonText = '') {
         this.container = document.getElementById(containerId);
         if (!this.container) {
-            console.error(`Container with id ${containerId} not found`);
             return;
         }
         

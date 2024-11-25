@@ -1,7 +1,6 @@
 class UIManager extends EventEmitter {
   constructor(containerId = "app", theme = "light") {
     super();
-    console.log('UIManager: constructor start');
     
     this.container = document.getElementById(containerId);
     this.theme = theme;
@@ -25,14 +24,10 @@ class UIManager extends EventEmitter {
     this.analyticManager = new AnalyticManager();
     this.widgetsRow = new WidgetsRow('widgets-row-container');
     
-    console.log('UIManager: creating FileInputComponent');
     // Создаем FileInputComponent и передаем обработчик с привязанным контекстом
     const handleFileSelected = (file) => {
-      console.log('UIManager: handleFileSelected called with file', file?.name);
       if (file) {
         this.emit("onFileSelected", file);
-      } else {
-        console.error('UIManager: handleFileSelected called without file');
       }
     };
     this.fileInput = new FileInputComponent('custom-file-input', handleFileSelected);
@@ -43,7 +38,6 @@ class UIManager extends EventEmitter {
     
     this.initializeEventListeners();
     this.render();
-    console.log('UIManager: constructor end');
   }
 
   applyTheme(theme) {
@@ -59,11 +53,6 @@ class UIManager extends EventEmitter {
   };
 
   onDateRangeChange(startDate, endDate) {
-    console.log('UIManager.onDateRangeChange input:', {
-      startDate: startDate instanceof Date ? startDate.toISOString() : startDate,
-      endDate: endDate instanceof Date ? endDate.toISOString() : endDate
-    });
-
     // Store dates as is - don't modify them
     this.currentDateStart = startDate;
     this.currentDateEnd = endDate;
@@ -76,12 +65,6 @@ class UIManager extends EventEmitter {
       dateStart: startDate,
       dateEnd: endDate
     };
-
-    console.log('UIManager.onDateRangeChange emitting:', {
-      team: filters.team,
-      dateStart: filters.dateStart instanceof Date ? filters.dateStart.toISOString() : filters.dateStart,
-      dateEnd: filters.dateEnd instanceof Date ? filters.dateEnd.toISOString() : filters.dateEnd
-    });
 
     this.emit("onFilterChange", filters);
     
@@ -99,17 +82,14 @@ class UIManager extends EventEmitter {
   }
 
   onUploadFileClick() {
-    console.log('UIManager: onUploadFileClick called');
     this.showView('upload-data-view');
   }
 
   showUploadDataView() {
-    console.log('UIManager: showUploadDataView called');
     this.showView('upload-data-view');
   }
 
   showView(viewId) {
-    console.log('UIManager: showView called with', viewId);
     // Hide all views
     document.querySelectorAll('.view-section').forEach(view => {
       view.style.display = 'none';
@@ -119,9 +99,6 @@ class UIManager extends EventEmitter {
     const view = document.getElementById(viewId);
     if (view) {
       view.style.display = '';
-      console.log('UIManager: view shown', viewId);
-    } else {
-      console.error('UIManager: view not found', viewId);
     }
   }
 
@@ -181,10 +158,7 @@ class UIManager extends EventEmitter {
   }
 
   showBacklogView(statistics) {
-    console.log('UIManager: showBacklogView called with statistics:', statistics);
-    
     if (!statistics) {
-      console.error('UIManager: showBacklogView called without statistics');
       return;
     }
 
@@ -194,11 +168,8 @@ class UIManager extends EventEmitter {
     try {
       // Create backlog line chart
       if (statistics.statusByMonth) {
-        console.log('UIManager: creating backlog line chart with data:', statistics.statusByMonth);
         this.chartManager.createBacklogLineChart('backlog-chart-canvas', statistics.statusByMonth);
         this.chartManager.createTeamsBacklogChart('teams-backlog-chart-canvas', statistics.statusByMonth);
-      } else {
-        console.error('UIManager: statistics.statusByMonth is missing');
       }
 
       // Show container view
@@ -211,7 +182,7 @@ class UIManager extends EventEmitter {
       if (backlogChart) backlogChart.style.visibility = 'visible';
       if (teamsBacklogChart) teamsBacklogChart.style.visibility = 'visible';
     } catch (error) {
-      console.error('UIManager: Error in showBacklogView:', error);
+      // Handle error silently
     }
   }
 
@@ -279,8 +250,6 @@ class UIManager extends EventEmitter {
         const date = new Date(dateString);
         if (!isNaN(date)) {
           uniqueDates.add(date.toISOString().split("T")[0]);
-        } else {
-          console.warn(`Invalid date: ${dateString}`);
         }
       }
     });
@@ -362,7 +331,6 @@ class UIManager extends EventEmitter {
 
   updateStatistics() {
     const stats = this.analyticManager.getStatistics();
-    console.log('Statistics:', stats);
   }
 
   onDateRangeChange(startDate, endDate) {

@@ -58,7 +58,7 @@ class WidgetsRow {
 
     createWidget(config) {
         const widget = document.createElement('div');
-        widget.className = 'app-widget-container';
+        widget.className = 'app-widget-container app-widget-loading';
 
         // Create top section
         const topSection = document.createElement('div');
@@ -71,12 +71,17 @@ class WidgetsRow {
         // Add value with time formatting if needed
         const valueText = document.createElement('span');
         valueText.className = 'app-widget-value-text';
+        valueText.textContent = config.type === 'time' ? '00' : '0';
         
-        if (config.type === 'time') {
-            valueText.textContent = this.formatTimeValue(config.value);
-        } else {
-            valueText.textContent = config.value;
-        }
+        // Имитация загрузки
+        setTimeout(() => {
+            widget.classList.remove('app-widget-loading');
+            if (config.type === 'time') {
+                valueText.textContent = this.formatTimeValue(config.value);
+            } else {
+                valueText.textContent = config.value;
+            }
+        }, 1000);
         
         textWrapper.appendChild(valueText);
 

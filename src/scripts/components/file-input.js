@@ -1,7 +1,6 @@
 class FileInputComponent extends EventEmitter {
     constructor(elementId, onFileSelected, selectExtension = '*.*', ) {
         super();
-        console.log('FileInput: constructor called for', elementId);
         
         this.selectExtension = selectExtension;
         this.file = null;
@@ -10,10 +9,8 @@ class FileInputComponent extends EventEmitter {
         // Find existing element or create new one
         this.container = document.getElementById(elementId);
         if (!this.container) {
-            console.error('FileInput: Container element not found:', elementId);
             return;
         }
-        console.log('FileInput: container found', this.container);
 
         // Create file input element
         this.inputElement = document.createElement('input');
@@ -22,13 +19,10 @@ class FileInputComponent extends EventEmitter {
         this.inputElement.accept = '.csv';
         this.inputElement.style.display = 'none';
         document.body.appendChild(this.inputElement);
-        console.log('FileInput: input element created', this.inputElement);
 
         // Add click handler to container
         const handleClick = (e) => {
-            console.log('FileInput: clicked on', e.target.tagName, e.currentTarget.id);
             if (e.target === this.inputElement) {
-                console.log('FileInput: input element clicked directly');
                 return;
             }
             e.preventDefault();
@@ -41,14 +35,10 @@ class FileInputComponent extends EventEmitter {
         
         // Add change handler to input
         this.inputElement.addEventListener('change', (event) => {
-            console.log('FileInput: change event triggered');
             const file = event.target.files[0];
             if (file) {
-                console.log('FileInput: file selected', file.name);
                 if (typeof this.onFileSelected === 'function') {
                     this.onFileSelected(file);
-                } else {
-                    console.error('FileInput: onFileSelected is not a function', typeof this.onFileSelected);
                 }
             }
         });
@@ -73,25 +63,16 @@ class FileInputComponent extends EventEmitter {
             
             const file = e.dataTransfer.files[0];
             if (file && file.name.endsWith('.csv')) {
-                console.log('FileInput: file dropped', file.name);
                 if (typeof this.onFileSelected === 'function') {
                     this.onFileSelected(file);
-                } else {
-                    console.error('FileInput: onFileSelected is not a function', typeof this.onFileSelected);
                 }
             }
         });
-
-        console.log('FileInput: initialization complete');
     }
 
     click() {
-        console.log('FileInput: click() called');
         if (this.inputElement) {
-            console.log('FileInput: triggering input click');
             this.inputElement.click();
-        } else {
-            console.error('FileInput: input element not found');
         }
     }
 
