@@ -1,7 +1,6 @@
 class App extends EventEmitter {
   constructor() {
     super();
-    console.log('App: constructor start');
     
     this.mode;
     this.theme = 'light';
@@ -114,7 +113,6 @@ class App extends EventEmitter {
     const issues = this.dataManager.getIssues();
     // if (!issues || !this.analyticManager) return;
 
-    log(filters, '[App. onFilterChange]');
     filters = filters.detail;
     const statistics = this.analyticManager.getStatistics(
       issues,
@@ -122,15 +120,12 @@ class App extends EventEmitter {
       filters.dateEnd,
       filters.team
     );
-
-    log(statistics, '[App. onFilterChange] statistics');
     
     this.uiManager.showBacklogView(statistics);
   }
 
   // Обработка события загрузки данных
   onIssuesLoaded(event) {
-    console.log("✅ [App.onIssuesLoaded] event:", event);
     
     const issues = event.issues;
     if (event.source === 'file') {
@@ -139,7 +134,6 @@ class App extends EventEmitter {
     
     this.analyticManager = new AnalyticManager(issues);
     const statistics = this.analyticManager.getStatistics(issues, null, null, 'all');
-    console.log("📊 [App.onIssuesLoaded] statistics:", statistics);
     
     // Показываем backlog view с обновленной статистикой
     this.uiManager.showBacklogView(statistics);

@@ -321,12 +321,59 @@ class AnalyticManager {
         }, null);
     }
 
+    getTopReportedTasksCurrentMonth(limit = null) {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        const result = this.issues
+            .filter(issue => {
+                const createdDate = new Date(issue.created);
+                return createdDate >= startOfMonth && createdDate <= endOfMonth;
+            })
+            .sort((a, b) => (b.reports || 0) - (a.reports || 0))
+            .slice(0, 10);
+
+            if (limit) {
+                return result.slice(0, limit);
+            } else {
+                return result;
+            }
+    }
+
+    getTopReportedIssues(limit = null) {
+        // Group unresolved issues by ID and count reports
+        const issueReports = new Map();
+        
+        this.issues
+            .filter(issue => !this.isResolved(issue.status))
+            .forEach(issue => {
+                const reports = issue.reports || 0;
+                if (reports > 0) {
+                    issueReports.set(issue.id, {
+                        ...issue,
+                        reportsCount: reports
+                    });
+                }
+            });
+
+        // Convert to array and sort by reports count
+        const sortedIssues = Array.from(issueReports.values())
+            .sort((a, b) => b.reportsCount - a.reportsCount);
+
+        return limit ? sortedIssues.slice(0, limit) : sortedIssues;
+    }
+
     getStatistics() {
         const opened = this.issues.filter(issue => !this.isResolved(issue.status));
         const resolved = this.issues.filter(issue => this.isResolved(issue.status));
         const rejected = this.issues.filter(issue => issue.resolved && issue.status === "Отклонен");
         const unresolved = this.issues.filter(issue => !this.isResolved(issue.status));
+        const topReportedCurrentMonth = this.getTopReportedTasksCurrentMonth(20);
+        const topReported = this.getTopReportedIssues(20);
+        // Get current month's top reported issues
         
+
         // Get unique team names
         const teamNames = [...new Set(this.issues.map(issue => issue.team))];
 
@@ -368,7 +415,7 @@ class AnalyticManager {
             .reduce((total, issue) => total + (issue.reports || 0), 0);
 
         // Get top reported unresolved issues (sorted by number of reports)
-        const topReported = [...this.issues]
+        const topReportedUnresolved = [...this.issues]
             .filter(issue => !this.isResolved(issue.status))
             .sort((a, b) => (b.reports || 0) - (a.reports || 0))
             .slice(0, 20)
@@ -498,7 +545,8 @@ class AnalyticManager {
             dateEnd,
             allTimeAverageResolution,
             topReported,
-            unresolvedReports,
+            topReportedUnresolved,
+            topReportedCurrentMonth, // Add this to the returned object
             statusByMonth,
             teamBacklog
         };
@@ -515,5 +563,38 @@ class AnalyticManager {
 
         const totalTime = resolutionTimes.reduce((sum, time) => sum + time, 0);
         return Math.round(totalTime / resolutionTimes.length);
+    }
+
+    // Get top reported tasks for a specific time period
+    getTopReportedTasksForPeriod(startDate, endDate, limit = 10) {
+        const periodIssues = this.filterIssuesByDate(startDate, endDate, this.issues);
+        return [...periodIssues]
+            .filter(issue => !this.isResolved(issue.status))
+            .sort((a, b) => (b.reports || 0) - (a.reports || 0))
+            .slice(0, limit);
+    }
+
+    // Get top reported tasks for current month
+    getTopReportedTasksCurrentMonth(limit = 10) {
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return this.getTopReportedTasksForPeriod(startDate, endDate, limit);
+    }
+
+    // Get top reported tasks for last 3 months
+    getTopReportedTasksLast3Months(limit = 10) {
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return this.getTopReportedTasksForPeriod(startDate, endDate, limit);
+    }
+
+    // Get top reported tasks for last 6 months
+    getTopReportedTasksLast6Months(limit = 10) {
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return this.getTopReportedTasksForPeriod(startDate, endDate, limit);
     }
   }

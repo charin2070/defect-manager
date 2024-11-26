@@ -110,31 +110,9 @@ class TeamsChart extends BaseChart {
         const event = new CustomEvent('teamSelected', {
           detail: { team: team }
         });
+
         document.dispatchEvent(event);
-        
-        // Создаем виджеты с информацией о команде
-        const widgetsRow = new WidgetsRow('widgets-row-container');
-        widgetsRow.clearWidgets();
-        
-        // Добавляем виджеты
-        widgetsRow.addWidget({
-          label: 'Команда',
-          value: team,
-          icon: 'src/img/team-0.svg'
-        });
-        
-        widgetsRow.addWidget({
-          label: 'Дефектов в работе',
-          value: openData[index] || 0,
-          icon: 'src/img/bug-0.svg'
-        });
-        
-        widgetsRow.addWidget({
-          label: 'Дата',
-          value: new Date().toLocaleDateString('ru-RU'),
-          icon: 'src/img/calendar-0.svg'
-        });
-        
+    
         // Переключаем на backlog график
         const teamsChartCanvas = document.getElementById('teams-backlog-chart-canvas');
         const backlogChartCanvas = document.getElementById('backlog-chart-canvas');

@@ -22,14 +22,18 @@ class UIManager extends EventEmitter {
     this.componentManager = new ComponentManager(componentsConfig);
     this.chartManager = new ChartManager();
     this.analyticManager = new AnalyticManager();
+
+    this.issueTable = new IssueTable('issue-table-container');
+    this.slidePanel = new SlidePanel('slide-panel');
     this.widgetsRow = new WidgetsRow('widgets-row-container');
     
-    // Создаем FileInputComponent и передаем обработчик с привязанным контекстом
+    // File input
     const handleFileSelected = (file) => {
       if (file) {
         this.emit("onFileSelected", file);
       }
     };
+    
     this.fileInput = new FileInputComponent('custom-file-input', handleFileSelected);
     
     // Инициализируем дропдауны
@@ -158,11 +162,15 @@ class UIManager extends EventEmitter {
   }
 
   showBacklogView(statistics) {
+    console.log(statistics, '[UIManager] Statistics');
+    
     if (!statistics) {
+      log('🔴 [UI Manager] Statistics are undefined');
       return;
     }
 
-    // Update widgets with statistics
+    this.statistics = statistics;
+
     this.updateWidgets(statistics);
 
     try {
@@ -171,6 +179,8 @@ class UIManager extends EventEmitter {
         this.chartManager.createBacklogLineChart('backlog-chart-canvas', statistics.statusByMonth);
         this.chartManager.createTeamsBacklogChart('teams-backlog-chart-canvas', statistics.statusByMonth);
       }
+
+      this.updateTeamsDropdown(statistics.teams);
 
       // Show container view
       this.showView('backlog-line-view');
@@ -182,8 +192,12 @@ class UIManager extends EventEmitter {
       if (backlogChart) backlogChart.style.visibility = 'visible';
       if (teamsBacklogChart) teamsBacklogChart.style.visibility = 'visible';
     } catch (error) {
-      // Handle error silently
+              log(error, 'Error on reandering view');
     }
+  }
+
+  updateTeamsDropdown(teams) {
+    this.teamsDropdown.updateTeams(teams);
   }
 
   updateWidgets(statistics) {
@@ -206,15 +220,18 @@ class UIManager extends EventEmitter {
     // Создаем конфигурацию виджетов
     const widgets = [
       {
+        // Backlog
         value: statistics.opened.length,
         label: 'Открытых дефектов',
-        icon: 'src/img/jira-defect.svg',
+        icon: 'src/img/layers-0.svg',
         trend: {
           direction: createdInMonth > 0 ? 'up' : 'down',
           text: `${createdInMonth} за месяц`
-        }
+        },
+        onClick: this.onBacklogClick,
       },
       {
+        // Resolution time
         value: statistics.allTimeAverageResolution || 0,
         type: 'time',
         label: 'Среднее время исправления',
@@ -225,46 +242,47 @@ class UIManager extends EventEmitter {
         }
       },
       {
-        value: statistics.resolved.length,
-        label: 'Закрытых дефектов',
-        icon: 'src/img/jira-defect.svg',
+        // Reports
+        value: statistics.unresolvedReports || 0,
+        label: 'обращений',
+        icon: 'src/img/user-speak.svg',
         trend: {
-          direction: statistics.resolved.length > 0 ? 'up' : 'down',
-          text: `${Math.abs(statistics.resolved.length)} всего`
-        }
+          direction: 'neutral',
+          text: '<a href="#" class="widget-link">За текущий месяц</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="widget-link">За всё время</a>'
+        },
+        onClick: this.onReportsClick.bind(this)
       }
     ];
+    
 
     // Обновляем виджеты
     this.widgetsRow.updateWidgets(widgets);
+  }
+
+  onReportsClick() {
+    const statistics = this.statistics;
+    
+    // Create and store ReportsView instance
+    if (!this.reportsView) {
+      this.reportsView = new ReportsView();
+    }
+    
+    // Render view with both current month and all-time data
+    const view = this.reportsView.render(
+      statistics.topReportedCurrentMonth,
+      statistics.topReported
+    );
+    
+    this.slidePanel.setTitle('Обращения');
+    this.slidePanel.updateContent(view);
+    this.slidePanel.open();
   }
 
   updateTitle(newTitle) {
     document.title = newTitle;
   }
 
-  populateDateDropdown(data) {
-    const uniqueDates = new Set();
-    data.forEach(({ dateField: dateString }) => {
-      if (dateString) {
-        const date = new Date(dateString);
-        if (!isNaN(date)) {
-          uniqueDates.add(date.toISOString().split("T")[0]);
-        }
-      }
-    });
-
-    const dateDropdown = this.componentManager.getElement(
-      "date-range-dropdown"
-    );
-    dateDropdown.innerHTML = "";
-    uniqueDates.forEach((date) => {
-      const option = document.createElement("option");
-      option.value = date;
-      option.textContent = date;
-      dateDropdown.appendChild(option);
-    });
-  }
+   
 
   initializeEventListeners() {
     document.addEventListener('teamSelected', (event) => {

@@ -18,7 +18,7 @@ class DateRangeDropdown extends DropdownComponent {
         const allTimeItem = this.createMenuItem('За всё время', () => {
             this.setButtonText('За всё время');
             if (this.onChange) {
-                this.onChange(null, null);
+                this.onChange(this.startDate, this.endDate);
             }
             this.close();
         });

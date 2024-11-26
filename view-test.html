@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        #viewContainer {
+            position: relative;
+            width: 100%;
+            min-height: 600px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .card {
+            position: absolute;
+            width: 200px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            will-change: transform;
+        }
+
+        .card.dragging {
+            z-index: 1000;
+            cursor: grabbing !important;
+            transform: scale(1.02) !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .card.snapping {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .card.maximized {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            z-index: 1000;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 4px 4px 0 0;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .card-header:active {
+            cursor: grabbing;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .card-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .card-controls button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .card-controls button:hover {
+            background: #e9ecef;
+        }
+
+        .card-content {
+            padding: 15px;
+            overflow: auto;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 15px;
+            height: 15px;
+            cursor: se-resize;
+            background: linear-gradient(135deg, transparent 50%, #ccc 50%);
+        }
+
+        .dragging {
+            opacity: 0.8;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Тестовые кнопки */
+        .test-controls {
+            margin-bottom: 20px;
+        }
+
+        .test-controls button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .grid-cell {
+            border: 1px dashed #aaa;
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        /* Добавляем стили для краев изменения размера */
+        .resize-edge {
+            position: absolute;
+            background: transparent;
+        }
+
+        .resize-edge.top {
+            top: 0;
+            left: 5px;
+            right: 5px;
+            height: 5px;
+            cursor: n-resize;
+        }
+
+        .resize-edge.bottom {
+            bottom: 0;
+            left: 5px;
+            right: 5px;
+            height: 5px;
+            cursor: s-resize;
+        }
+
+        .resize-edge.left {
+            left: 0;
+            top: 5px;
+            bottom: 5px;
+            width: 5px;
+            cursor: w-resize;
+        }
+
+        .resize-edge.right {
+            right: 0;
+            top: 5px;
+            bottom: 5px;
+            width: 5px;
+            cursor: e-resize;
+        }
+
+        .resize-edge.top-left {
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            cursor: nw-resize;
+        }
+
+        .resize-edge.top-right {
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            cursor: ne-resize;
+        }
+
+        .resize-edge.bottom-left {
+            bottom: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            cursor: sw-resize;
+        }
+
+        .resize-edge.bottom-right {
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            cursor: se-resize;
+        }
+
+        .card-shadow {
+            position: absolute;
+            background: rgba(0, 123, 255, 0.1);
+            border: 2px dashed rgba(0, 123, 255, 0.4);
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 999;
+            transition: all 0.15s ease;
+            display: none;
+        }
+
+        .card-shadow.visible {
+            display: block;
+            animation: shadowPulse 1.5s infinite;
+        }
+
+        @keyframes shadowPulse {
+            0% {
+                background: rgba(0, 123, 255, 0.1);
+                border-color: rgba(0, 123, 255, 0.4);
+            }
+            50% {
+                background: rgba(0, 123, 255, 0.15);
+                border-color: rgba(0, 123, 255, 0.6);
+            }
+            100% {
+                background: rgba(0, 123, 255, 0.1);
+                border-color: rgba(0, 123, 255, 0.4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <button onclick="createTestCard()">Добавить карточку</button>
+        <button onclick="clearAllCards()">Очистить все</button>
+        <button onclick="toggleGrid()">Показать/скрыть сетку</button>
+    </div>
+
+    <div id="viewContainer">
+        <!-- Добавляем разметку сетки -->
+        <div class="grid-overlay" style="display: none;">
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+        </div>
+    </div>
+
+    <!-- Подключение базового класса view -->
+    <script src="src/scripts/views/base-view.js"></script>
+
+    <!-- Тестовый код -->
+    <script>
+        // Создаем экземпляр BaseView
+        const testView = new BaseView('viewContainer');
+        let cardCounter = 1;
+
+        // Функция создания тестовой карточки
+        function createTestCard() {
+            const content = `
+                <p>Это тестовая карточка #${cardCounter}</p>
+                <p>Вы можете:</p>
+                <ul>
+                    <li>Перетаскивать карточку за заголовок</li>
+                    <li>Сворачивать/разворачивать кнопкой "_"</li>
+                    <li>Разворачивать на весь контейнер кнопкой "□"</li>
+                    <li>Изменять размер за правый нижний угол</li>
+                </ul>
+            `;
+            
+            testView.createCard(
+                `card-${cardCounter}`,
+                `Тестовая карточка ${cardCounter}`,
+                content
+            );
+            
+            cardCounter++;
+        }
+
+        // Функция очистки всех карточек
+        function clearAllCards() {
+            testView.clear();
+            cardCounter = 1;
+        }
+
+        // Функция показа/скрытия сетки
+        function toggleGrid() {
+            const gridOverlay = document.querySelector('.grid-overlay');
+            gridOverlay.style.display = gridOverlay.style.display === 'none' ? 'grid' : 'none';
+        }
+
+        // Создадим первую карточку автоматически
+        createTestCard();
+    </script>
+</body>
+</html>

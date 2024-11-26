@@ -81,7 +81,7 @@ class ChartManager {
               plugins: {
                   title: {
                       display: true,
-                      text: 'Статистика задач по месяцам',
+                    //   text: 'Статистика задач по месяцам',
                       font: {
                           size: 16,
                           family: 'Roboto, sans-serif',
