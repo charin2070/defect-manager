@@ -7,13 +7,18 @@
     <title>DM</title>
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="src/img/favicon.png">
-    <link href="src/styles/app-components.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles/tailwind.min.css">
+    <link rel="stylesheet" href="src/styles/app-components.css">
+    <link rel="stylesheet" href="src/styles/date-range-dropdown.css">
+    <link rel="stylesheet" href="src/styles/dropdown.css">
+    <link rel="stylesheet" href="src/styles/teams-dropdown.css">
+    <link rel="stylesheet" href="src/styles/scrollbar-minimal.css">
+    <link rel="stylesheet" href="src/styles/theme.css">      
     <link rel="stylesheet" href="styles/app-style.css">
+    <link rel="stylesheet" href="src/styles/components/slide-panel.css">
+    <link rel="stylesheet" href="src/styles/components/custom-file-input.css">
     <link rel="stylesheet" href="styles/dots-loader.css">
     <link rel="stylesheet" href="src/styles/style.css">
-    <link rel="stylesheet" href="src/styles/dropdown.css">
-    <link rel="stylesheet" href="src/styles/theme.css">      
 </head>
 <body>
     <!-- AI INSTRUCTION 
@@ -133,14 +138,16 @@
 
             </div>
         </div>
-
     </div>
+
+    <!-- Utils -->
     <script src="src/scripts/utils/graphic-utils.js"></script>
     <script src="src/scripts/utils/log-tools.js"></script>
     <script src="src/scripts/utils/date-util.js"></script>
     <script src="src/scripts/utils/console-panel.js"></script>
     <script src="src/scripts/core/event-emitter.js"></script>
     <script src="src/scripts/core/theme-manager.js"></script>
+    <!-- Components -->
     <script src="src/scripts/components/html-view.js"></script>
     <script src="src/scripts/components/dropdown-component.js"></script>
     <script src="src/scripts/components/date-range-dropdown.js"></script>
@@ -155,9 +162,12 @@
     <script src="src/scripts/vendor/chart.js"></script>
     <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
     <script src="src/scripts/components/chart-component.js"></script>
+    <!-- Views -->
+    <script src="src/scripts/views/view.js"></script>
     <script src="src/scripts/views/reports-view.js"></script>
     <script src="src/scripts/views/team-view.js"></script>
     <script src="src/scripts/views/backlog-view.js"></script>
+    <!-- Managers -->
     <script src="src/scripts/core/chart-manager.js"></script>
     <script src="src/scripts/components/loader-view.js"></script>
     <script src="src/scripts/utils/analytic-manager.js"></script>

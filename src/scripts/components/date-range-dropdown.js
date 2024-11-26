@@ -75,6 +75,13 @@ class DateRangeDropdown extends DropdownComponent {
         });
     }
 
+    getDateRange() {
+        return {
+            startDate: this.dateStart,
+            endDate: this.dateEnd
+        };
+    }
+
     getYears() {
         const currentYear = new Date().getFullYear();
         return Array.from({length: 5}, (_, i) => currentYear - i);

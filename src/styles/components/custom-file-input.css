@@ -1,0 +1,33 @@
+цццццц.custom-file-input {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.custom-file-input input[type="file"] {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.custom-file-input label {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-file-input:hover label {
+    background: #f8f9fa;
+    border-color: #999;
+}
+
+.custom-file-input.has-file label {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    color: #1976d2;
+}

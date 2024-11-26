@@ -13,10 +13,15 @@ class SlidePanel {
         const header = document.createElement('div');
         header.className = 'slide-panel-header';
         
+        // Create and store logo element
+        this.logo = document.createElement('img');
+        this.logo.style.display = 'none';
+        header.appendChild(this.logo);
+        
         // Create and store title element
         this.title = document.createElement('span');
         this.title.className = 'title-text';
-        this.title.textContent = 'Details';
+        this.title.textContent = 'Загрузка заголовка...';
         header.appendChild(this.title);
         
         // Create close button
@@ -64,6 +69,12 @@ class SlidePanel {
         };
         
         this.panel.addEventListener('transitionend', onTransitionEnd);
+    }
+
+    setLogo(imageUrl) {
+        this.logo.src = imageUrl;
+        this.logo.className = 'slide-panel-logo';
+        this.logo.style.display = 'flex';
     }
 
     setTitle(title) {

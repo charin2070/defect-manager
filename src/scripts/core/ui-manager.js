@@ -27,14 +27,14 @@ class UIManager extends EventEmitter {
     this.slidePanel = new SlidePanel('slide-panel');
     this.widgetsRow = new WidgetsRow('widgets-row-container');
     
-    // File input
-    const handleFileSelected = (file) => {
+    // File input component
+    const onFileSelected = (file) => {
       if (file) {
         this.emit("onFileSelected", file);
       }
     };
     
-    this.fileInput = new FileInputComponent('custom-file-input', handleFileSelected);
+    this.fileInput = new FileInputComponent('custom-file-input', onFileSelected);
     
     // Инициализируем дропдауны
     this.teamsDropdown = new TeamsDropdownComponent('teams-dropdown', 'Все команды');
@@ -254,25 +254,24 @@ class UIManager extends EventEmitter {
       }
     ];
     
-
-    // Обновляем виджеты
+    // Обновляем Widgets
     this.widgetsRow.updateWidgets(widgets);
   }
 
   onReportsClick() {
     const statistics = this.statistics;
     
-    // Create and store ReportsView instance
+    // Create view
     if (!this.reportsView) {
       this.reportsView = new ReportsView();
     }
     
-    // Render view with both current month and all-time data
     const view = this.reportsView.render(
       statistics.topReportedCurrentMonth,
       statistics.topReported
     );
     
+    this.slidePanel.setLogo('src/img/user-speak.svg');
     this.slidePanel.setTitle('Обращения');
     this.slidePanel.updateContent(view);
     this.slidePanel.open();
@@ -282,8 +281,6 @@ class UIManager extends EventEmitter {
     document.title = newTitle;
   }
 
-   
-
   initializeEventListeners() {
     document.addEventListener('teamSelected', (event) => {
       const selectedTeam = event.detail.team;
@@ -292,18 +289,15 @@ class UIManager extends EventEmitter {
   }
 
   handleTeamSelection(team) {
-    // Get all teams for dropdown
-    const teams = this.analyticManager.getUniqueTeams();
-    this.teamsDropdown.updateTeams(teams);
-    
+    const newLocal = this;
     // Select the current team
-    this.teamsDropdown.selectTeam(team);
+    newLocal.teamsDropdown.selectTeam(team);
     
-    // Emit filter change event with selected team and current date range
+    // Emit filters
     this.emit("onFilterChange", {
       team: team,
-      dateStart: this.currentDateStart,
-      dateEnd: this.currentDateEnd
+      dateStart: this.dateRangeDropdown.getDateRange().startDate,
+      dateEnd: this.dateRangeDropdown.getDateRange().endDate
     });
   }
 
@@ -347,13 +341,12 @@ class UIManager extends EventEmitter {
     }
   }
 
-  updateStatistics() {
-    const stats = this.analyticManager.getStatistics();
+  onDateRangeChange(startDate, endDate) {
+    this.emit("onFilterChange", {
+      team: this.teamsDropdown.getSelectedTeam(),
+      dateStart: startDate,
+      dateEnd: endDate
+    });
   }
 
-  onDateRangeChange(startDate, endDate) {
-    // Обновляем статистику с новыми датами
-    const statistics = this.analyticManager.getStatistics();
-    this.showBacklogView(statistics);
-  }
 }

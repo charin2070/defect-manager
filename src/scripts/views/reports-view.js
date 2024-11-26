@@ -1,5 +1,6 @@
-class ReportsView {
+class ReportsView extends View {
     constructor() {
+        super();
         this.container = document.createElement('div');
         this.container.className = 'reports-view';
         
@@ -73,8 +74,8 @@ class ReportsView {
         this.allTimeContent.innerHTML = '';
         
         // Render tables
-        const currentMonthTable = this.currentMonthTable.render(currentMonthData);
-        const allTimeTable = this.allTimeTable.render(allTimeData);
+        const currentMonthTable = this.currentMonthTable.showIssues(currentMonthData, this.headers);
+        const allTimeTable = this.allTimeTable.showIssues(allTimeData, this.headers);
         
         // Append tables to content containers
         this.currentMonthContent.appendChild(currentMonthTable);

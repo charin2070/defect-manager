@@ -52,31 +52,6 @@ root {
   --navbar-height: 1em;
 }
 
-.custom-file-input {
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.custom-file-input:hover {
-  border-color: #666;
-  background-color: #f9f9f9;
-}
-
-.custom-file-input.dragover {
-  border-color: #2196f3;
-  background-color: #e3f2fd;
-}
-
-.file-input-text {
-  display: block;
-  margin-top: 10px;
-  color: #666;
-}
-
 /* Modern Search Bar Styles */
 .search-container {
   position: relative;
@@ -335,88 +310,15 @@ root {
   pointer-events: auto;
 }
 
-/* Slide Panel and Table Styles */
-.slide-panel-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0);
-  backdrop-filter: blur(0px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  z-index: 999;
-}
-
-.slide-panel-backdrop.visible {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(4px);
-  pointer-events: auto;
-}
-
-.slide-panel {
-  position: fixed;
-  top: 0;
-  right: -100%;
-  width: fit-content;
-  min-width: 600px;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-  padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 1000;
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.slide-panel.open {
-  right: 0;
-  opacity: 1;
-  transform: translateX(0);
-  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
-}
-
-.slide-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 12px;
-  background: #f8f9fa;
-}
-
-.slide-panel-header .title-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: #202124;
-  margin: 0;
-}
-
-.slide-panel-close {
-  background: none;
-  border: none;
-  color: #5f6368;
-  font-size: 20px;
-  padding: 4px 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  line-height: 1;
-}
-
-.slide-panel-close:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: #202124;
-}
-
+/* Remove slide panel styles as they are moved to a separate file */
+.slide-panel-backdrop,
+.slide-panel,
+.slide-panel.open,
+.slide-panel-header,
+.slide-panel-close,
+.slide-panel-close:hover,
 .slide-panel-content {
-  padding: 0 12px 12px;
+    /* These styles are now in src/styles/components/slide-panel.css */
 }
 
 .issue-table {
@@ -554,22 +456,7 @@ root {
 }
 
 /* Custom scrollbar for better UX */
-.slide-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.slide-panel::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.slide-panel::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.slide-panel::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
+/* Removed slide panel scrollbar styles */
 
 body {
   background: radial-gradient(
@@ -799,81 +686,8 @@ body .dark-theme * {
   padding-bottom: 1rem !important;
 }
 
-/* File Input */
-.custom-file-input {
-  border: 2px dashed #1a73e8;
-  border-radius: 20px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 40px;
-  text-align: center;
-  cursor: pointer;
-  color: var(--secondary-text-color);
-  background-color: rgba(53, 59, 72, 1) 0%;
-  transition: background 2s, border-color 2s;
-}
+/* Remove custom file input styles as they are now in a separate file */
 
-.custom-file-input:hover {
-  background: rgba(26, 115, 232, 0.05);
-  border-color: #1a73e8;
-}
-
-.filter-label {
-  font-size: 1.2rem;
-  font-weight: medium;
-  color: #444;
-}
-
-.app-dropdown {
-  position: relative;
-  display: inline-flex;
-  z-index: 10;
-  background-color: rgba(209, 209, 209, 0.336);
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 300;
-  border-radius: 8px;
-  padding: 0.3em 0.6em;
-  color: #333;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.app-dropdown * {
-  background-color: rgba(255, 255, 255, 0.815);
-  backdrop-filter: blur(10px);
-}
-
-.app-dropdown {
-  background-color: rgba(224, 224, 224, 0.404);
-  backdrop-filter: blur(10px);
-}
-
-.app-dropdown:focus {
-  outline: none;
-  box-shadow: none;
-}
-
-.app-dropdown-items-container{
-  display: none;
-  flex-direction: column;
-  background-color: rgba(0, 0, 0, 0.185);
-  backdrop-filter: blur(10px);
-  z-index: 10;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 300;
-  border-radius: 12px;
-  padding: 0.3em 0.6em;
-  color: #ffffff;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.app-dropdown:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Jira Link Styles */
 .jira-link {
   color: #0052CC;
   text-decoration: none;
