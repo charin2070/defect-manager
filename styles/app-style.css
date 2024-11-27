@@ -111,27 +111,6 @@ root {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Общие стили для всех дропдаунов */
-.menu-dropdown,
-.dropdown-menu {
-  position: fixed;
-  margin-top: 8px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(35px);
-  border-radius: 12px;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.15);
-  width: max-content;
-  min-width: 180px;
-  max-height: 576px;
-  overflow-y: overlay;
-  opacity: 0;
-  transform: translateY(-8px);
-  pointer-events: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-  padding: 6px;
-  border: 0.5px solid rgba(0, 0, 0, 0.05);
-}
 
 [data-theme="dark"] .menu-dropdown,
 [data-theme="dark"] .dropdown-menu {
@@ -308,17 +287,6 @@ root {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-}
-
-/* Remove slide panel styles as they are moved to a separate file */
-.slide-panel-backdrop,
-.slide-panel,
-.slide-panel.open,
-.slide-panel-header,
-.slide-panel-close,
-.slide-panel-close:hover,
-.slide-panel-content {
-    /* These styles are now in src/styles/components/slide-panel.css */
 }
 
 .issue-table {
@@ -825,4 +793,23 @@ body.dark-theme .navbar,
 
 .tab-content.active {
     display: block;
+}
+
+/* Loader overlay styles */
+.loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+[data-theme="dark"] .loader-overlay {
+  background: rgba(40, 40, 40, 0.9);
 }

@@ -5,39 +5,48 @@ class DropdownComponent {
             return;
         }
         
-        this.dropdownMenu = null;
-        this.button = this.container.querySelector('button');
-        this.isOpen = false;
         this.initialize(buttonText);
+        this.closeTimeout = null; // Для хранения id таймера
     }
 
     initialize(buttonText) {
-        // Если кнопка уже существует, просто обновляем её текст
-        if (!this.button) {
-            // Создаем кнопку дропдауна
-            this.button = document.createElement('button');
-            this.button.className = 'btn btn-secondary dropdown-toggle';
-            this.button.textContent = buttonText;
-            this.container.appendChild(this.button);
-        } else if (buttonText) {
-            this.button.textContent = buttonText;
-        }
-        
-        // Создаем меню дропдауна, если его ещё нет
-        this.dropdownMenu = this.container.querySelector('.dropdown-menu');
-        if (!this.dropdownMenu) {
-            this.dropdownMenu = document.createElement('div');
-            this.dropdownMenu.className = 'dropdown-menu';
-            this.container.appendChild(this.dropdownMenu);
-        }
-        
+        this.button = this.createButton(buttonText);
+        this.dropdownMenu = this.createDropdownMenu();
+        this.isOpen = false;
         this.setupEventListeners();
     }
 
+    createButton(buttonText) {
+        let button = this.container.querySelector('button');
+        if (!button) {
+            button = document.createElement('button');
+            button.className = 'btn btn-secondary dropdown-toggle';
+            this.container.appendChild(button);
+        }
+        button.textContent = buttonText;
+        return button;
+    }
+
+    createDropdownMenu() {
+        let dropdownMenu = this.container.querySelector('.dropdown-menu');
+        if (!dropdownMenu) {
+            dropdownMenu = document.createElement('div');
+            dropdownMenu.className = 'dropdown-menu';
+            this.container.appendChild(dropdownMenu);
+        }
+        return dropdownMenu;
+    }
+
     setupEventListeners() {
-        // Обработка наведения мыши
         this.container.addEventListener('mouseenter', () => this.open());
-        this.container.addEventListener('mouseleave', () => this.close());
+        this.container.addEventListener('mouseleave', () => this.scheduleClose());
+        this.dropdownMenu.addEventListener('mouseenter', () => this.cancelClose());
+        this.dropdownMenu.addEventListener('mouseleave', () => this.scheduleClose());
+        this.button.addEventListener('click', () => this.toggle());
+    }
+
+    toggle() {
+        this.isOpen ? this.close() : this.open();
     }
 
     open() {
@@ -56,7 +65,19 @@ class DropdownComponent {
         }
     }
 
-    // Методы для переопределения в наследниках
+    // Запланировать закрытие
+    scheduleClose() {
+        this.closeTimeout = setTimeout(() => this.close(), 200); // Задержка 200 мс
+    }
+
+    // Отменить запланированное закрытие
+    cancelClose() {
+        if (this.closeTimeout) {
+            clearTimeout(this.closeTimeout);
+            this.closeTimeout = null;
+        }
+    }
+
     onOpen() {}
     onClose() {}
 

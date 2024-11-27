@@ -23,7 +23,7 @@ class IssueTable {
             reports: { 
                 header: 'Обращений',
                 formatter: (issue) => issue.reports || 0,
-                className: '',
+                className: 'text-center',
                 sortable: true,
                 sortFn: (a, b) => (a.reports || 0) - (b.reports || 0)
             },

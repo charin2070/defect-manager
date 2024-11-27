@@ -1,8 +1,55 @@
 class AnalyticManager {
     constructor(issues) {   
-      this.issues = issues || []; // Initialize with empty array if issues is undefined
+      this.issues = issues || [];
+      this.statusByMonth = null;
+      this.dateStart = null;
+      this.dateEnd = null;
+      this.opened = [];
+      this.allTimeAverageResolution = 0;
+      this.unresolvedReports = 0;
     }
   
+    updateData(issues) {
+        this.issues = issues;
+        this.opened = this.getUnresolvedIssues(issues);
+        this.allTimeAverageResolution = this.getAverageResolutionTime();
+        this.unresolvedReports = this.calculateUnresolvedReports();
+        this.statusByMonth = this.getStatusByMonth();
+        const dateRange = this.getDateRange();
+        this.dateStart = dateRange.start;
+        this.dateEnd = dateRange.end;
+    }
+
+    getTeams() {
+        return this.getUniqueTeams();
+    }
+
+    getDateRange() {
+        if (!Array.isArray(this.issues) || this.issues.length === 0) {
+            return { start: new Date(), end: new Date() };
+        }
+
+        const dates = this.issues.map(issue => new Date(issue.created));
+        return {
+            start: new Date(Math.min(...dates)),
+            end: new Date(Math.max(...dates))
+        };
+    }
+
+    getWidgetData() {
+        return {
+            opened: this.opened,
+            allTimeAverageResolution: this.allTimeAverageResolution,
+            unresolvedReports: this.unresolvedReports,
+            dateStart: this.dateStart,
+            dateEnd: this.dateEnd
+        };
+    }
+
+    calculateUnresolvedReports() {
+        return this.opened.reduce((sum, issue) => sum + (parseInt(issue.reports) || 0), 0);
+    }
+
     // Метод для получения всех уникальных команд
     getUniqueTeams() {
         if (!Array.isArray(this.issues)) {
@@ -597,4 +644,38 @@ class AnalyticManager {
         const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         return this.getTopReportedTasksForPeriod(startDate, endDate, limit);
     }
-  }
+
+    getStatusByMonth() {
+        if (!Array.isArray(this.issues) || this.issues.length === 0) {
+            return {};
+        }
+
+        const statusByMonth = {};
+        const teams = this.getUniqueTeams();
+
+        this.issues.forEach(issue => {
+            const date = new Date(issue.created);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!statusByMonth[monthKey]) {
+                statusByMonth[monthKey] = {
+                    total: 0,
+                    resolved: 0,
+                    teams: teams.reduce((acc, team) => ({ ...acc, [team]: 0 }), {})
+                };
+            }
+
+            statusByMonth[monthKey].total++;
+            if (issue.resolved) {
+                statusByMonth[monthKey].resolved++;
+            }
+            if (issue.team) {
+                statusByMonth[monthKey].teams[issue.team] = (statusByMonth[monthKey].teams[issue.team] || 0) + 1;
+            }
+        });
+
+        return statusByMonth;
+    }
+
+    
+}

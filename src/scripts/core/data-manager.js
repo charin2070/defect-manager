@@ -329,7 +329,7 @@ class DataManager extends EventEmitter {
   loadFromLocalStorage(dataPrefix) {
     log(localStorage, `🗃️ Loading ${dataPrefix || this.dataPrefix} from local storage...`);
     const storedIssues = localStorage.getItem(dataPrefix || this.dataPrefix);
-    if (storedIssues && !storedIssues != typeof 'undefined') {
+    if (storedIssues && storedIssues !== 'undefined') {
       this.issues = JSON.parse(storedIssues);
     }
     this.emit("onIssuesLoaded", {'issues': this.issues, 'source': 'local-storage'});

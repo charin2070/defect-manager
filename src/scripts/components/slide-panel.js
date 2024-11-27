@@ -12,11 +12,15 @@ class SlidePanel {
         // Create header
         const header = document.createElement('div');
         header.className = 'slide-panel-header';
-        
-        // Create and store logo element
-        this.logo = document.createElement('img');
-        this.logo.style.display = 'none';
-        header.appendChild(this.logo);
+            // Create and store logo element
+            this.logo = document.createElement('img');
+            this.logo.className = 'slide-panel-logo';
+            this.logo.style.display = 'flex';
+            this.logo.src = 'src/img/translation.svg';
+            this.logo.alt = 'Logo';   
+
+       header.appendChild(this.logo);
+        // header.appendChild(this.logo);
         
         // Create and store title element
         this.title = document.createElement('span');
@@ -72,9 +76,9 @@ class SlidePanel {
     }
 
     setLogo(imageUrl) {
-        this.logo.src = imageUrl;
-        this.logo.className = 'slide-panel-logo';
-        this.logo.style.display = 'flex';
+        // this.logo.src = imageUrl;
+        // this.logo.className = 'slide-panel-logo';
+        // this.logo.style.display = 'flex';
     }
 
     setTitle(title) {

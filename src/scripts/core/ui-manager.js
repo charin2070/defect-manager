@@ -170,6 +170,12 @@ class UIManager extends EventEmitter {
     }
 
     this.statistics = statistics;
+    
+    // Show loader overlay
+    const loaderOverlay = document.getElementById('app-loader');
+    if (loaderOverlay) {
+      loaderOverlay.style.display = 'flex';
+    }
 
     this.updateWidgets(statistics);
 
@@ -191,8 +197,17 @@ class UIManager extends EventEmitter {
 
       if (backlogChart) backlogChart.style.visibility = 'visible';
       if (teamsBacklogChart) teamsBacklogChart.style.visibility = 'visible';
+
+      // Hide loader overlay after charts are loaded
+      if (loaderOverlay) {
+        loaderOverlay.style.display = 'none';
+      }
     } catch (error) {
-              log(error, 'Error on reandering view');
+      log(error, 'Error on rendering view');
+      // Hide loader overlay in case of error
+      if (loaderOverlay) {
+        loaderOverlay.style.display = 'none';
+      }
     }
   }
 
@@ -245,7 +260,7 @@ class UIManager extends EventEmitter {
         // Reports
         value: statistics.unresolvedReports || 0,
         label: 'обращений',
-        icon: 'src/img/user-speak.svg',
+        icon: 'src/img/translation.svg',
         trend: {
           direction: 'neutral',
           text: '<a href="#" class="widget-link">За текущий месяц</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="widget-link">За всё время</a>'

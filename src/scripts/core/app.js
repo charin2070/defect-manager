@@ -18,15 +18,10 @@ class App extends EventEmitter {
     this.chartManager = new ChartManager();
     this.themeManager = new ThemeManager();
     this.analyticManager = null;
+    this.statisticManager = null;
 
     console.log('App: binding event handlers');
-    // Привязываем обработчики событий
-    this.uiManager.on("onFileSelected", this.onFileSelected.bind(this));
-    this.uiManager.on("onClearLocalStorageClick", this.onClearLocalStorage.bind(this));
-    this.uiManager.on("onThemeSwitch", this.onThemeSwitch.bind(this));
-    this.uiManager.on("onFilterChange", this.onFilterChange.bind(this));
-    this.dataManager.on("onIssuesLoaded", this.onIssuesLoaded.bind(this));
-    
+    // Event handlers are now bound in setupListeners()
     this.initialize();
     console.log('App: constructor end');
   }
@@ -70,11 +65,11 @@ class App extends EventEmitter {
 
   // Настраиваем слушатели событий
   setupListeners() {
-    // this.uiManager.on("onFileSelected", this.onFileSelected.bind(this));
-    // this.uiManager.on("onClearLocalStorageClick", this.onClearLocalStorage.bind(this));
-    // this.uiManager.on("onThemeSwitch", this.onThemeSwitch.bind(this));
-    // this.uiManager.on("onFilterChange", this.onFilterChange.bind(this));
-    // this.dataManager.on("onIssuesLoaded", this.onIssuesLoaded.bind(this));
+    this.uiManager.on("onFileSelected", this.onFileSelected.bind(this));
+    this.uiManager.on("onClearLocalStorageClick", this.onClearLocalStorage.bind(this));
+    this.uiManager.on("onThemeSwitch", this.onThemeSwitch.bind(this));
+    this.uiManager.on("onFilterChange", this.onFilterChange.bind(this));
+    this.dataManager.on("onIssuesLoaded", this.onIssuesLoaded.bind(this));
   }
 
   // Получаем префикс данных
@@ -132,6 +127,14 @@ class App extends EventEmitter {
       this.dataManager.saveToLocalStorage(this.getDataPrefix(), issues);
     }
     
+    try {
+      this.statisticManager = new StatisticManager(issues);
+      const result = this.statisticManager.getStatisticsAndPredictionsNew();
+      console.log('Statistics:', result);
+    } catch (error) {
+      console.error('Error in statistics processing:', error);
+    }
+
     this.analyticManager = new AnalyticManager(issues);
     const statistics = this.analyticManager.getStatistics(issues, null, null, 'all');
     

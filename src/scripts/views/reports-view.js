@@ -30,7 +30,8 @@ class ReportsView extends View {
         this.allTimeTab.className = 'tab-button';
         this.allTimeTab.textContent = 'За всё время';
         this.allTimeTab.addEventListener('click', () => this.switchTab('all'));
-        
+  
+        //  tabsContainer.appendChild(this.logo);
         tabsContainer.appendChild(this.currentMonthTab);
         tabsContainer.appendChild(this.allTimeTab);
         

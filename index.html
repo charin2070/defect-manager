@@ -13,13 +13,14 @@
     <link rel="stylesheet" href="src/styles/dropdown.css">
     <link rel="stylesheet" href="src/styles/teams-dropdown.css">
     <link rel="stylesheet" href="src/styles/scrollbar-minimal.css">
-    <link rel="stylesheet" href="src/styles/theme.css">      
+    <link rel="stylesheet" href="src/styles/theme.css">
     <link rel="stylesheet" href="styles/app-style.css">
     <link rel="stylesheet" href="src/styles/components/slide-panel.css">
     <link rel="stylesheet" href="src/styles/components/custom-file-input.css">
     <link rel="stylesheet" href="styles/dots-loader.css">
     <link rel="stylesheet" href="src/styles/style.css">
 </head>
+
 <body>
     <!-- AI INSTRUCTION 
 
@@ -30,49 +31,55 @@
 4. UIManager постоянно использует массив issues для визуализации информации о задачах, поэтому массив issues должен оставаться неизменным.
 -->
 
-    <!-- Navbar -->
-    <nav class="navbar" style="margin-bottom: 3em!important">
-        <div class="navbar-items-container">
-            <div class="navbar-items-group" style="gap: 0.5em;">
-                <input type="file" id="fileInput" style="display: none;">
-                <div class="menu-button" id="actions-menu">
-                    <img class="app-navbar-icon" src="src/img/tuning2.svg" style="width: 1.2em;">
-                    <div class="menu-dropdown" style="right: inherit;">
-                        <div class="menu-item" id="upload-file-button">
-                            <img src="src/img/download.svg" alt="Upload">
-                            <span>Загрузить файл</span>
+
+
+   <!-- App -->
+   <div id="app" class="app-container mx-auto max-w-full px-4 py-16 pt-20">
+    <!-- Loader -->
+    <div class="chart-loader">
+        <div class="chart-line" style="background-color: #FF6384;"></div>
+        <div class="chart-line" style="background-color: #36A2EB;"></div>
+        <div class="chart-line" style="background-color: #FFCE56;"></div>
+        <div class="chart-line" style="background-color: #4BC0C0;"></div>
+    </div>
+
+        <!-- Navbar -->
+        <nav class="navbar" style="margin-bottom: 3em!important">
+            <div class="navbar-items-container">
+                <div class="navbar-items-group" style="gap: 0.5em;">
+                    <input type="file" id="fileInput" style="display: none;">
+                    <div class="menu-button" id="actions-menu">
+                        <img class="app-navbar-icon" src="src/img/menu-dots-0.svg">
+                        <div class="menu-dropdown" style="right: inherit;">
+                            <div class="menu-item" id="upload-file-button">
+                                <img src="src/img/download.svg" alt="Upload">
+                                <span>Загрузить файл</span>
+                            </div>
+                            <div class="menu-item" id="clear-storage">
+                                <img src="src/img/trash-bin-0.svg" alt="Clear">
+                                <span>Очистить данные</span>
+                            </div>
                         </div>
-                        <div class="menu-item" id="clear-storage">
-                            <img src="src/img/trash-bin-0.svg" alt="Clear">
-                            <span>Очистить данные</span>
-                        </div>
+                        <div class="menu-bridge"></div>
                     </div>
-                    <div class="menu-bridge"></div>
+                </div>
+
+                <div class="search-container">
+                    <img src="src/img/search.svg" class="search-icon" alt="Search">
+                    <input type="search" class="search-bar" placeholder="Поиск..." aria-label="Search">
+                </div>
+
+                <!-- Theme toggle -->
+                <div class="navbar-items-group" style="gap: 0.5em;">
+                    <div id="theme-toggle" class="app-button">
+                        <img class="app-navbar-icon" src="src/img/moon-stars-0.svg">
+                    </div>
                 </div>
             </div>
-
-            <div class="search-container">
-                <img src="src/img/search.svg" class="search-icon" alt="Search">
-                <input type="search" class="search-bar" placeholder="Поиск..." aria-label="Search">
-            </div>
-
-            <!-- Theme toggle -->
-            <div class="navbar-items-group" style="gap: 0.5em;">
-                <div id="theme-toggle" class="app-button">
-                    <img class="app-navbar-icon" src="src/img/moon-stars-0.svg" style="width: 1em;">
-                </div>
-            </div>
-        </div>
-    </nav>
+        </nav>
 
 
-    <!-- App -->
-    <div id="app" class="app-container mx-auto max-w-full px-4 py-16 pt-20">
-        <!-- Loader -->
-        <div id="app-loader" class="view-section flex justify-center items-center h-screen">
-            <div class="loader-container">
-            </div>
-        </div>
+
 
         <!-- Widgets -->
         <div id="widgets-row-container" class="app-widgets-row"></div>
@@ -105,21 +112,21 @@
                 <div class="chart-header flex justify-between items-center">
 
                     <div class="navbar-items-group">
-                    <!-- Teams dropdown -->
-                    <div id="teams-dropdown" class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle">Все команды</button>
-                        <div class="dropdown-menu">
-                        </div>
-                    </div>
-
-                    <!-- Date range dropdown -->
-                    <div class="header-item">
-                        <div id="date-range-dropdown" class="dropdown">
+                        <!-- Teams dropdown -->
+                        <div id="teams-dropdown" class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle">Все команды</button>
                             <div class="dropdown-menu">
                             </div>
                         </div>
-                    </div>
+
+                        <!-- Date range dropdown -->
+                        <div class="header-item">
+                            <div id="date-range-dropdown" class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle">Все команды</button>
+                                <div class="dropdown-menu">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="chart-controls flex gap-2">
@@ -168,6 +175,7 @@
     <script src="src/scripts/views/team-view.js"></script>
     <script src="src/scripts/views/backlog-view.js"></script>
     <!-- Managers -->
+    <script src="src/scripts/core/statistic-manager.js"></script>
     <script src="src/scripts/core/chart-manager.js"></script>
     <script src="src/scripts/components/loader-view.js"></script>
     <script src="src/scripts/utils/analytic-manager.js"></script>

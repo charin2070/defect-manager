@@ -29,7 +29,6 @@
     backdrop-filter: blur(10px);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-    padding: 20px;
     box-sizing: border-box;
     overflow-y: auto;
     z-index: 1000;
@@ -50,9 +49,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 12px;
-    background: #f8f9fa;
     gap: 12px;
 }
 
