@@ -1,0 +1,94 @@
+/* Trendy and Fresh File Input Container Styles */
+.file-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(145deg, #f3f4f6 0%, #ffffff 100%);
+    border: 2px dashed #e5e7eb;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+    box-sizing: border-box;
+}
+
+.file-input-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, transparent, rgba(255, 255, 255, 0.1));
+    animation: rotate 8s linear infinite;
+    z-index: 0;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.file-input-container:hover {
+    background: linear-gradient(135deg, #e0f2f1, #e0f7fa);
+    border-color: #0ea5e9;
+}
+
+.file-input-icon {
+    font-size: 50px;
+    color: #0ea5e9;
+    margin-bottom: 20px;
+    z-index: 1;
+}
+
+.file-input-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.file-input-drag-text {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.file-input-hint {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.file-input-upload-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    background-color: #34d399;
+    color: white;
+    border: none;
+    outline: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-input-upload-button:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+}
+
+.file-input-upload-button:active {
+    transform: translateY(0);
+    background-color: #047857;
+}

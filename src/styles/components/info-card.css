@@ -1,0 +1,56 @@
+.info-card {
+    box-shadow: 0 0 .875rem 0 rgba(33, 37, 41, .05);
+    margin-bottom: 24px;
+    --bs-card-spacer-y: 1.25rem;
+    --bs-card-spacer-x: 1.25rem;
+    --bs-card-title-spacer-y: 0.5rem;
+    --bs-card-title-color: #939ba2;
+    --bs-card-border-width: 0;
+    --bs-card-border-color: transparent;
+    --bs-card-border-radius: 0.25rem;
+    --bs-card-bg: #fff;
+    word-wrap: break-word;
+    background-clip: border-box;
+    background-color: var(--bs-card-bg);
+    border: var(--bs-card-border-width) solid var(--bs-card-border-color);
+    border-radius: var(--bs-card-border-radius);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+}
+
+.info-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.info-card-header {
+    color: var(--bs-card-title-color);
+    margin-bottom: var(--bs-card-title-spacer-y);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.info-card-body {
+    font-size: 2em;
+    font-weight: bold;
+    color: #1a202c;
+    margin: 16px 0;
+}
+
+.info-card-footer {
+    font-size: 0.875em;
+    color: #4a5568;
+    text-align: left;
+}
+
+.info-card-footer .text-success {
+    color: #38a169;
+}
+
+.info-card-footer .text-danger {
+    color: #e53e3e;
+}

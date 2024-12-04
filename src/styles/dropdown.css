@@ -1,0 +1,136 @@
+/* Common dropdown styles */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown button {
+    transition: all 0.2s ease;
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    color: #4a5568;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    cursor: pointer;
+}
+
+.dropdown:hover button {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dropdown-menu {
+    position: absolute;
+    min-width: 200px;
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-radius: 8px;
+    padding: 0.5rem 0;
+    margin-top: 2px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: 
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+}
+
+.dropdown:hover .dropdown-menu,
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    clear: both;
+    font-weight: 400;
+    color: #212529;
+    text-align: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.dropdown-item:hover {
+    background-color: #f7fafc;
+    color: #1a202c;
+    padding-left: 1.2rem;
+}
+
+.dropdown-item.active {
+    background-color: #ebf8ff;
+    color: #2b6cb0;
+}
+
+/* Date Range Dropdown specific styles */
+.dropdown-submenu {
+    position: absolute;
+    left: 100%;
+    top: -4px;
+    margin-left: 0;
+    background-color: rgba(255, 255, 255, 0.98);
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    min-width: 160px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-8px);
+    transition: 
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+}
+
+.dropdown-item:hover > .dropdown-submenu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.dropdown-divider {
+    height: 0;
+    margin: 0.5rem 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Arrow for items with submenus */
+.dropdown-item:has(> .dropdown-submenu) {
+    padding-right: 24px;
+}
+
+.dropdown-item:has(> .dropdown-submenu)::after {
+    content: '›';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    transition: transform 0.2s ease;
+}
+
+.dropdown-item:has(> .dropdown-submenu):hover::after {
+    transform: translateY(-50%) rotate(90deg);
+}
+
+/* Specific dropdown instances */
+#teams-dropdown .dropdown-menu,
+#date-range-dropdown .dropdown-menu {
+    min-width: 200px;
+}
