@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-// Teams dropdown component
-class TeamsDropdownComponent extends CustomDropdown {
-=======
+
 class TeamsDropdownComponent extends DropdownComponent {
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     constructor(containerId, text = 'Все команды') {
         super(containerId, text);
         this.container.classList.add('dropdown'); // Добавляем класс dropdown для правильного отображения

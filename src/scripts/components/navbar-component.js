@@ -11,7 +11,7 @@ class NavbarComponent {
         const defaultConfig = {
             theme: 'light',
             mode: 'normal',
-            title: 'Defect Manager',
+            title: '',
             animate: true
         };
 
@@ -29,10 +29,14 @@ class NavbarComponent {
         brand.className = 'navbar-brand';
         brand.textContent = this.config.title;
 
+        const leftMenu = document.createElement('div');
+        leftMenu.className = 'navbar-left';
+        leftMenu.appendChild(brand);
+
         const menu = document.createElement('div');
         menu.className = 'navbar-menu';
 
-        this.#element.appendChild(brand);
+        this.#element.appendChild(leftMenu);
         this.#element.appendChild(menu);
 
         // Добавляем стили для фиксированной позиции
@@ -89,6 +93,67 @@ class NavbarComponent {
                 element.style.opacity = '1';
                 element.style.transform = 'translateX(0)';
             });
+        }
+    }
+
+    addButton(text, image, onclick) {
+        const button = document.createElement('button');
+        button.className = 'navbar-button';
+
+        if (image) {
+            const img = document.createElement('img');
+            img.className = 'navbar-icon-button';
+            img.src = image;
+            img.alt = text;
+            button.appendChild(img);
+        }
+
+        if (text) {
+            const span = document.createElement('span');
+            span.textContent = text;
+            button.appendChild(span);
+        }
+
+        if (typeof onclick === 'function') {
+            button.addEventListener('click', onclick);
+        }
+
+        this.addItem(button);
+    }
+
+    addGroup(side, elements = []) {
+        const group = document.createElement('div');
+        group.className = 'navbar-group';
+
+        elements.forEach(element => {
+            if (element instanceof HTMLElement) {
+                group.appendChild(element);
+            }
+        });
+
+        let target;
+        switch (side) {
+            case 'left':
+                target = this.#element.querySelector('.navbar-left');
+                break;
+            case 'right':
+                target = this.#element.querySelector('.navbar-menu');
+                break;
+            case 'center':
+                target = this.#element.querySelector('.navbar-center');
+                if (!target) {
+                    target = document.createElement('div');
+                    target.className = 'navbar-center';
+                    this.#element.insertBefore(target, this.#element.querySelector('.navbar-menu'));
+                }
+                break;
+            default:
+                console.error('Invalid side specified for addGroup');
+                return;
+        }
+
+        if (target) {
+            target.appendChild(group);
         }
     }
 

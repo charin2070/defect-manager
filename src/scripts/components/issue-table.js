@@ -50,13 +50,6 @@ class IssueTable {
                 className: '',
                 sortable: true,
                 sortFn: (a, b) => new Date(a.created) - new Date(b.created)
-            },
-            resolved: { 
-                header: 'Решен',
-                formatter: (issue) => issue.resolved ? new Date(issue.resolved).toLocaleDateString('ru-RU') : '-',
-                className: '',
-                sortable: true,
-                sortFn: (a, b) => new Date(a.resolved || 0) - new Date(b.resolved || 0)
             }
         };
 
@@ -66,20 +59,20 @@ class IssueTable {
 
     initializeColumns(headers) {
         if (Array.isArray(headers)) {
-            // If headers is an array of strings, use default column configs
-            this.activeColumns = headers.map(header => {
-                const columnKey = Object.keys(this.availableColumns)
-                    .find(key => this.availableColumns[key].header === header);
-                return columnKey ? this.availableColumns[columnKey] : null;
-            }).filter(Boolean);
+            // Store just the column keys that we want to display
+            this.activeColumns = headers;
         } else if (typeof headers === 'object') {
             // If headers is an object with custom configurations
-            this.activeColumns = Object.entries(headers)
-                .map(([key, customConfig]) => ({
-                    ...this.availableColumns[key],
-                    ...customConfig
-                }))
-                .filter(Boolean);
+            this.activeColumns = Object.keys(headers);
+            // Merge custom configs with defaults
+            Object.entries(headers).forEach(([key, customConfig]) => {
+                if (this.availableColumns[key]) {
+                    this.availableColumns[key] = {
+                        ...this.availableColumns[key],
+                        ...customConfig
+                    };
+                }
+            });
         }
     }
 
@@ -87,19 +80,20 @@ class IssueTable {
         const thead = document.createElement('thead');
         const tr = document.createElement('tr');
         
-        this.activeColumns.forEach(column => {
-            const th = document.createElement('th');
-            th.textContent = column.header;
-            th.style.cursor = 'pointer';
-            if (this.isUpperCase) {
-                th.textContent = th.textContent.toUpperCase();
-            }
-            if (column.sortable) {
-                th.classList.add('sortable');
-                th.addEventListener('click', () => this.sortByColumn(column));
-            }
-            tr.appendChild(th);
-        });
+        Object.entries(this.availableColumns)
+            .filter(([key]) => this.activeColumns.includes(key))
+            .forEach(([key, column]) => {
+                const th = document.createElement('th');
+                th.textContent = column.header;
+                if (this.isUpperCase) {
+                    th.textContent = th.textContent.toUpperCase();
+                }
+                if (column.sortable) {
+                    th.classList.add('sortable');
+                    th.addEventListener('click', () => this.sortByColumn(column));
+                }
+                tr.appendChild(th);
+            });
         
         thead.appendChild(tr);
         return thead;
@@ -108,17 +102,63 @@ class IssueTable {
     createTableRow(issue) {
         const tr = document.createElement('tr');
         tr.setAttribute('data-id', issue.id);
+        tr.style.cursor = 'pointer';
         
-        this.activeColumns.forEach(column => {
-            const td = document.createElement('td');
-            if (column.className) {
-                td.className = column.className;
-            }
-            td.innerHTML = column.formatter(issue);
-            tr.appendChild(td);
+        // Add click handler to show issue details
+        tr.addEventListener('click', () => {
+            const slidePanel = SlidePanel.getInstance();
+            const issueCard = new IssueCard({
+                title: issue.id,
+                timeAgo: new Date(issue.created).toLocaleDateString('ru-RU'),
+                description: issue.description || 'Нет описания',
+                footer: `Статус: ${issue.status || 'Новый'}`
+            });
+            
+            slidePanel.setTitle(`Задача ${issue.id}`);
+            slidePanel.clear();
+            slidePanel.updateContent(issueCard.createCard());
+            slidePanel.open();
         });
         
+        Object.entries(this.availableColumns)
+            .filter(([key]) => this.activeColumns.includes(key))
+            .forEach(([key, column]) => {
+                const td = document.createElement('td');
+                if (column.className) {
+                    td.className = column.className;
+                }
+                td.innerHTML = column.formatter(issue);
+                tr.appendChild(td);
+            });
+        
         return tr;
+    }
+
+    render(issues) {
+        this.container.innerHTML = '';
+        
+        const table = document.createElement('table');
+        table.className = 'issue-table';
+        
+        // Add header
+        table.appendChild(this.createTableHeader());
+        
+        // Add body
+        const tbody = document.createElement('tbody');
+        issues.forEach(issue => {
+            tbody.appendChild(this.createTableRow(issue));
+        });
+        
+        table.appendChild(tbody);
+        this.container.appendChild(table);
+        return this.container;
+    }
+
+    showIssues(issues, headers) {
+        if (headers) {
+            this.initializeColumns(headers);
+        }
+        return this.render(issues);
     }
 
     sortByColumn(column) {
@@ -147,35 +187,6 @@ class IssueTable {
         this.currentData.forEach(issue => {
             tbody.appendChild(this.createTableRow(issue));
         });
-    }
-
-    showIssues(issues, headers) {
-        if (headers) {
-            this.initializeColumns(headers);
-        }
-        return this.render(issues);
-    }
-
-    render(issues) {
-        this.currentData = [...issues]; // Store for sorting
-        this.container.innerHTML = '';
-        
-        const table = document.createElement('table');
-        table.className = 'issue-table';
-        
-        // Add header
-        table.appendChild(this.createTableHeader());
-        
-        // Add body
-        const tbody = document.createElement('tbody');
-        this.currentData.forEach(issue => {
-            tbody.appendChild(this.createTableRow(issue));
-        });
-        
-        table.appendChild(tbody);
-        this.container.appendChild(table);
-        
-        return this.container;
     }
 
     updateRow(issueId, updatedData) {

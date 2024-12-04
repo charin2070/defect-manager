@@ -16,7 +16,7 @@
             "request": "launch",
             "name": "blank.html",
             "url": "http://localhost:5500",
-            "file": "${workspaceFolder}/blank.html",
+            "file": "${workspaceFolder}/index.html",
             "webRoot": "${workspaceFolder}"
         }
 

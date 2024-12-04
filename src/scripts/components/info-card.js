@@ -1,8 +1,17 @@
 class InfoCard {
+    static slidePanel = null;
+
     constructor(container, options = {}) {
         this.container = container;
         this.options = options;
         this.refact = Refact.getInstance();
+        
+        // Slide panel
+        if (!InfoCard.slidePanel) {
+            InfoCard.slidePanel = SlidePanel.getInstance();
+        }
+        this.slidePanel = InfoCard.slidePanel;
+        
         this.card = this.createCard();
         this.setupReactivity();
         this.applyStyles();
@@ -38,6 +47,25 @@ class InfoCard {
         if (this.options.onClick) {
             card.addEventListener('click', this.options.onClick);
         }
+
+        // Add default click handler for showing unresolved issues
+        card.addEventListener('click', () => {
+            const issueTable = new IssueTable(['taskId', 'reports', 'status', 'description', 'created'], {isUpperCase: true});
+            const slidePanel = SlidePanel.getInstance();
+            
+            slidePanel.setTitle('Нерешенные задачи');
+            slidePanel.clear();
+            
+            // Get issues from state
+            const issues = this.refact.state.issues || [];
+            const unresolvedIssues = issues.filter(issue => 
+                !['resolved', 'closed', 'done'].includes(issue.status?.toLowerCase() || '')
+            );
+            const tableElement = issueTable.showIssues(unresolvedIssues);
+            
+            slidePanel.updateContent(tableElement);
+            slidePanel.open();
+        });
 
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body';
@@ -210,5 +238,11 @@ class InfoCard {
         } else if (options.iconSvg) {
             stat.innerHTML = options.iconSvg;
         }
+    }
+
+    setContentColor(color) {
+        const body = this.card.querySelector('.card-body');
+        const contentElement = body.querySelector('h1');
+        contentElement.style.color = color;
     }
 }

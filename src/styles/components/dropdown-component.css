@@ -2,11 +2,11 @@
 .dropdown {
     position: relative;
     display: inline-block;
-    --dropdown-bg: rgba(28, 32, 38, 0.95);
-    --dropdown-text: #e2e8f0;
+    --dropdown-bg: rgba(255, 255, 255, 0.95);
+    --dropdown-text: #000000;
     --dropdown-hover: rgba(66, 153, 225, 0.15);
     --dropdown-border: rgba(66, 153, 225, 0.3);
-    --dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    /* --dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); */
     --dropdown-glow: 0 0 15px rgba(66, 153, 225, 0.2);
 }
 
@@ -92,6 +92,7 @@
 
 .dropdown-item:hover {
     background: var(--dropdown-hover);
+    color:rgba(25, 25, 25, 0.89);
 }
 
 .dropdown-item::before {

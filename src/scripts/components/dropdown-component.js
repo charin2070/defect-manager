@@ -1,126 +1,127 @@
-// Define base dropdown class
-class CustomDropdown {
-    constructor(containerId, buttonText = '') {
-        this.container = document.getElementById(containerId);
-        if (!this.container) {
-            console.error(`CustomDropdown: Container #${containerId} not found`);
-            return;
+class DropdownComponent {
+    constructor(element) {
+        if (element){
+            this.element = element;
+            this.button = element.querySelector('.dropdown-toggle');
+            this.menu = element.querySelector('.dropdown-menu');
+            this.items = element.querySelectorAll('.dropdown-item');
+            this.isOpen = false;
+            this.init();
         }
-        
-        this.initialize(buttonText);
+
     }
 
-    initialize(buttonText) {
-        this.button = this.createButton(buttonText);
-        this.dropdownMenu = this.createDropdownMenu();
-        this.isOpen = false;
-        this.setupEventListeners();
-    }
-
-    createButton(buttonText) {
-        let button = this.container.querySelector('button');
-        if (!button) {
-            button = document.createElement('button');
-            button.className = 'btn btn-secondary dropdown-toggle';
-            this.container.appendChild(button);
-        }
-        button.textContent = buttonText;
-        return button;
-    }
-
-    createDropdownMenu() {
-        let dropdownMenu = this.container.querySelector('.dropdown-menu');
-        if (!dropdownMenu) {
-            dropdownMenu = document.createElement('div');
-            dropdownMenu.className = 'dropdown-menu';
-            this.container.appendChild(dropdownMenu);
-        }
-        return dropdownMenu;
-    }
-
-    setupEventListeners() {
-        if (!this.button || !this.dropdownMenu) return;
-
-        this.button.addEventListener('click', (e) => {
+    init() {
+        this.button?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggle();
         });
 
         document.addEventListener('click', (e) => {
-            if (!this.container.contains(e.target)) {
+            if (!this.element.contains(e.target)) {
                 this.close();
             }
         });
+    }
 
-        this.dropdownMenu.addEventListener('click', (e) => {
-            e.stopPropagation();
+    getContainer() {
+        return this.element;
+    }
+
+    clearItems() {
+        if (this.menu) {
+            this.menu.innerHTML = '';
+        }
+    }
+
+    addItem(text, value, onClick) {
+        if (!this.menu) return;
+
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = text;
+        item.dataset.value = value;
+        
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (onClick) onClick(value);
+            this.handleItemClick(e);
         });
+
+        this.menu.appendChild(item);
     }
 
     toggle() {
-        if (this.isOpen) {
+        if (this.element.classList.contains('show')) {
             this.close();
         } else {
-            this.open();
+            this.show();
+        }
+    }
+
+    show() {
+        if (this.isOpen) return;
+        this.isOpen = true;
+        this.element.classList.add('show');
+        this.adjustMenuPosition();
+        document.addEventListener('click', this.handleOutsideClick);
+    }
+
+    adjustMenuPosition() {
+        const menu = this.element.querySelector('.dropdown-menu');
+        const rect = menu.getBoundingClientRect();
+        const parentRect = this.element.getBoundingClientRect();
+        
+        // Проверяем выход за правый край экрана
+        if (rect.right > window.innerWidth) {
+            const overflow = rect.right - window.innerWidth;
+            menu.style.left = `${-overflow - 10}px`; // 10px отступ от края
+        }
+        
+        // Проверяем выход за левый край
+        if (rect.left < 0) {
+            menu.style.left = '0px';
         }
     }
 
     open() {
-        if (!this.dropdownMenu) return;
-        
-        this.isOpen = true;
-        this.dropdownMenu.classList.add('show');
+        this.element.classList.add('show');
         this.button?.setAttribute('aria-expanded', 'true');
     }
 
     close() {
-        if (!this.dropdownMenu) return;
-        
-        this.isOpen = false;
-        this.dropdownMenu.classList.remove('show');
+        this.element.classList.remove('show');
         this.button?.setAttribute('aria-expanded', 'false');
+        this.isOpen = false;
+        document.removeEventListener('click', this.handleOutsideClick);
     }
 
-    addItem(text, value = null, onClick = null) {
-        if (!this.dropdownMenu) return;
-
-        const item = document.createElement('a');
-        item.className = 'dropdown-item';
-        item.href = '#';
-        item.textContent = text;
+    handleItemClick(event) {
+        const value = event.target.dataset.value;
+        const text = event.target.textContent;
         
-        if (value) {
-            item.dataset.value = value;
+        if (this.button) {
+            this.button.textContent = text;
         }
+        
+        this.element.dispatchEvent(new CustomEvent('change', {
+            detail: { value, text }
+        }));
+        
+        this.close();
+    }
 
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (onClick) {
-                onClick(value || text);
-            }
+    handleOutsideClick = (e) => {
+        if (!this.element.contains(e.target)) {
             this.close();
-        });
-
-        this.dropdownMenu.appendChild(item);
-    }
-
-    clearItems() {
-        if (this.dropdownMenu) {
-            this.dropdownMenu.innerHTML = '';
-        }
-    }
-
-    disable() {
-        if (this.button) {
-            this.button.disabled = true;
-        }
-    }
-
-    enable() {
-        if (this.button) {
-            this.button.disabled = false;
         }
     }
 }
 
-window.CustomDropdown = CustomDropdown;
+// Initialize all dropdowns when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+        new DropdownComponent(dropdown);
+    });
+});

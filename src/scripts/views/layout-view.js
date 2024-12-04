@@ -1,7 +1,6 @@
 class LayoutView extends View {
     constructor() {
         super();
- 
         this.init();
     }
 
@@ -9,49 +8,85 @@ class LayoutView extends View {
         this.wrapper = document.createElement('div');
         this.wrapper.className = 'layout-wrapper';
         
-        // Create navbar first
+        // Navbar
         this.navbar = NavbarComponent.create({ animate: true });
         this.wrapper.appendChild(this.navbar.getElement());
         
-        // Create content container after navbar
+        // Content container
         this.contentContainer = document.createElement('div');
         this.contentContainer.className = 'content-container';
         this.wrapper.appendChild(this.contentContainer);
         
-        // Initialize date range dropdown in navbar
-        this.dateRangeDropdown = new DateRangeDropdown(this.navbar.getElement(), '2021-01-01', Date.now());
+        // Reports dropdown
+        this.reportDropdown = new ReportDropdown(this.navbar.getElement());
         
-        // Create upload button in navbar
+        // Upload button
+        this.uploadButton = this.navbar.addButton('', 'src/img/upload-0.svg', () => {
+            this.refact.setState({ view: 'upload' });
+        });
+
+        // Clear Local Storage button
+        this.clearLocalStorageButton = this.navbar.addButton('', 'src/img/trash-bin-0.svg', () => {
+            const dataManager = new DataManager();
+            dataManager.clearLocalStorage();
+            window.location.reload();
+        });
+        
+        // Upload button
         const uploadButton = document.createElement('button');
         uploadButton.className = 'navbar-icon-button';
         const uploadIcon = document.createElement('img');
         uploadIcon.src = 'src/img/upload-0.svg';
         uploadIcon.alt = 'Upload';
         uploadButton.appendChild(uploadIcon);
-        
         uploadButton.addEventListener('click', () => {
             this.refact.setState({ view: 'upload' });
         });
+
+        // Clear local storage button
+        const clearButton = document.createElement('button');
+        clearButton.className = 'navbar-icon-button';
+        clearButton.id = 'clear-local-storage-button';
+        const clearIcon = document.createElement('img');
+        clearIcon.src = 'src/img/trash-bin-0.svg';
+        clearIcon.alt = 'Clear Storage';
+        clearButton.appendChild(clearIcon);
         
-        this.navbar.getElement().appendChild(uploadButton);
+        clearButton.addEventListener('click', () => {
+            const dataManager = new DataManager();
+            dataManager.clearLocalStorage();
+            window.location.reload();
+        });
+        
+        // Append
+        const navbarElement = this.navbar.getElement();
+        navbarElement.appendChild(uploadButton);
+        navbarElement.appendChild(clearButton);
         
         return this.wrapper;
     }
 
     init() {
         this.container = this.createWrapper();
+        this.setContainer(this.container);
+        this.dateRangeDropdown = new DateRangeDropdown();
+        this.navbar.addGroup('left', [this.dateRangeDropdown.getContainer()]);
         
-        // Добавляем стили для layout
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'src/styles/layout.css';
-        document.head.appendChild(link);
+    }
+
+    setContent(content) {
+        // Очищаем контейнер
+        while (this.contentContainer.firstChild) {
+            this.contentContainer.removeChild(this.contentContainer.firstChild);
+        }
+        // Добавляем новый контент
+        if (content) {
+            this.contentContainer.appendChild(content);
+        }
     }
 
     showUploadView() {
-        if (this.uploadView) {
-            this.uploadView.show();
-        }
+        this.refact.setState({ view: 'upload' });
     }
 
     getWrapper() {

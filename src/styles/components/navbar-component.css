@@ -1,14 +1,16 @@
 .navbar {
     display: flex;
+    position: fixed;
+    left: 0;
+    top: 0;
     align-items: center;
     justify-content: space-between;
-    padding: 0.25rem 1rem;
+    padding: var(--navbar-padding);
     background: var(--navbar-bg);
     border-bottom: 1px solid var(--navbar-border);
     color: var(--navbar-color);
     box-shadow: var(--navbar-shadow);
     transition: all 0.3s ease;
-    position: relative;
     z-index: 1000;
 }
 
@@ -27,7 +29,7 @@
     --navbar-bg: #ffffff;
     --navbar-color: #333;
     --navbar-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --navbar-hover: #f8f9fa;
+    --navbar-hover: #e5e5e5;
     --navbar-border: #ddd;
 }
 
@@ -93,6 +95,8 @@
 }
 
 .navbar button {
+    display: flex;
+    align-items: center;
     background: transparent;
     border: none;
     color: var(--navbar-color);
@@ -106,16 +110,16 @@
 }
 
 .navbar-icon-button {
-    width: 32px;
-    height: 32px;
+    width: 2em;
+    height: 2em;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #007bff;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #007bff00;
+    /* border: 1px solid rgba(0, 0, 0, 0.1); */
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.4s ease;
     margin: 0 8px;
     user-select: none;
     -webkit-user-select: none;
@@ -123,11 +127,11 @@
     -ms-user-select: none;
 }
 
-.navbar-icon-button:hover {
-    background: #0056b3;
-}
-
 .navbar-icon-button img {
-    width: 20px;
-    height: 20px;
+    width: 1em;
+    height: 1em;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }

@@ -1,196 +1,59 @@
+<!-- Мы не используем модульность ES6 -->
 <!DOCTYPE html>
-<html lang="ru" style="font-family: 'Roboto', sans-serif;">
+<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>АИ Дэшборд</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="src/img/line-chart.svg">
-    <link rel="stylesheet" href="src/styles/app-components.css">
-    <link rel="stylesheet" href="src/styles/date-range-dropdown.css">
-    <link rel="stylesheet" href="src/styles/dropdown.css">
-    <link rel="stylesheet" href="src/styles/teams-dropdown.css">
-    <link rel="stylesheet" href="src/styles/scrollbar-minimal.css">
-    <link rel="stylesheet" href="src/styles/theme.css">
-    <link rel="stylesheet" href="styles/app-style.css">
-    <link rel="stylesheet" href="src/styles/components/slide-panel.css">
-    <link rel="stylesheet" href="src/styles/components/custom-file-input.css">
-    <link rel="stylesheet" href="src/styles/menu-button.css">
-    <link rel="stylesheet" href="styles/dots-loader.css">
-    <link rel="stylesheet" href="src/styles/style.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Defect Management as a Service">
+    <meta name="author" content="DM">
+    <meta name="keywords" content="defect, bug, management, jira">
+    <title>DM</title>
+
+    <link href="src/styles/app-style.css" rel="stylesheet">
+    <link href="src/styles/components/layout-view.css" rel="stylesheet">
+    <link href="src/styles/components/dropdown.css" rel="stylesheet">
+    <link href="src/styles/dashboard/components/buttons.css" rel="stylesheet">
+    <link href="src/styles/dashboard/components/modals.css" rel="stylesheet">
+    <link href="src/styles/components/info-card.css" rel="stylesheet">
+    <link href="src/styles/components/slide-panel.css" rel="stylesheet">
+    <link href="src/styles/components/issue-table.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="src/styles/vendor/prism.css" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles/components/navbar-component.css">
+    <link rel="stylesheet" href="src/styles/components/dropdown-component.css">
+    <link href="src/styles/components/file-input.css" rel="stylesheet">
+    <link href="src/styles/components/upload-view.css" rel="stylesheet">
+    <link href="src/styles/dashboard/components/console-toast.css" rel="stylesheet">
 </head>
 
 <body>
-    <!-- AI INSTRUCTION 
-
-Это приложение для помощи в устранении дефектов программного обеспечения работает так: 
-1. При загрузке index.html вызывается скрипт app.js, в котором описана логика дальнейшей загрузки приложения.
-2. app.js создаёт объект класса App, который загружает из Local Storage массив issues, который содержит объекты описывающие свойства задачи в Jira на исправление дефекта.
-3. Далее app вызывает метод showBacklogView класса UIManager и передаёт в качестве параметра массив issues.
-4. UIManager постоянно использует массив issues для визуализации информации о задачах, поэтому массив issues должен оставаться неизменным.
--->
-        
-   <!-- App -->
-   <div id="app" class="app-container mx-auto max-w-full px-4 py-16 pt-20">
-    <!-- Loader -->
-    <div class="chart-loader">
-        <div class="chart-line" style="background-color: #FF6384;"></div>
-        <div class="chart-line" style="background-color: #36A2EB;"></div>
-        <div class="chart-line" style="background-color: #FFCE56;"></div>
-        <div class="chart-line" style="background-color: #4BC0C0;"></div>
-    </div>
-
-        <!-- Navbar -->
-        <nav id="navbar" class="navbar" style="margin-bottom: 3em!important">
-            <div class="navbar-items-container">
-                <div class="navbar-items-group" style="gap: 0.5em;">
-                    <input type="file" id="fileInput" style="display: none;">
-                    <div class="menu-button">
-                        <img class="app-navbar-icon" src="src/img/menu-dots-0.svg">
-                        <div class="menu-dropdown">
-                            <div class="menu-item has-submenu" id="reports-view">
-                                <img src="src/img/chart-0.svg" alt="Reports">
-                                <span>Отчёты</span>
-                                <div class="menu-submenu">
-                                    <div class="menu-item has-submenu">
-                                        <span>Еженедельные</span>
-                                        <div class="menu-submenu">
-                                            <div class="menu-item" id="weekly-issues">
-                                                <span>Обращения</span>
-                                            </div>
-                                            <div class="menu-item" id="weekly-sla">
-                                                <span>SLA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="menu-separator"></div>
-                            <div class="menu-item" id="upload-file-button">
-                                <img src="src/img/download.svg" alt="Upload">
-                                <span>Загрузить файл</span>
-                            </div>
-                            <div class="menu-item" id="clear-storage">
-                                <img src="src/img/trash-bin-0.svg" alt="Clear">
-                                <span>Очистить данные</span>
-                            </div>
-                            <div class="menu-separator"></div>
-                            <div class="menu-item" id="theme-toggle">
-                                <img src="src/img/moon-stars-0.svg" alt="Theme">
-                                <span>Сменить тему</span>
-                            </div>
-                        </div>
-                        <div class="menu-bridge"></div>
-                    </div>
-                    <div class="menu-button">
-                        <img class="app-navbar-icon" src="src/img/document.svg">
-                        <div class="menu-dropdown">
-                            <div class="menu-item" id="mvp">
-                                <span>MVP</span>
-                            </div>
-                            <div class="menu-item" id="sla">
-                                <span>SLA</span>
-                            </div>
-                            <div class="menu-item" id="issues">
-                                <span>Обращения</span>
-                            </div>
-                        </div>
-                        <div class="menu-bridge"></div>
-                    </div>
-                </div>
-
-                <div class="navbar-items-group" style="gap: 0.5em; margin-left: auto;">
-                    <div class="search-container">
-                        <img src="src/img/search.svg" class="search-icon" alt="Search">
-                        <input type="search" class="search-bar" placeholder="Поиск..." aria-label="Search">
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Widgets -->
-        <div id="widgets-row-container" class="app-widgets-row"></div>
-        <div id="upload-data-view" class="view-section dashboard-card flex mb-8 p-6" style="display: none;">
-            <div id="custom-file-input" class="custom-file-input">
-                <label class="block cursor-pointer">
-                    <svg class="mx-auto h-20 w-20 text-gray-400 mb-3" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <span class="file-input-text">Перетащите CSV файл или кликните для выбора</span>
-                </label>
-            </div>
-
-            <div id="slide-panel" class="slide-panel">
-                <div class="slide-panel-header">
-                    <h2>Обращения по задачам</h2>
-                    <button class="slide-panel-close" aria-label="Закрыть">&times;</button>
-                </div>
-                <div class="slide-panel-content issue-table-container">
-                    <!-- Content goes here -->
-                </div>
-            </div>
-
-            <!-- Upload card -->
-        </div>
-        <div id="backlog-line-view" class="view-section flex-col gap-2">
-            <div class="chart-section">
-                <div class="chart-header flex justify-between items-center">
-
-                    <div class="navbar-items-group">
-                        <!-- Teams dropdown -->
-                        <div id="teams-dropdown" class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle">Все команды</button>
-                            <div class="dropdown-menu">
-                            </div>
-                        </div>
-
-                        <!-- Date range dropdown -->
-                        <div class="header-item">
-                            <div id="date-range-dropdown" class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle">Все команды</button>
-                                <div class="dropdown-menu">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="chart-controls flex gap-2">
-                        <button id="toggleChartView" class="app-button">
-                            <img class="app-navbar-icon" src="src/img/chart-0.svg" style="width: 1em;">
-                        </button>
-                    </div>
-
-                </div>
-
-                <!-- Charts -->
-                <div class="chart-container" id="backlog-charts-container">
-                    <canvas id="backlog-chart-canvas" style="display: none;"></canvas>
-                    <canvas id="teams-backlog-chart-canvas"></canvas>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
+    <div id="app"></div>
+    <!-- Reactivity first -->
+    <script src="src/scripts/core/refact.js"></script>
     <!-- Utils -->
-     <script src="src/scripts/components/console-toast.js"></script>
-    <script src="src/scripts/utils/graphic-utils.js"></script>
     <script src="src/scripts/utils/log-tools.js"></script>
+    <!-- <script src="src/scripts/components/console-toast.js"></script> -->
+    <script src="src/scripts/utils/csv-parser.js"></script>
+    <!-- Vendor -->
+    <script src="src/scripts/vendor/prism.js"></script>
+     <!-- Utils -->
+    <script src="src/scripts/utils/graphic-utils.js"></script>
     <script src="src/scripts/utils/date-util.js"></script>
     <script src="src/scripts/utils/console-panel.js"></script>
     <script src="src/scripts/core/event-emitter.js"></script>
-    <script src="src/scripts/core/theme-manager.js"></script>
     <!-- Components -->
-    <script src="src/scripts/components/html-view.js"></script>
-    <script src="src/scripts/components/dashboard-navbar.js"></script>
-    <script src="src/scripts/components/side-bar.js"></script>
     <script src="src/scripts/components/dropdown-component.js"></script>
+    <script src="src/scripts/components/navbar-component.js"></script>
+    <script src="src/scripts/components/info-card.js"></script>
     <script src="src/scripts/components/date-range-dropdown.js"></script>
-    <script src="src/scripts/components/teams-dropdown-component.js"></script>
+    <script src="src/scripts/components/issue-table.js"></script>
     <script src="src/scripts/components/slide-panel.js"></script>
+    <script src="src/scripts/components/issue-card.js"></script>
+    <script src="src/scripts/components/dashboard-navbar.js"></script>
+    <script src="src/scripts/components/report-dropdown.js"></script>
+    <script src="src/scripts/components/teams-dropdown-component.js"></script>
     <script src="src/scripts/components/widgets-row.js"></script>
     <script src="src/scripts/components/component-manager.js"></script>
     <script src="src/scripts/components/file-input.js"></script>
@@ -201,24 +64,24 @@
     <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
     <script src="src/scripts/components/chart-component.js"></script>
     <!-- Views -->
+    <script src="src/scripts/views/view-component.js"></script>
+    <script src="src/scripts/views/layout-view.js"></script>
     <script src="src/scripts/views/view-controller.js"></script>
-    <script src="src/scripts/views/view.js"></script>
+    <script src="src/scripts/views/dashboard-view.js"></script>
+    <script src="src/scripts/views/upload-view.js"></script>
     <script src="src/scripts/views/reports-view.js"></script>
     <script src="src/scripts/views/team-view.js"></script>
     <script src="src/scripts/views/backlog-view.js"></script>
     <!-- Managers -->
-    <script src="src/scripts/core/refact.js"></script>
     <script src="src/scripts/core/config-manager.js"></script>
     <script src="src/scripts/core/team-manager.js"></script>
     <script src="src/scripts/core/report-manager.js"></script>
     <script src="src/scripts/core/statistic-manager.js"></script>
     <script src="src/scripts/core/chart-manager.js"></script>
-    <script src="src/scripts/components/loader-view.js"></script>
-    <script src="src/scripts/utils/analytic-manager.js"></script>
     <script src="src/scripts/core/data-manager.js"></script>
-    <script src="src/scripts/components/issue-table.js"></script>
     <script src="src/scripts/core/ui-manager.js"></script>
     <script src="src/scripts/core/app.js"></script>
+    
 </body>
 
 </html>

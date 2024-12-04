@@ -1,15 +1,10 @@
 /* Common dropdown styles */
-<<<<<<< HEAD
 .dropdown {
-=======
 .app-dropdown {
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     position: relative;
     display: inline-block;
 }
 
-<<<<<<< HEAD
-=======
 .app-dropdown-toggle {
     margin: auto;
     display: flex;
@@ -23,7 +18,6 @@ dropdown-item-icon {
     margin-right: 0.5em;
 }
 
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
 .dropdown button {
     transition: all 0.2s ease;
     padding: 0.5rem 1rem;
@@ -153,4 +147,6 @@ dropdown-item-icon {
 #teams-dropdown .dropdown-menu,
 #date-range-dropdown .dropdown-menu {
     min-width: 200px;
+}
+
 }

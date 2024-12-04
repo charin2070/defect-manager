@@ -1,3 +1,45 @@
+@import url('/src/styles/app-style.css');
+
+
+/* Roboto Font Declarations */
+@font-face {
+    font-family: 'Roboto';
+    src: url('../src/fonts/Roboto-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Roboto';
+    src: url('../src/fonts/Roboto-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Roboto';
+    src: url('../src/fonts/Roboto-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Roboto';
+    src: url('../src/fonts/Roboto-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  /* Global Font Settings */
+  * {
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  body {
+    font-family: 'Roboto', sans-serif;
+  }
+  
+
 root {
     --main-color: #1a73e8;
     --secondary-text-color: #1a73e;

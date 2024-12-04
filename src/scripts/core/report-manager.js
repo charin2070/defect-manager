@@ -159,10 +159,10 @@ class ReportManager {
 
     // Filter only unresolved issues
     const unresolvedIssues = issues.filter(issue => 
-      issue.status !== "resolved" && 
-      issue.status !== "closed" &&
-      issue.status !== "rejected"
+      issue.state == "unresolved"
     );
+
+    
 
     // Calculate percentages
     const totalIssues = issues.length;
@@ -186,69 +186,87 @@ class ReportManager {
   }
   
   getMvpReport(teams, issues) {
-    // "Всего открыто" = количеству unresolved задач из массива issues
-    // "Всего закрыто" = количеству resolved задач из массива issues
-    // "Обращений по ним (с даты создания)" = количеству reports на unresolved задачах команды
-    // "Заакрыто за пред.мес" = задачи из массива issues, у которых дата resolved находится в пределах прошлого месяца.
-    // "Новых за пред.мес" = задачи из массива issues, у которых дата created находится в пределах 30 дней от 
-    // "Отклонено за пред. мес." = задачи со статусом "Отклонен" и датой resolved находящейся в пределах проошлого месяца
+    console.log('getMvpReport called with teams:', teams);
+    console.log('getMvpReport called with issues:', issues);
 
-    // "Ср.время закрытия(дни)" = среднее количество дней между открытием и решением задачи.  
-    
-    const defectSummary = teams.map(team => {
+    if (!Array.isArray(issues)) {
+      console.error('Error: issues is not an array:', issues);
+      return {};
+    }
+
+    const report = {};
+
+    teams.forEach(team => {
+      console.log('Processing team:', team);
       const teamIssues = issues.filter(issue => issue.team === team);
-      const totalOpen = teamIssues.filter(issue => issue.status !== 'resolved').length;
-      
-      //  "ТОП-5 закрытых по количеству обращений" = Задачи, чей статус = "Закрыт" и чья дата resolution не позднее чем 90 дней от текущей даты.
-      // "ТОП-5 новых" = Задачи, чья дата "created" (дата создания) не ранее чем 90 дней от текущей даты.
-      const totalClosed= teamIssues.filter(issue => issue.status === 'resolved').length;
-      const avgCloseTime = this.calculateAverageCloseTime(teamIssues);
-      const totalReports = teamIssues.reduce((sum, issue) => sum + (issue.reports || 0), 0);
+      console.log('Team issues:', teamIssues);
 
-      const  tableData = {
-      team,
-        totalOpen,
-        totalClosed,
-        totalReports,
-        closedLastMonth: this.countIssuesInLastDays(teamIssues, 'resolved', 30),
-        newLastMonth: this.countIssuesInLastDays(teamIssues, 'new', 30),
-        rejectedLastMonth: this.countIssuesInLastDays(teamIssues, 'rejected', 30),
-        avgCloseTime,
+      const totalUnresolved = teamIssues.filter(issue => issue.state == 'unresolved').length;
+      const totalClosed = teamIssues.filter(issue => issue.state == 'resolved').length;
+      const totalRejected = teamIssues.filter(issue => issue.state == 'rejected').length;
+      const avgCloseTime = this.calculateAverageCloseTime(teamIssues);
+
+      const last30Days = {
+        resolved: this.countIssuesInLastDays(teamIssues, 'resolved', 30),
+        unresolved: this.countIssuesInLastDays(teamIssues, 'unresolved', 30),
+        rejected: this.countIssuesInLastDays(teamIssues, 'rejected', 30),
+        averageResolutionTime: this.getAverageResolutionTime(teamIssues)
       };
 
-      return tableData;        
+      const last90Days = {
+        resolved: this.countIssuesInLastDays(teamIssues, 'resolved', 90),
+        unresolved: this.countIssuesInLastDays(teamIssues, 'unresolved', 90),
+        rejected: this.countIssuesInLastDays(teamIssues, 'rejected', 90),
+        averageResolutionTime: this.getAverageResolutionTime(teamIssues)
+      };
+
+      report[team] = {
+        total: {
+          resolved: totalClosed,
+          unresolved: totalUnresolved,
+          rejected: totalRejected,
+          averageResolutionTime: avgCloseTime
+        },
+        last30Days: {
+          total: last30Days
+        },
+        last90Days: {
+          total: last90Days
+        }
+      };
     });
 
+    console.log('Report:', report);
 
-
-    // Для того чтобы текст вставлялся в Confluence как таблица, нужно форматировать его в табличный вид с использованием символов табуляции (\t) для разделения колонок и символов новой строки (\n) для разделения строк. Затем этот формат можно скопировать в буфер обмена с использованием API Clipboard.
-    // Заголовки таблицы: "Команда", "Всего открыто", "Всего закрыто", "Обращений по ним (с даты создания)", "Закрыто за пред. мес. (Т-30)", "Новых за пред. мес.", "Отклонено за пред. мес.", "Ср.время закрытия(дни)" 
-
-    const topNewIssues = this.getTopIssues(issues, 'new', 90);
-    const topClosedIssues = this.getTopIssues(issues, 'resolved', 90);
-
-    
-console.log(tableData)
-    return {
-      defectSummary,
-      topNewIssues,
-      topClosedIssues,
-
-    };
+    return report;
   }
+  getAverageResolutionTime(issues) {
+    const resolvedIssues = issues.filter(issue => issue.state === 'resolved');
+    if (resolvedIssues.length === 0) return 0;
 
-  countIssuesInLastDays(issues, status, days) {
+    const totalCloseTime = resolvedIssues.reduce((sum, issue) => {
+      const openDate = new Date(issue.created);
+      const closeDate = new Date(issue.resolved);
+      return sum + (closeDate - openDate);
+    }, 0);
+    
+    return Math.round(totalCloseTime / resolvedIssues.length / (1000 * 60 * 60 * 24));
+}
+
+  countIssuesInLastDays(issues, state, days) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
     return issues.filter(issue => {
       const issueDate = new Date(issue.created);
-      return issue.status === status && issueDate >= cutoffDate;
+      return issue.state === state && issueDate >= cutoffDate;
     }).length;
   }
 
   calculateAverageCloseTime(issues) {
     const closedIssues = issues.filter(issue => issue.status === 'resolved' && issue.resolved);
+    console.log('Closed issues:', closedIssues);
+    
     const totalCloseTime = closedIssues.reduce((sum, issue) => {
       const openDate = new Date(issue.created);
       const closeDate = new Date(issue.resolved);
@@ -279,3 +297,6 @@ console.log(tableData)
   
   
 }
+
+// Make ReportManager globally available
+window.ReportManager = ReportManager;

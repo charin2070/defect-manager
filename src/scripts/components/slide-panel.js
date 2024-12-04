@@ -1,5 +1,20 @@
 class SlidePanel {
+    static instance = null;
+
+    static getInstance() {
+        if (!SlidePanel.instance) {
+            SlidePanel.instance = new SlidePanel();
+        }
+        return SlidePanel.instance;
+    }
+
     constructor() {
+        // Prevent multiple instances
+        if (SlidePanel.instance) {
+            return SlidePanel.instance;
+        }
+        SlidePanel.instance = this;
+
         // Create backdrop
         this.backdrop = document.createElement('div');
         this.backdrop.className = 'slide-panel-backdrop';
@@ -7,20 +22,20 @@ class SlidePanel {
 
         // Create panel
         this.panel = document.createElement('div');
-        this.panel.className = 'slide-panel';
+        this.panel.className = 'slide-panel slide-panel-right';
         
         // Create header
         const header = document.createElement('div');
         header.className = 'slide-panel-header';
-            // Create and store logo element
-            this.logo = document.createElement('img');
-            this.logo.className = 'slide-panel-logo';
-            this.logo.style.display = 'flex';
-            this.logo.src = 'src/img/translation.svg';
-            this.logo.alt = 'Logo';   
+        
+        // Create and store logo element
+        this.logo = document.createElement('img');
+        this.logo.className = 'slide-panel-logo';
+        this.logo.style.display = 'flex';
+        this.logo.src = 'src/img/translation.svg';
+        this.logo.alt = 'Logo';   
 
-       header.appendChild(this.logo);
-        // header.appendChild(this.logo);
+        header.appendChild(this.logo);
         
         // Create and store title element
         this.title = document.createElement('span');
@@ -51,22 +66,19 @@ class SlidePanel {
                 this.close();
             }
         });
+
+        return this;
     }
 
-<<<<<<< HEAD
     clear() {
         this.content.innerHTML = '';
     }
 
-=======
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     open() {
         this.panel.style.display = 'block';
         this.backdrop.style.display = 'block';
-        requestAnimationFrame(() => {
-            this.panel.classList.add('open');
-            this.backdrop.classList.add('visible');
-        });
+        this.panel.classList.add('open');
+        this.backdrop.classList.add('visible');
     }
     
     close() {
@@ -83,9 +95,9 @@ class SlidePanel {
     }
 
     setLogo(imageUrl) {
-        // this.logo.src = imageUrl;
-        // this.logo.className = 'slide-panel-logo';
-        // this.logo.style.display = 'flex';
+        this.logo.src = imageUrl;
+        this.logo.className = 'slide-panel-logo';
+        this.logo.style.display = 'flex';
     }
 
     setTitle(title) {

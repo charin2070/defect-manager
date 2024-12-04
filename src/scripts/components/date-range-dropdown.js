@@ -1,9 +1,10 @@
 class DateRangeDropdown extends DropdownComponent {
     constructor(parentElement, dateStart, dateEnd) {
+        super(parentElement);
         // Create dropdown structure
-        const container = document.createElement('div');
-        container.className = 'dropdown date-range-dropdown';
-        container.id = 'dateRangeContainer';
+        this.container = document.createElement('div');
+        this.container.className = 'dropdown date-range-dropdown';
+        this.container.id = 'dateRangeContainer';
         
         const button = document.createElement('button');
         button.className = 'dropdown-toggle';
@@ -12,13 +13,10 @@ class DateRangeDropdown extends DropdownComponent {
         const menu = document.createElement('div');
         menu.className = 'dropdown-menu';
         
-        container.appendChild(button);
-        container.appendChild(menu);
-        parentElement.appendChild(container);
-        
-        // Initialize dropdown
-        super(container);
-        
+        this.container.appendChild(button);
+        this.container.appendChild(menu);
+        if (parentElement) parentElement.appendChild(this.container);
+
         // Set initial dates
         this.dateStart = dateStart ? new Date(dateStart) : null;
         this.dateEnd = dateEnd ? new Date(dateEnd) : null;

@@ -1,8 +1,15 @@
-.dashboard-container {
+.dasshboard-container {
     padding: 1.5rem;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.sectionStyle {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: var(--surface-color);
 }
 
 .cards-grid {

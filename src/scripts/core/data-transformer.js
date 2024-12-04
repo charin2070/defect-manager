@@ -13,6 +13,41 @@ class DataTransformer {
    * @param {string} [options.valueField] - Field to aggregate (required if aggregation is 'sum')
    * @returns {Object} Dataset suitable for linear charts
    */
+
+  getStateByStatus(status) {
+    switch(status) {
+      case 'Закрыт':
+        return 'resolved';
+      case 'Отклонен':
+        return 'rejected';
+      default:
+        return 'unresolved'; 
+    }
+  }
+
+  objectToIssue( object ) {
+    const issue = {};
+    Object.keys(object).forEach(key => {
+      issue[key] = object[key];
+    });
+
+    issue.state = DataTransformer.getStateByStatus(issue.status);
+    issue.isOverdue = DataTransformer.isOverdue(issue);
+    
+    return issue;
+  }
+
+  // Is SLA ovedue
+  static isOverdue(issue) {
+    if (issue.state === 'unresolved')
+      return false;
+
+    const today = new Date();
+    const dueDate = new Date(issue.slaDate);
+
+    return today > dueDate;
+  }
+
   static getLinearDataset(issues, options = {}) {
     const {
       dateField = 'created',

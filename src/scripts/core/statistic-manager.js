@@ -1,7 +1,127 @@
 class StatisticManager {
     constructor(issues = []) {
-<<<<<<< HEAD
         this.issues = issues;
+        this.init();
+    }
+
+    init(){
+        this.types = {
+            defects: this.statistics,
+            requests: this.statistics,
+            all: this.statistics
+        }
+
+        this.statistics = {
+            total: this.values,
+            currentMonth: this.values,
+            lastMonth: this.values,
+            last30Days: this.values,
+            last90Days: this.values,
+            last180Days: this.values
+        }
+
+        this.values = {
+            resolved: [],
+            unresolved: [],
+            rejected: [],
+            rejectedByTeam: [],
+            total: [],
+            slaDate: [],
+            resolutionTime: [],
+            backlogCount: 0,
+            reportsCount: 0,
+        }
+    }
+
+    static getFullStatistics(issues) {
+        this.statistics = {
+            total: this.calculateStatistics(issues),
+            currentMonth: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date())),
+            lastMonth: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)))),
+            last30Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date())),
+            last90Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date())),
+            last180Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date()))
+        }
+
+        this.values = {
+            resolved: this.getCountByStatus(issues, 'resolved'),
+            unresolved: this.getCountByStatus(issues, 'unresolved'),
+            rejected: this.getCountByStatus(issues, 'rejected'),
+            rejectedByTeam: this.getCountByStatus(issues, 'rejectedByTeam'),
+            total: issues.length,
+            slaDate: this.calculateSlaDate(issues),
+            resolutionTime: this.calculateAverageResolutionTime(issues),
+            backlogCount: issues.filter(issue => !issue.resolved).length,
+            reportsCount: this.calculateUnresolvedReports(issues),
+        }
+
+        return this.statistics;
+    }
+
+    static filterIssuesByDate(startDate, endDate, issues) {
+        // Check is issues is array
+        if (!Array.isArray(issues)) {
+            log(issues, 'Not array');
+            throw new Error('[StatisticManager] filterIssuesByDate (issues), but issues is not an array');
+            
+        }
+            return issues.filter(issue => {
+            const created = new Date(issue.created);
+            return created >= startDate && created <= endDate;
+        });
+    }
+
+    static calculateStatistics(issues) {
+        if (!Array.isArray(issues))
+            throw new Error('[StatisticManager] calculateStatistics (issues), but issues is not an array');
+        const stateGroup = StatisticManager.groupByState(issues);
+        log(stateGroup, 'stateGroup');  
+
+        return {
+            total: issues.length,
+            resolved: stateGroup.resolved,
+            unresolved: stateGroup.unresolved,
+            rejected: stateGroup.rejected,
+            reportsCount: StatisticManager.getReportsCount(stateGroup.unresolved),
+            slaDate: StatisticManager.groupBySlaDate(issues),
+            resolutionTime: StatisticManager.getAverageTime(issues, 'resolved'),
+        }
+    }
+
+    static isDateInRange(date, startDate, endDate) {
+        return date >= startDate && date <= endDate;
+    }
+
+   static groupBySlaDate(issues) {
+        return issues.reduce((acc, issue) => {
+            if (issue.slaDate) {
+                acc[issue.slaDate] = (acc[issue.slaDate] || 0) + 1;
+            }
+            return acc;
+        }, {});
+    }
+
+    getAverageTime(issues, property) {
+        const total = issues.reduce((sum, issue) => sum + (issue[property] || 0), 0);
+        return total / issues.length;
+    }
+
+    static getReportsCount(issues) {
+        if (!Array.isArray(issues))
+            throw new Error('[StatisticManager] getReportsCount (issues), but issues is not an array');
+        
+        return issues.reduce((sum, issue) =>
+            sum + (parseInt(issue.reports) || 0), 0);
+        }
+
+    static groupByState(issues) {
+        if (!Array.isArray(issues))
+            throw new Error('[StatisticManager] groupByState (issues), but issues is not an array');
+        
+        return issues.reduce((acc, issue) => {
+            acc[issue.state] = (acc[issue.state] || 0) + 1;
+            return acc;
+        })
     }
 
     /**
@@ -10,24 +130,32 @@ class StatisticManager {
      * @returns {Object} объект, где ключи - даты в формате ISO, значения - задачи
      */
     groupIssuesByDate(issues = this.issues) {
-        // Создаем копию массива, чтобы не мутировать оригинальный
+        // Copy array
         const sortedIssues = [...issues];
-        
-        // Сортируем по дате создания (от старых к новым)
-        sortedIssues.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        
-        // Группируем по датам
+
+        sortedIssues.sort((a, b) => new Date(a.created) - new Date(b.created));
         return sortedIssues.reduce((acc, issue) => {
-            // Получаем дату в формате ISO (YYYY-MM-DD)
-            const date = new Date(issue.createdAt).toISOString().split('T')[0];
-            
-            // Если для этой даты еще нет массива задач, создаем его
-            if (!acc[date]) {
-                acc[date] = [];
+            // Validate date
+            try {
+                const date = new Date(issue.created);
+                if (isNaN(date.getTime())) {
+                    console.warn('⚠️ [StatisticManager] Invalid date found:', issue.created, 'for issue:', issue.id);
+                    return acc;
+                }
+                
+                // Format YYYY-MM-DD
+                const isoDate = date.toISOString().split('T')[0];
+                
+                // New date
+                if (!acc[isoDate]) {
+                    acc[isoDate] = [];
+                }
+                
+                // Добавляем задачу в соответствующий массив
+                acc[isoDate].push(issue);
+            } catch (error) {
+                console.warn('⚠️ [StatisticManager] Error processing date for issue:', issue.id, error);
             }
-            
-            // Добавляем задачу в соответствующий массив
-            acc[date].push(issue);
             
             return acc;
         }, {});
@@ -39,14 +167,23 @@ class StatisticManager {
      * @param {Array} issues - массив задач (опционально)
      * @returns {Object} сгруппированные задачи за указанный период
      */
-    getStatisticsByPeriod(days, issues = this.issues) {
+    static getStatisticsByPeriod(days, issues = this.issues) {
         const now = new Date();
         const startDate = new Date(now.setDate(now.getDate() - days));
         
         // Фильтруем задачи за указанный период
         const filteredIssues = issues.filter(issue => {
-            const issueDate = new Date(issue.createdAt);
-            return issueDate >= startDate;
+            try {
+                const issueDate = new Date(issue.created);
+                if (isNaN(issueDate.getTime())) {
+                    console.warn('⚠️ Invalid date found:', issue.created, 'for issue:', issue.id);
+                    return false;
+                }
+                return issueDate >= startDate;
+            } catch (error) {
+                console.warn('⚠️ Error processing date for issue:', issue.id, error);
+                return false;
+            }
         });
         
         return this.groupIssuesByDate(filteredIssues);
@@ -54,17 +191,18 @@ class StatisticManager {
 
     /**
      * Получает общую статистику по задачам
+     * @param {Array} issues - массив задач (опционально)
      * @returns {Object} объект с различными статистическими данными
      */
-    getStatistics() {
-        const total = this.issues.length;
-        const open = this.issues.filter(issue => !issue.closedAt).length;
-        const closed = this.issues.filter(issue => issue.closedAt).length;
+    static getStatistics(issues = this.issues) {
+        const total = issues.length;
+        const unresolved = issues.filter(issue => issue.status !== 'resolved').length;
+        const closed = issues.filter(issue => issue.status === 'resolved').length;
         
-        // Считаем просроченные задачи (если есть dueDate и она меньше текущей даты)
-        const overdue = this.issues.filter(issue => {
-            if (!issue.dueDate || issue.closedAt) return false;
-            return new Date(issue.dueDate) < new Date();
+        // Считаем просроченные задачи (если есть slaDate и она меньше текущей даты)
+        const overdue = issues.filter(issue => {
+            if (!issue.slaDate || issue.status === 'resolved') return false;
+            return new Date(issue.slaDate) < new Date();
         }).length;
 
         // Группируем по приоритетам
@@ -81,13 +219,20 @@ class StatisticManager {
             return acc;
         }, {});
 
+        // Группируем по командам
+        const byTeam = this.issues.reduce((acc, issue) => {
+            const team = issue.team || 'none';
+            acc[team] = (acc[team] || 0) + 1;
+            return acc;
+        }, {});
+
         // Статистика по времени закрытия (в днях)
         const closingTimes = this.issues
-            .filter(issue => issue.closedAt)
+            .filter(issue => issue.status === 'resolved')
             .map(issue => {
-                const created = new Date(issue.createdAt);
-                const closed = new Date(issue.closedAt);
-                return Math.ceil((closed - created) / (1000 * 60 * 60 * 24)); // в днях
+                const created = new Date(issue.created);
+                const resolved = new Date(issue.resolved);
+                return Math.ceil((resolved - created) / (1000 * 60 * 60 * 24)); // в днях
             });
 
         const avgClosingTime = closingTimes.length 
@@ -105,6 +250,7 @@ class StatisticManager {
             overdue,
             byPriority,
             byStatus,
+            byTeam,
             avgClosingTime,
             trends: {
                 last30Days,
@@ -112,52 +258,118 @@ class StatisticManager {
             }
         };
     }
-=======
-      this.issues = issues;
+
+    static indexIssues(issues) {
+        const indexes = {
+            byId: new Map(),
+            byCreationDate: new Map(),
+            byResolvedDate: new Map()
+        };
+
+        if (!Array.isArray(issues)) {
+            console.warn('indexIssues: Input is not an array:', issues);
+            return indexes;
+        }
+
+        issues.forEach(issue => {
+            // Index by ID
+            indexes.byId.set(issue.id, issue);
+
+            // Parse dates
+            const creationDate = issue.created ? new Date(issue.created).toISOString().split('T')[0] : null;
+            const resolvedDate = issue.resolved ? new Date(issue.resolved).toISOString().split('T')[0] : null;
+
+            // Index by creation date
+            if (creationDate) {
+                if (!indexes.byCreationDate.has(creationDate)) {
+                    indexes.byCreationDate.set(creationDate, []);
+                }
+                indexes.byCreationDate.get(creationDate).push(issue);
+            }
+
+            // Index by resolution date
+            if (resolvedDate) {
+                if (!indexes.byResolvedDate.has(resolvedDate)) {
+                    indexes.byResolvedDate.set(resolvedDate, []);
+                }
+                indexes.byResolvedDate.get(resolvedDate).push(issue);
+            }
+        });
+
+        return indexes;
     }
 
-    getStatistics(issues, dateStart, dateEnd, team) {
+    /**
+     * Gets reports statistics for different time periods
+     * @param {Array} issues - array of issues (optional)
+     * @returns {Object} statistics about reports for different periods
+     */
+    static getReportsStatistics(issues = this.issues) {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-}
+        // Get start dates for different periods
+        const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+        const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1);
+        const startOfThreeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
+        const startOfSixMonthsAgo = new Date(currentYear, currentMonth - 6, 1);
 
-  indexIssues(issues) {
-    const indexes = {
-      byId: new Map(),
-      byCreationDate: new Map(),
-      byResolvedDate: new Map()
-    };
+        // Initialize statistics object
+        const statistics = {
+            unresolvedReports: 0,
+            currentMonthReports: 0,
+            lastMonthReports: 0,
+            lastThreeMonthsReports: 0,
+            lastSixMonthsReports: 0
+        };
 
-    if (!Array.isArray(issues)) {
-      console.warn('indexIssues: Input is not an array:', issues);
-      return indexes;
+        issues.forEach(issue => {
+            try {
+                const createdDate = new Date(issue.created);
+                const reports = parseInt(issue.reports) || 0;
+
+                // Count unresolved reports
+                if (issue.status !== 'resolved') {
+                    statistics.unresolvedReports += reports;
+                }
+
+                // Count reports for different time periods
+                if (createdDate >= startOfCurrentMonth) {
+                    statistics.currentMonthReports += reports;
+                }
+                if (createdDate >= startOfLastMonth && createdDate < startOfCurrentMonth) {
+                    statistics.lastMonthReports += reports;
+                }
+                if (createdDate >= startOfThreeMonthsAgo) {
+                    statistics.lastThreeMonthsReports += reports;
+                }
+                if (createdDate >= startOfSixMonthsAgo) {
+                    statistics.lastSixMonthsReports += reports;
+                }
+            } catch (error) {
+                console.warn('⚠️ Error processing reports for issue:', issue.id, error);
+            }
+        });
+
+        return statistics;
     }
 
-    issues.forEach(issue => {
-      // Index by ID
-      indexes.byId.set(issue.id, issue);
+    /**
+     * Gets detailed reports statistics including trends
+     * @param {Array} issues - array of issues (optional)
+     * @returns {Object} detailed reports statistics
+     */
+    static getDetailedReportsStatistics(issues = this.issues) {
+        const basicStats = this.getReportsStatistics(issues);
+        const monthlyAverage = Math.round(basicStats.lastSixMonthsReports / 6);
+        const monthlyTrend = basicStats.currentMonthReports - basicStats.lastMonthReports;
 
-      // Parse dates
-      const creationDate = issue.created ? new Date(issue.created).toISOString().split('T')[0] : null;
-      const resolvedDate = issue.resolved ? new Date(issue.resolved).toISOString().split('T')[0] : null;
-
-      // Index by creation date
-      if (creationDate) {
-        if (!indexes.byCreationDate.has(creationDate)) {
-          indexes.byCreationDate.set(creationDate, []);
-        }
-        indexes.byCreationDate.get(creationDate).push(issue);
-      }
-
-      // Index by resolution date
-      if (resolvedDate) {
-        if (!indexes.byResolvedDate.has(resolvedDate)) {
-          indexes.byResolvedDate.set(resolvedDate, []);
-        }
-        indexes.byResolvedDate.get(resolvedDate).push(issue);
-      }
-    });
-
-    return indexes;
-  }
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
+        return {
+            ...basicStats,
+            monthlyAverage,
+            monthlyTrend,
+            trendDirection: monthlyTrend > 0 ? 'up' : monthlyTrend < 0 ? 'down' : 'stable'
+        };
+    }
 }

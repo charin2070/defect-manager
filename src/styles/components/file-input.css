@@ -95,3 +95,23 @@
     white-space: nowrap;
     border: 0;
 }
+
+@media (max-width: 600px) {
+    .file-input-container {
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+
+    .file-input-title {
+        font-size: 1.5rem;
+    }
+
+    .file-input-drag-text {
+        font-size: 1rem;
+    }
+
+    .file-input-upload-button {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.875rem;
+    }
+}

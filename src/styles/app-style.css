@@ -32,6 +32,10 @@
   font-family: 'Roboto', sans-serif;
 }
 
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
 root {
   --unresolved-color: #rgba(255, 99, 132, 1);
   --resolved-color: #rgba(75, 192, 192, 1);
@@ -52,7 +56,62 @@ root {
   --navbar-height: 1em;
 }
 
-/* Modern Search Bar Styles */
+
+/* Status badge styles */
+.status-badge {
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.status-badge.status-новый {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.15) 0%, rgba(66, 153, 225, 0.25) 100%);
+  color: #2B6CB0;
+  border: 1px solid rgba(66, 153, 225, 0.3);
+}
+
+.status-badge.status-в-работе {
+  background: linear-gradient(135deg, rgba(236, 201, 75, 0.15) 0%, rgba(236, 201, 75, 0.25) 100%);
+  color: #B7791F;
+  border: 1px solid rgba(236, 201, 75, 0.3);
+}
+
+.status-badge.status-решен,
+.status-badge.status-закрыт,
+.status-badge.status-отклонен {
+  background: linear-gradient(135deg, #1a4731 0%, #2f855a 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.status-badge.status-закрыт,
+.status-badge.status-отклонен {
+  background: linear-gradient(135deg, var(--resolved-color), var(--rejected-color) 100%);
+  color: #276749;
+  border: 1px solid rgba(72, 187, 120, 0.4);
+  font-weight: 600;
+}
+
+.status-badge.status-новый:hover {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.2) 0%, rgba(66, 153, 225, 0.3) 100%);
+}
+
+.status-badge.status-в-работе:hover {
+  background: linear-gradient(135deg, rgba(236, 201, 75, 0.2) 0%, rgba(236, 201, 75, 0.3) 100%);
+}
+ch Bar Styles */
 .search-container {
   position: relative;
   margin: 0 1em;
@@ -531,56 +590,6 @@ body .dark-theme * {
   background-color: rgba(173, 28, 2, 0.39) !important;
 }
 
-/* Navbar Component */
-.navbar {
-  background-color: rgba(255, 255, 255, 0.596);
-  backdrop-filter: blur(10px);
-  position: fixed;
-  top: 0;
-  left: 0;
-  transition: top 0.3s;
-  height: var(--navbar-height);
-  border-bottom: 1px solid #ddd;
-  padding: 0.5rem; /* p-2 */
-  box-shadow:  0 5px 35px rgba(0, 0, 0, 0.2);
-  position: fixed;
-  width: 100%;
-  z-index: 10;
-  transition: background-color 0.5s, color 0.5s;
-}
-
-.navbar-items-group {
-  display: flex;
-  justify-content: space-between;
-  gap: 1em;
-}
-
-.navbar-items-container{
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.navbar.hide {
-  top: calc(-4 * var(--navbar-height));
-}
-
-.navbar h1 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #222;
-}
-
-.navbar a {
-  color: #555;
-  transition: color 0.3s;
-}
-
-.navbar a:hover {
-  color: #1a73e8;
-}
 
 .view-section {
   height: calc(80vh - var(--navbar-height));
@@ -684,13 +693,6 @@ body .dark-theme * {
   color: #333;
 }
 
-.content-container {
-  background-color: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1em;
-  padding: 1em;
-  border-radius: 10px;
-}
 
 .chart-container {
   position: relative;
@@ -763,14 +765,6 @@ body.dark-theme .tab-button {
 body.dark-theme .tab-button.active {
   background-color: #1d4ed8;
   color: #fff;
-}
-
-body.dark-theme .navbar,
-.navbar.dark-theme {
-  background-color: var(--bg-color-dark);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--bg-color-darker);
-  color: white;
 }
 
 /* Dropdown */

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 .layout {
     display: flex;
     flex-direction: column;
@@ -14,10 +13,14 @@
     border-bottom: 1px solid #dee2e6;
 }
 
-.layout-content {
-    flex: 1 1 auto;
+.content-container {
     display: flex;
-    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 3em;
+    margin-bottom: 1em;
+    padding: 1em;
+    border-radius: 10px;
 }
 
 .layout-main {
@@ -39,7 +42,7 @@
     background-color: #f8f9fa;
     border-top: 1px solid #dee2e6;
 }
-=======
+
 .layout-container {
     margin: 0;
     padding: 0;
@@ -52,4 +55,3 @@
     right: 0;
     bottom: 0;
 }
->>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
