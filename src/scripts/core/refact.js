@@ -13,6 +13,7 @@
  * - Use `bind` to link DOM elements to state keys, making your UI reactive and declarative.
  * - Render HTML templates via `render` to set up the initial UI structure.
  * 
+<<<<<<< HEAD
  * Refact is a foundation for building lightweight, reactive JavaScript applications without relying on external frameworks.
 я */
 
@@ -29,6 +30,29 @@ class Refact {
             Refact.#instance = new Refact(rootElement);
         }
         return Refact.#instance;
+=======
+ * RefAct is a foundation for building lightweight, reactive JavaScript applications without relying on external frameworks.
+я */
+
+class Refact {
+    static instance;
+
+    constructor(rootElement) {
+        if (Refact.instance) {
+            return Refact.instance;
+        }
+        this.rootElement = rootElement;
+        this.state = {};
+        this.subscribers = new Map();
+        Refact.instance = this;
+    }
+
+    static getInstance(rootElement) {
+        if (!Refact.instance) {
+            Refact.instance = new Refact(rootElement);
+        }
+        return Refact.instance;
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     }
 
     // Default state
@@ -36,6 +60,7 @@ class Refact {
         for (let key in newState) {
             this.state[key] = newState[key];
             this.notify(key);
+<<<<<<< HEAD
             
             // Улучшенное логирование
             const value = this.state[key];
@@ -52,6 +77,9 @@ class Refact {
             }
             
             console.log(`⚡State changed: ${key} = ${logValue} (by: ${changedBy})`);
+=======
+            console.log(`⚡State changed: ${key} = ${this.state[key]} (by: ${changedBy})`);
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
         }
     }
     

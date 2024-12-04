@@ -1,9 +1,29 @@
 /* Common dropdown styles */
+<<<<<<< HEAD
 .dropdown {
+=======
+.app-dropdown {
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     position: relative;
     display: inline-block;
 }
 
+<<<<<<< HEAD
+=======
+.app-dropdown-toggle {
+    margin: auto;
+    display: flex;
+    width: 2em;
+    height: 2em;;
+}
+
+dropdown-item-icon {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+}
+
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
 .dropdown button {
     transition: all 0.2s ease;
     padding: 0.5rem 1rem;

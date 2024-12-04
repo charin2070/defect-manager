@@ -1,4 +1,5 @@
 class View {
+<<<<<<< HEAD
     constructor(container) {
         this.container = container;
         this.refact = Refact.getInstance(document.body);
@@ -36,6 +37,16 @@ class View {
     }
 
     getContainer() {
+=======
+    constructor() {
+        this.container = document.createElement('div');
+    }
+        
+    setupView() {
+    }
+    
+    render() {
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
         return this.container;
     }
 }

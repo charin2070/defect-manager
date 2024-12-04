@@ -1,0 +1,125 @@
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bs-light);
+    border-right: 1px solid var(--bs-border-color);
+    transition: margin-left .35s ease-in-out, left .35s ease-in-out, margin-right .35s ease-in-out, right .35s ease-in-out;
+    direction: ltr;
+    height: 100vh;
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-nav {
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+    flex-grow: 1;
+}
+
+.sidebar-header {
+    background: transparent;
+    padding: 1.5rem 1.5rem .375rem;
+    font-size: .75rem;
+    color: var(--bs-gray-600);
+}
+
+.sidebar-item {
+    position: relative;
+}
+
+.sidebar-link {
+    display: block;
+    padding: .625rem 1.625rem;
+    font-size: .875rem;
+    position: relative;
+    cursor: pointer;
+    color: var(--bs-gray-600);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+    background: var(--bs-light);
+    color: var(--bs-primary);
+    border-left-color: var(--bs-primary);
+}
+
+.sidebar-link i,
+.sidebar-link svg {
+    margin-right: .75rem;
+    font-size: 1rem;
+    width: 20px;
+    height: 20px;
+    color: var(--bs-gray-500);
+}
+
+.sidebar-link.active {
+    color: var(--bs-primary);
+    background: var(--bs-light);
+    border-left-color: var(--bs-primary);
+}
+
+.sidebar-brand {
+    display: block;
+    padding: 1.15rem 1.5rem;
+    font-size: 1.15rem;
+    color: var(--bs-gray-800);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.sidebar-toggle {
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+}
+
+/* Collapsed state */
+.sidebar-collapsed {
+    margin-left: -260px;
+}
+
+/* Dark theme support */
+.dark-theme .sidebar {
+    background: var(--bs-dark);
+    border-right-color: var(--bs-gray-800);
+}
+
+.dark-theme .sidebar-link {
+    color: var(--bs-gray-400);
+}
+
+.dark-theme .sidebar-link:hover,
+.dark-theme .sidebar-link.active {
+    background: var(--bs-gray-800);
+    color: var(--bs-light);
+}
+
+.dark-theme .sidebar-brand {
+    color: var(--bs-light);
+}
+
+.dark-theme .sidebar-header {
+    color: var(--bs-gray-400);
+}
+
+/* Mobile support */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+    }
+
+    .sidebar-collapsed {
+        margin-left: 0;
+        left: -260px;
+    }
+}

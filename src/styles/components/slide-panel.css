@@ -18,9 +18,19 @@
     pointer-events: auto;
 }
 
+<<<<<<< HEAD
 /* Base slide panel styles */
 .slide-panel {
     position: fixed;
+=======
+.slide-panel {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: fit-content;
+    min-width: 600px;
+    height: 100%;
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     background-color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -29,6 +39,7 @@
     overflow-y: auto;
     z-index: 1000;
     opacity: 0;
+<<<<<<< HEAD
 }
 
 /* Right panel */
@@ -299,6 +310,25 @@
 /* Slide Panel Header */
 .slide-panel-header {
     display: none;
+=======
+    transform: translateX(20px);
+}
+
+.slide-panel.open {
+    right: 0;
+    opacity: 1;
+    transform: translateX(0);
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Slide Panel Header */
+.slide-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 12px;
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
 }
 
 .slide-panel-logo {
@@ -342,6 +372,7 @@
     width: 100%;
     overflow-x: auto;
 }
+<<<<<<< HEAD
 
 /* Code block styles for issue description with Prism.js integration */
 .issue-details .description-content {
@@ -592,3 +623,5 @@
     transform: translateY(-1px);
     transition: transform 0.2s ease;
 }
+=======
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b

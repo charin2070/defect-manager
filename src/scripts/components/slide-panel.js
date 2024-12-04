@@ -53,10 +53,13 @@ class SlidePanel {
         });
     }
 
+<<<<<<< HEAD
     clear() {
         this.content.innerHTML = '';
     }
 
+=======
+>>>>>>> 413ea59d99e7f4b83c6ec8cbf77e1de2e15d057b
     open() {
         this.panel.style.display = 'block';
         this.backdrop.style.display = 'block';
