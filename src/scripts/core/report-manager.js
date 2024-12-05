@@ -1,7 +1,11 @@
 class ReportManager {
   constructor() {
-    
-  }
+    this.refact = Refact.getInstance();
+    this.refact.subscribe('reportType', (type) => {
+      this.generateReport(type);
+    });
+  }    
+
 
   months = [
     'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
@@ -17,48 +21,122 @@ class ReportManager {
     "Терминалы": ["терминал"],
   };
 
-  getMvpReport(issues) {
-    if (!Array.isArray(issues)) {
-        throw new Error('[ReportManager] getMvpReport requires an array of issues');
+ 
+  mobileTeams = ["Meribel", "K2", "Не назначена", "Kilimanjaro", "Etna", "Olympus", "Makalu", "Everest", "Sierra", "Elbrus", "Siple", "Appalachians", "Fuji", "Matterhorn", "Weisshorn", "Citadel", "Twin Tree", "Black Rock", "Millenium", "Renaissance", "Montblanc", "Kailash"];
+
+  generateReport(type) {
+    switch (type) {
+      case 'weekly':
+        this.generateWeeklyReport();
+        break;
+      case 'mvp':
+        this.getMvpReport(this.refact.state.issues, this.mobileTeams);
+        break;
+      default:
+        break;
     }
+  }
+  
+  isValidIssue(issue) {
+    return issue && issue.id && issue.created && issue.state && issue.team;
+  }
 
-    const statistics = StatisticManager.getFullStatistics(issues);
-    const teams = {};
-
-    issues.forEach(issue => {
-        const team = issue.team || 'Unknown';
-        if (!teams[team]) {
-            teams[team] = {
-                open: 0,
+  getMvpReport(issues, teams) {
+    
+    const teamsData = {};
+    teams.forEach(team => {
+        teamsData[team] = {
+            new: 0,
+            unresolved: 0,
+            resolved: 0,
+            rejected: 0,
+            avgCloseTime: 0,
+            reportsTotal: 0,
+            reportsUnresolved: 0,
+            last30Days: {
                 closed: 0,
-                rejected: 0,
-                avgCloseTime: 0,
-                last30Days: {
-                    closed: 0,
-                    new: 0,
-                    rejected: 0
-                }
-            };
-        }
-
-        if (issue.state === 'unresolved') teams[team].open++;
-        if (issue.state === 'resolved') teams[team].closed++;
-        if (issue.state === 'rejected') teams[team].rejected++;
-    });
-
-    const tableData = Object.entries(teams).map(([team, data]) => {
-        return {
-            team,
-            open: data.open,
-            closed: data.closed,
-            reports: '-',
-            closedLast30: data.last30Days.closed,
-            newLast30: data.last30Days.new,
-            rejectedLast30: data.last30Days.rejected,
-            avgCloseTime: data.avgCloseTime || '-'
+                new: 0,
+                rejected: 0
+            },
         };
     });
 
-    return tableData;
+    if (issues.length === 0) {
+        log('No valid issues found, returning empty array');
+        return [];
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    issues.forEach(issue => {
+        // Получаем команду из объекта issue
+        const team = issue.team;
+        
+        if (!teamsData[team]) {
+            return;
+        }
+
+        // Increment total count
+        teamsData[team].new++;
+
+        // Count reports
+        if (issue.reports) {
+            teamsData[team].reportsTotal += issue.reports;
+            if (issue.state === 'unresolved') {
+                teamsData[team].reportsUnresolved += issue.reports;
+            }
+        }
+
+        // Process by state
+        switch (issue.state) {
+            case 'unresolved':
+                teamsData[team].unresolved++;
+                break;
+            case 'resolved':
+                teamsData[team].resolved++;
+                if (issue.resolved && issue.created) {
+                    const closeTime = new Date(issue.resolved) - new Date(issue.created);
+                    teamsData[team].avgCloseTime = 
+                        (teamsData[team].avgCloseTime * (teamsData[team].resolved - 1) + closeTime) 
+                        / teamsData[team].resolved;
+                }
+                break;
+            case 'rejected':
+                teamsData[team].rejected++;
+                break;
+        }
+
+        // Process last 30 days statistics
+        const createdDate = new Date(issue.created);
+        if (createdDate >= thirtyDaysAgo) {
+            teamsData[team].last30Days.new++;
+        }
+
+        if (issue.resolved) {
+            const resolvedDate = new Date(issue.resolved);
+            if (resolvedDate >= thirtyDaysAgo) {
+                if (issue.state === 'rejected') {
+                    teamsData[team].last30Days.rejected++;
+                } else {
+                    teamsData[team].last30Days.closed++;
+                }
+            }
+        }
+    });
+
+    // Calculate average resolution time for each team
+    Object.keys(teamsData).forEach(team => {
+        const teamData = teamsData[team];
+        if (teamData.resolved > 0) {
+            // Convert from milliseconds to days
+            teamData.avgCloseTime = (teamData.avgCloseTime / (1000 * 60 * 60 * 24));
+        }
+    });
+
+    log(teamsData, 'teamsData');
+
+    return teamsData;
 }
+
 }

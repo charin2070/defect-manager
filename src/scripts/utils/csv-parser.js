@@ -112,24 +112,14 @@ class CsvParser {
                 issue[prop] = values[index];
               });
     
-              // Check and parse date fields
+              // Date conversion
               this.datesFields.forEach(field => {
                 if (issue[field]) {
-                  let date;
-                  // Try to parse DD.MM.YYYY HH:mm format
-                  const match = issue[field].match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
-                  if (match) {
-                    const [_, day, month, year, hours, minutes] = match;
-                    date = new Date(year, month - 1, day, hours, minutes);
-                  } else {
-                    date = new Date(issue[field]);
-                  }
-    
-                  if (isNaN(date.getTime())) {
+                  issue[field] = stringToDate(issue[field]);
+                
+                   if (isNaN(issue[field].getTime())) {
                     console.warn(`⚠️ Invalid date found: ${issue[field]} for issue: ${issue.id}`);
-                    issue[field] = null;
-                  } else {
-                    issue[field] = date.toISOString();
+                    issue[field] = null;    
                   }
                 }
               });
@@ -147,37 +137,6 @@ class CsvParser {
     
       parseCSVLine(line) {
         return line.split(/,(?=(?:[^"]|"[^"]*")*$)/);
-      }
-
-    cleanupCsvData(csvData) {
-        const lines = csvData.split("\n");
-        const formattedLines = [];
-        let currentLine = "";
-    
-        lines.forEach((line, index) => {
-          if (index === 0) {
-            // Add header row
-            formattedLines.push(line.trim());
-          } else if (line.startsWith("ADIRINC-")) {
-            // If we have a previous line, add it to formattedLines
-            if (currentLine) {
-              // Add the previous line
-              formattedLines.push(currentLine.trim());
-            }
-            // Start a new line
-            currentLine = line;
-          } else {
-            // Append to the current line, replacing newline with space
-            currentLine += " " + line.trim();
-          }
-        });
-    
-        // Add the last line if it exists
-        if (currentLine) {
-          formattedLines.push(currentLine.trim());
-        }
-    
-        return formattedLines;
       }
 
     loadFromCsvFile(file) {
@@ -324,18 +283,5 @@ class CsvParser {
         return csvObject;
     }
 
-    saveToLocalStorage(dataPrefix, data) {
-        console.log(data, "🗃️ Saving data to local storage...");
-
-        // Get data-object size
-        const dataSize = (JSON.stringify(data).length / 1024).toFixed(2);
-        console.log(`💾 [CsvParser] Saving to Local Storage (size: ${dataSize} KB) ...`);
-
-        localStorage.setItem(dataPrefix, JSON.stringify(data));
-        if (localStorage.getItem(dataPrefix)) {
-            console.log(`💾 [CsvParser] Saved to local storage as ${dataPrefix}`);
-        } else {
-            console.log(`⛔ [CsvParser] Failed to save to local storage as ${dataPrefix}`);
-        }
-    }
+ 
 }

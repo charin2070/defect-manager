@@ -80,18 +80,18 @@ class NavbarComponent {
         this.#updateClasses();
     }
 
-    addItem(element) {
+    addItem(itemElement) {
         const menu = this.#element.querySelector('.navbar-menu');
-        if (menu && element instanceof Element) {
-            element.style.opacity = '0';
-            element.style.transform = 'translateX(20px)';
-            menu.appendChild(element);
+        if (menu && itemElement instanceof Element) {
+            itemElement.style.opacity = '0';
+            itemElement.style.transform = 'translateX(20px)';
+            this.#element.appendChild(itemElement);
             
             // Анимация появления
             requestAnimationFrame(() => {
-                element.style.transition = 'all 0.3s ease';
-                element.style.opacity = '1';
-                element.style.transform = 'translateX(0)';
+                itemElement.style.transition = 'all 0.3s ease';
+                itemElement.style.opacity = '1';
+                itemElement.style.transform = 'translateX(0)';
             });
         }
     }

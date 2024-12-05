@@ -37,27 +37,6 @@ class ReportDropdown extends DropdownComponent {
         this.addItem('MVP отчёта по дефектам и доработкам', 'mvp', () => {
             this.setReportType('mvp');
             this.button.textContent = 'MVP отчёта по дефектам и доработкам';
-            
-            try {
-                // Get ReportManager instance and generate MVP report
-                const reportManager = new ReportManager();
-                const teams = [
-                    "Meribel", "K2", "Kilimanjaro", "Etna", "Olympus", 
-                    "Makalu", "Everest", "Sierra", "Elbrus", "Siple", 
-                    "Appalachians", "Fuji", "Matterhorn", "Weisshorn", 
-                    "Citadel", "Twin Tree", "Black Rock", "Millenium", 
-                    "Renaissance", "Montblanc", "Kailash"
-                ];
-                
-                // Get issues from Refact state
-                const refact = Refact.getInstance();
-                const issues = refact.state.issues || [];
-                
-                const report = reportManager.getMvpReport(teams, issues);
-            
-            } catch (error) {
-                console.error('Error generating MVP report:', error);
-            }
         });
     }
 

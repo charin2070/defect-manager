@@ -18,12 +18,9 @@ class ViewController {
         // Create and register views
         this.uploadView = new UploadView();
         this.dashboardView = new DashboardView();
-        
+
         this.registerView('upload', this.uploadView);
         this.registerView('dashboard', this.dashboardView);
-        
-        // Show initial view
-        this.showView('upload');
     }
 
     registerView(name, viewContainer) {

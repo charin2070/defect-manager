@@ -86,11 +86,12 @@ class DataManager {
 
   saveToLocalStorage() {
     try {
-      localStorage.setItem(this.dataPrefix, JSON.stringify(this.issues));
-      return true;
+      const jsonData = JSON.stringify(this.issues);
+      const dataSize = (jsonData.length / 1024).toFixed(2);
+      console.log(`✅[DataManager] Saving to Local Storage (size: ${dataSize} KB) ...`);
+      localStorage.setItem(this.dataPrefix, jsonData);
     } catch (error) {
-      console.error('❌ Error saving to Local Storage:', error);
-      return false;
+      console.error(`[DataManager] Error saving to local storage:`, error);
     }
   }
 
@@ -129,11 +130,14 @@ class DataManager {
         csvParser.loadFromCsvFile(file).then(issues => {
           this.issues = issues;
           this.refact.setState({ issues: this.issues }, 'DataManager.loadFromFile');
-          this.saveToLocalStorage();
-          console.log("📥 Loaded and saved issues from file:", { count: issues.length });
+          this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+          log(this.refact, 'DataManager.loadFromFile');
+         this.saveToLocalStorage();
+         
           resolve({ issues: this.issues, source: 'file' });
         }).catch(error => {
-          console.error("❌ [DataManager.loadFromFile] Error:", error);
+          this.refact.setState({ dataStatus: 'error' }, 'DataManager.loadFromFile');
+          console.error("[DataManager.loadFromFile] Error:", error);
           reject(error);
         });
       } else {

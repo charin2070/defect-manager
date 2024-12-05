@@ -63,9 +63,9 @@ class DashboardView extends View {
     
             // Reports
             this.unresolvedReportsCard = new InfoCard(this.topCardsRow, {
-                title: 'Непрочитанных обращений',
+                title: 'Открытых обращений',
                 content: 'Загрузка...',
-                iconSvg: 'src/img/jira-report.svg',
+                iconSvg: 'src/img/trigger.svg',
                 footer: 'Общее количество обращений'
             });
   

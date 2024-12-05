@@ -58,7 +58,7 @@ class DropdownComponent {
             }
             this.handleItemClick(e);
         });
-
+        
         this.menu.appendChild(item);
     }
 

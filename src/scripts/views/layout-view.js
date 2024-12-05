@@ -32,6 +32,11 @@ class LayoutView extends View {
             window.location.reload();
         });
 
+        const menuContainer = document.createElement('div');
+        this.mainMenu = new DropdownComponent(menuContainer);
+        this.mainMenu.addItem('Удалить данные', null, null, 'src/img/trash-bin-0.svg', {'dataState': 'clearLocalStorageData'});
+        this.navbar.addItem(this.mainMenu.getContainer());
+
         return this.wrapper;
     }
 
