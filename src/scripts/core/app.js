@@ -25,10 +25,9 @@ class App {
             this.config = new ConfigManager(this.defaultConfig);
             this.config.loadConfigFromLocalStorage();
 
-            this.setupState();
+            this.setupStates();
             this.setupManagers();
             this.setupEventListeners();
-
 
             this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
 
@@ -39,7 +38,7 @@ class App {
         }
     }
 
-    setupState() {            
+    setupStates() {            
         this.refact.setState({
             config: this.config.config,
             filters: this.config.config.filters,
@@ -49,27 +48,54 @@ class App {
         });
     }
 
-
     setupManagers() {
         this.viewController = new ViewController(this.container);
         this.dataManager = new DataManager(this.config.config.dataPrefix);
         this.statisticManager = new StatisticManager();
         this.reportsManager = new ReportManager();
+        this.dataTransformer = new DataTransformer();
     }
 
     setupEventListeners() {
         // Issues
-        this.refact.subscribe('issues', (issues) => {
-            if (!issues && issues == 'undefined') return;
+        this.refact.subscribe('dataStatus', (status) => {
+            if (status === 'error') {
+                this.viewController.showView('error', this.dataManager.lastError);
+                return;
+            }
 
-            this.refact.issues = issues;
+            if (status === 'empty') {
+                this.viewController.showView('empty');
+                return;
+            }
 
-            const statistics = StatisticManager.getFullStatistics(issues);
-            log(statistics, '📦 Statistics');
-            this.refact.setState({
-                statistics: statistics
-            }, 'App - issues');
-            this.showDashboard();
+            if (status === 'loaded') {
+                this.viewController.showView('dashboard');
+                // Get issues from data manager
+            const issues = this.dataManager.getIssues();
+            if (!issues || !issues.length) return;
+
+            // Transform and update state
+            const transformedIssues = issues.map(issue => this.dataTransformer.objectToIssue(issue));
+            this.refact.setState({ issues: transformedIssues }, 'App - issues');
+            
+            // Calculate and update statistics
+            const statistics = StatisticManager.getFullStatistics(transformedIssues);
+            console.log('📦 Statistics:', statistics);
+            this.refact.setState({ statistics }, 'App - statistics');
+
+            // Show dashboard
+            this.viewController.showView('dashboard');     
+
+                return;
+            }
+        });
+
+        // Filters
+        this.refact.subscribe('filters', (filters) => {
+            this.config.config.filters = filters;
+            this.config.saveConfigToLocalStorage();
+            this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
         });
     }
 

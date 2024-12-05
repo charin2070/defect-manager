@@ -1,0 +1,25 @@
+.dashboard-container {
+    padding: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.sectionStyle {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    width: 100%;
+    background: var(--surface-color);
+}
+
+.cards-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    width: 100%;
+}

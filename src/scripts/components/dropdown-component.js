@@ -34,7 +34,7 @@ class DropdownComponent {
         }
     }
 
-    addItem(text, value, onClick) {
+    addItem(text, value, onClick, imageUrl = null, stateUpdate = null) {
         if (!this.menu) return;
 
         const item = document.createElement('div');
@@ -42,9 +42,20 @@ class DropdownComponent {
         item.textContent = text;
         item.dataset.value = value;
         
+        if (imageUrl) {
+            const icon = document.createElement('img');
+            icon.src = imageUrl;
+            icon.className = 'dropdown-icon';
+            item.prepend(icon);
+        }
+
         item.addEventListener('click', (e) => {
             e.preventDefault();
             if (onClick) onClick(value);
+            if (stateUpdate) {
+                const [stateName, stateValue] = Object.entries(stateUpdate)[0];
+                this.refact.setState(stateName, stateValue);
+            }
             this.handleItemClick(e);
         });
 

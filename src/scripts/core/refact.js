@@ -23,7 +23,13 @@ class Refact {
             return Refact.instance;
         }
         this.rootElement = rootElement;
-        this.state = {};
+        this.state = {
+            statistics: {
+                total: {
+                    unresolved: 0
+                }
+            }
+        };
         this.subscribers = new Map();
         Refact.instance = this;
     }
@@ -75,10 +81,18 @@ class Refact {
     // Bind element to state
     bind(selector, key) {
         const element = this.rootElement.querySelector(selector);
+        if (!element) {
+            console.warn(`Element not found for selector: ${selector}`);
+            return;
+        }
         this.subscribe(key, value => {
             element.textContent = value;
         });
-        element.textContent = this.state[key] || '';
+        if (key in this.state) {
+            element.textContent = this.state[key];
+        } else {
+            console.warn(`State key not found: ${key}`);
+        }
     }
 
     render(template) {

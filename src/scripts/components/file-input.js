@@ -25,16 +25,16 @@ class FileInputContainer {
 
         this.dragDropText = document.createElement('p');
         this.dragDropText.className = 'file-input-drag-text';
-        this.dragDropText.textContent = 'Перетащите файл или нажмите кнопку';
+        this.dragDropText.textContent = 'Перетащите файл или нажмите';
 
         this.uploadButton = document.createElement('button');
         this.uploadButton.className = 'file-input-upload-button';
-        this.uploadButton.textContent = 'Загрузить CSV';
+        this.uploadButton.textContent = 'Загрузить файл';
         this.uploadButton.type = 'button';
 
         this.hint = document.createElement('p');
         this.hint.className = 'file-input-hint';
-        this.hint.textContent = 'Файл экспорта в формате CSV';
+        this.hint.textContent = 'в Excel или CSV';
 
         this.inputElement = document.createElement('input');
         this.inputElement.type = 'file';
@@ -52,6 +52,8 @@ class FileInputContainer {
         this.uploadButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            // Reset input value before opening file dialog
+            this.inputElement.value = '';
             this.inputElement.click();
         });
 
@@ -59,6 +61,31 @@ class FileInputContainer {
             if (event.target.files && event.target.files.length > 0) {
                 const file = event.target.files[0];
                 console.log('File selected:', file.name); 
+                this.refact.setState({ uploadedFile: file });
+            }
+        });
+
+        // Handle drag and drop
+        this.container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.container.classList.add('dragover');
+        });
+
+        this.container.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.container.classList.remove('dragover');
+        });
+
+        this.container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.container.classList.remove('dragover');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                console.log('File dropped:', file.name);
                 this.refact.setState({ uploadedFile: file });
             }
         });

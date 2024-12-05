@@ -34,65 +34,131 @@ class StatisticManager {
     }
 
     static getFullStatistics(issues) {
-        this.statistics = {
-            total: this.calculateStatistics(issues),
-            currentMonth: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date())),
-            lastMonth: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)))),
-            last30Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date())),
-            last90Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date())),
-            last180Days: this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date()))
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] getFullStatistics requires an array of issues');
         }
 
-        this.values = {
-            resolved: this.getCountByStatus(issues, 'resolved'),
-            unresolved: this.getCountByStatus(issues, 'unresolved'),
-            rejected: this.getCountByStatus(issues, 'rejected'),
-            rejectedByTeam: this.getCountByStatus(issues, 'rejectedByTeam'),
-            total: issues.length,
-            slaDate: this.calculateSlaDate(issues),
-            resolutionTime: this.calculateAverageResolutionTime(issues),
-            backlogCount: issues.filter(issue => !issue.resolved).length,
-            reportsCount: this.calculateUnresolvedReports(issues),
-        }
+        const calculateCreatedCount = (filteredIssues) => filteredIssues.length;
+        const calculateCompletedCount = (filteredIssues) => filteredIssues.filter(issue => {
+            const resolvedDate = new Date(issue.resolved);
+            return !isNaN(resolvedDate) && ['resolved', 'rejected'].includes(issue.status);
+        }).length;
+        const calculateBacklog = (created, resolved, rejected) => created - (resolved + rejected);
 
-        return this.statistics;
+        const filterUnresolvedIssues = (filteredIssues) => filteredIssues.filter(issue => issue.state === 'unresolved');
+
+        return {
+            total: {
+                ...this.calculateStatistics(issues),
+                unresolvedIssues: filterUnresolvedIssues(issues)
+            },
+            currentMonth: {
+                ...this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues)),
+                created: calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues)),
+                backlog: calculateBacklog(
+                    calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues))
+                ),
+                unresolvedIssues: filterUnresolvedIssues(this.filterIssuesByDate(new Date(new Date().setDate(1)), new Date(), issues))
+            },
+            lastMonth: {
+                ...this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues)),
+                created: calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues)),
+                backlog: calculateBacklog(
+                    calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues))
+                ),
+                unresolvedIssues: filterUnresolvedIssues(this.filterIssuesByDate(new Date(new Date().setMonth(new Date().getMonth() - 1, 1)), new Date(new Date().setDate(0)), issues))
+            },
+            last30Days: {
+                ...this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues)),
+                created: calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues)),
+                backlog: calculateBacklog(
+                    calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues))
+                ),
+                unresolvedIssues: filterUnresolvedIssues(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 30)), new Date(), issues))
+            },
+            last90Days: {
+                ...this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues)),
+                created: calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues)),
+                backlog: calculateBacklog(
+                    calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues))
+                ),
+                unresolvedIssues: filterUnresolvedIssues(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 90)), new Date(), issues))
+            },
+            last180Days: {
+                ...this.calculateStatistics(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues)),
+                created: calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues)),
+                backlog: calculateBacklog(
+                    calculateCreatedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues)),
+                    calculateCompletedCount(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues))
+                ),
+                unresolvedIssues: filterUnresolvedIssues(this.filterIssuesByDate(new Date(new Date().setDate(new Date().getDate() - 180)), new Date(), issues))
+            }
+        };
     }
 
     static filterIssuesByDate(startDate, endDate, issues) {
-        // Check is issues is array
         if (!Array.isArray(issues)) {
-            log(issues, 'Not array');
-            throw new Error('[StatisticManager] filterIssuesByDate (issues), but issues is not an array');
-            
+            throw new Error('[StatisticManager] filterIssuesByDate requires an array of issues');
         }
-            return issues.filter(issue => {
+
+        if (!(startDate instanceof Date) || isNaN(startDate)) {
+            throw new Error('[StatisticManager] Invalid startDate');
+        }
+
+        if (!(endDate instanceof Date) || isNaN(endDate)) {
+            throw new Error('[StatisticManager] Invalid endDate');
+        }
+
+        return issues.filter(issue => {
+            if (!issue.created) {
+                console.warn(`[StatisticManager] Missing created date for issue: ${issue.id}`);
+                return false;
+            }
             const created = new Date(issue.created);
+            if (isNaN(created)) {
+                console.warn(`[StatisticManager] Invalid date for issue: ${issue.id}, date value: ${issue.created}`);
+                return false;
+            }
             return created >= startDate && created <= endDate;
         });
     }
 
     static calculateStatistics(issues) {
-        if (!Array.isArray(issues))
-            throw new Error('[StatisticManager] calculateStatistics (issues), but issues is not an array');
-        const stateGroup = StatisticManager.groupByState(issues);
-        log(stateGroup, 'stateGroup');  
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] calculateStatistics requires an array of issues');
+        }
 
+        const stateGroups = this.groupByState(issues);
+        
         return {
             total: issues.length,
-            resolved: stateGroup.resolved,
-            unresolved: stateGroup.unresolved,
-            rejected: stateGroup.rejected,
-            reportsCount: StatisticManager.getReportsCount(stateGroup.unresolved),
-            slaDate: StatisticManager.groupBySlaDate(issues),
-            resolutionTime: StatisticManager.getAverageTime(issues, 'resolved'),
-        }
+            resolved: stateGroups.resolved || 0,
+            unresolved: stateGroups.unresolved || 0,
+            rejected: stateGroups.rejected || 0,
+            reportsCount: this.getReportsCount(issues.filter(i => i.state === 'unresolved')),
+            slaDate: this.groupBySlaDate(issues),
+            resolutionTime: this.getAverageTime(issues, 'resolved')
+        };
     }
 
     static isDateInRange(date, startDate, endDate) {
         return date >= startDate && date <= endDate;
     }
 
-   static groupBySlaDate(issues) {
+    static groupBySlaDate(issues) {
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] groupBySlaDate requires an array of issues');
+        }
+
         return issues.reduce((acc, issue) => {
             if (issue.slaDate) {
                 acc[issue.slaDate] = (acc[issue.slaDate] || 0) + 1;
@@ -101,27 +167,34 @@ class StatisticManager {
         }, {});
     }
 
-    getAverageTime(issues, property) {
+    static getAverageTime(issues, property) {
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] getAverageTime requires an array of issues');
+        }
+
+        if (issues.length === 0) return 0;
+        
         const total = issues.reduce((sum, issue) => sum + (issue[property] || 0), 0);
         return total / issues.length;
     }
 
     static getReportsCount(issues) {
-        if (!Array.isArray(issues))
-            throw new Error('[StatisticManager] getReportsCount (issues), but issues is not an array');
-        
-        return issues.reduce((sum, issue) =>
-            sum + (parseInt(issue.reports) || 0), 0);
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] getReportsCount requires an array of issues');
         }
+        
+        return issues.reduce((sum, issue) => sum + (parseInt(issue.reports) || 0), 0);
+    }
 
     static groupByState(issues) {
-        if (!Array.isArray(issues))
-            throw new Error('[StatisticManager] groupByState (issues), but issues is not an array');
+        if (!Array.isArray(issues)) {
+            throw new Error('[StatisticManager] groupByState requires an array of issues');
+        }
         
         return issues.reduce((acc, issue) => {
             acc[issue.state] = (acc[issue.state] || 0) + 1;
             return acc;
-        })
+        }, {});
     }
 
     /**
@@ -245,7 +318,7 @@ class StatisticManager {
 
         return {
             total,
-            open,
+            open: unresolved,
             closed,
             overdue,
             byPriority,

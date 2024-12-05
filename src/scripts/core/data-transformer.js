@@ -25,13 +25,17 @@ class DataTransformer {
     }
   }
 
+  objectsToIssues( objects ) {    
+    return objects.map(object => this.objectToIssue(object));
+  }
+
   objectToIssue( object ) {
     const issue = {};
     Object.keys(object).forEach(key => {
       issue[key] = object[key];
     });
 
-    issue.state = DataTransformer.getStateByStatus(issue.status);
+    issue.state = this.getStateByStatus(issue.status);
     issue.isOverdue = DataTransformer.isOverdue(issue);
     
     return issue;
@@ -208,109 +212,3 @@ class DataTransformer {
     };
   }
 }
-
-
-
-
-// class DataTransformer {
-//     /**
-//      * Преобразует задачи в датасет для линейного графика.
-//      * @param {Array} issues - Массив задач, каждая задача - объект с полями `date` и `value`.
-//      * @returns {Object} Датасет для линейного графика.
-//      */
-//     getLinearDataset(issues) {
-//       const labels = issues.map(issue => issue.date);
-//       const data = issues.map(issue => issue.value);
-
-//       return {
-//           labels, // Метки (даты)
-//           datasets: [
-//               {
-//                   label: 'Dataset', // Название набора данных
-//                   data, // Значения
-//                   fill: false, // График не закрашен
-//                   borderColor: 'blue', // Цвет линии
-//                   tension: 0.1 // Сглаживание
-//               }
-//           ]
-//       };
-//   }
-
-//   /**
-//    * Преобразует задачи в датасет для круговой диаграммы.
-//    * @param {Array} issues - Массив задач, каждая задача - объект с полями `category` и `value`.
-//    * @returns {Object} Датасет для круговой диаграммы.
-//    */
-//   getPieDataset(issues) {
-//       const labels = Array.from(new Set(issues.map(issue => issue.category)));
-//       const data = labels.map(label =>
-//           issues.filter(issue => issue.category === label)
-//               .reduce((sum, issue) => sum + issue.value, 0)
-//       );
-
-//       return {
-//           labels, // Метки (категории)
-//           datasets: [
-//               {
-//                   data, // Значения
-//                   backgroundColor: labels.map(() => this.getRandomColor()) // Случайные цвета
-//               }
-//           ]
-//       };
-//   }
-
-//   /**
-//    * Преобразует задачи в датасет для столбчатой диаграммы.
-//    * @param {Array} issues - Массив задач, каждая задача - объект с полями `date` и `category` и `value`.
-//    * @returns {Object} Датасет для столбчатой диаграммы.
-//    */
-//   getBarDataset(issues) {
-//       const dates = Array.from(new Set(issues.map(issue => issue.date)));
-//       const categories = Array.from(new Set(issues.map(issue => issue.category)));
-
-//       const datasets = categories.map(category => {
-//           const data = dates.map(date =>
-//               issues.filter(issue => issue.date === date && issue.category === category)
-//                   .reduce((sum, issue) => sum + issue.value, 0)
-//           );
-//           return {
-//               label: category,
-//               data,
-//               backgroundColor: this.getRandomColor()
-//           };
-//       });
-
-//       return {
-//           labels: dates, // Метки (даты)
-//           datasets // Наборы данных по категориям
-//       };
-//   }
-
-//   /**
-//    * Генерирует случайный цвет в формате RGBA.
-//    * @returns {String} Цвет в формате RGBA.
-//    */
-//   getRandomColor() {
-//       const r = Math.floor(Math.random() * 256);
-//       const g = Math.floor(Math.random() * 256);
-//       const b = Math.floor(Math.random() * 256);
-//       const a = 0.5;
-//       return `rgba(${r}, ${g}, ${b}, ${a})`;
-//   }
-// }
-
-// // Пример использования
-// const transformer = new DataTransformer();
-
-// const issues = [
-//   { date: '2024-01-01', category: 'UI', value: 5 },
-//   { date: '2024-01-01', category: 'Backend', value: 8 },
-//   { date: '2024-01-02', category: 'UI', value: 3 },
-//   { date: '2024-01-02', category: 'Backend', value: 7 },
-//   { date: '2024-01-02', category: 'API', value: 4 }
-// ];
-
-// console.log(transformer.getLinearDataset(issues));
-// console.log(transformer.getPieDataset(issues));
-// console.log(transformer.getBarDataset(issues));
-

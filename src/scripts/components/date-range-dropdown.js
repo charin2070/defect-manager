@@ -24,6 +24,10 @@ class DateRangeDropdown extends DropdownComponent {
         this.setupDateMenu();
     }
 
+    getContainer() {
+        return this.container
+    }
+
     setupDateMenu() {
         this.clearItems();
         

@@ -31,47 +31,18 @@ class LayoutView extends View {
             dataManager.clearLocalStorage();
             window.location.reload();
         });
-        
-        // Upload button
-        const uploadButton = document.createElement('button');
-        uploadButton.className = 'navbar-icon-button';
-        const uploadIcon = document.createElement('img');
-        uploadIcon.src = 'src/img/upload-0.svg';
-        uploadIcon.alt = 'Upload';
-        uploadButton.appendChild(uploadIcon);
-        uploadButton.addEventListener('click', () => {
-            this.refact.setState({ view: 'upload' });
-        });
 
-        // Clear local storage button
-        const clearButton = document.createElement('button');
-        clearButton.className = 'navbar-icon-button';
-        clearButton.id = 'clear-local-storage-button';
-        const clearIcon = document.createElement('img');
-        clearIcon.src = 'src/img/trash-bin-0.svg';
-        clearIcon.alt = 'Clear Storage';
-        clearButton.appendChild(clearIcon);
-        
-        clearButton.addEventListener('click', () => {
-            const dataManager = new DataManager();
-            dataManager.clearLocalStorage();
-            window.location.reload();
-        });
-        
-        // Append
-        const navbarElement = this.navbar.getElement();
-        navbarElement.appendChild(uploadButton);
-        navbarElement.appendChild(clearButton);
-        
         return this.wrapper;
     }
 
     init() {
         this.container = this.createWrapper();
         this.setContainer(this.container);
-        this.dateRangeDropdown = new DateRangeDropdown();
-        this.navbar.addGroup('left', [this.dateRangeDropdown.getContainer()]);
         
+        // First create the DateRangeDropdown
+        this.dateRangeDropdown = new DateRangeDropdown();
+        // Then add it to the navbar group
+        this.leftNavbarGroup = this.navbar.addGroup('left', [this.dateRangeDropdown.getContainer()]);
     }
 
     setContent(content) {

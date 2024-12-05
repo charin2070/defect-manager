@@ -155,6 +155,8 @@ class NavbarComponent {
         if (target) {
             target.appendChild(group);
         }
+
+        return group;
     }
 
     static create(config) {
