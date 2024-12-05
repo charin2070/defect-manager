@@ -60,7 +60,9 @@ class App {
         // Issues
         this.refact.subscribe('dataStatus', (status) => {
             if (status === 'error') {
-                this.viewController.showView('error', this.dataManager.lastError);
+                MessageView.showMessage('Ошибка', this.dataManager.lastError || 'Произошла ошибка при загрузке данных', 'OK', () => {
+                    this.viewController.showView('dashboard');
+                });
                 return;
             }
 

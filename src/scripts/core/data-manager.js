@@ -125,34 +125,68 @@ class DataManager {
   // Returns array of objects from CSV file
   loadFromFile(file) {
     return new Promise((resolve, reject) => {
-      if (file.name.endsWith(".csv")) {
+      if (!file.name.endsWith(".csv")) {
+        const error = new Error(`Unsupported file format: ${file.name}`);
+        this.refact.setState({ dataStatus: 'error' }, 'DataManager.loadFromFile');
+        reject(error);
+        return;
+      }
+
+      // First read the first line to check for special headers
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const firstLine = e.target.result.split('\n')[0];
+        const isSlaUpdate = firstLine.includes('Номер дефекта') || firstLine.includes('Дата наступления SLA');
+
         const csvParser = new CsvParser();
-        csvParser.loadFromCsvFile(file).then(issues => {
-          this.issues = issues;
-          this.refact.setState({ issues: this.issues }, 'DataManager.loadFromFile');
-          this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-          log(this.refact, 'DataManager.loadFromFile');
-         this.saveToLocalStorage();
-         
-          resolve({ issues: this.issues, source: 'file' });
+        csvParser.loadFromCsvFile(file).then(loadedData => {
+          if (isSlaUpdate && this.refact.state.issues) {
+            // Update SLA dates in existing issues
+            const updatedCount = 0;
+            loadedData.forEach(loadedItem => {
+              const existingIssue = this.refact.state.issues.find(issue => issue.taskId === loadedItem['Номер драфта']);
+              if (existingIssue) {
+                updatedCount++;
+                existingIssue.slaDate = loadedItem.slaDate;
+              }
+            });
+
+            MessageView.showMessage('Внимание!', `Обновлено ${updatedCount} дат SLA`, 'Обновить', () => {
+              this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
+              this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+              this.saveToLocalStorage();
+              resolve({ issues: this.refact.state.issues, source: 'file' });
+            });
+            
+            // Update state with modified issues
+            this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
+            this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+            this.saveToLocalStorage();
+            resolve({ issues: this.refact.state.issues, source: 'file' });
+          } else {
+            // Normal CSV load
+            this.issues = loadedData;
+            this.refact.setState({ issues: this.issues }, 'DataManager.loadFromFile');
+            this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+            this.saveToLocalStorage();
+            resolve({ issues: this.issues, source: 'file' });
+          }
         }).catch(error => {
           this.refact.setState({ dataStatus: 'error' }, 'DataManager.loadFromFile');
           console.error("[DataManager.loadFromFile] Error:", error);
           reject(error);
         });
-      } else {
-        const error = new Error(`Unsupported file format: ${file.name}`);
+      };
+      reader.onerror = (error) => {
         this.refact.setState({ dataStatus: 'error' }, 'DataManager.loadFromFile');
         reject(error);
-      }
+      };
+      reader.readAsText(file);
     });
   }
 
   
-
   subscribeToIssues(callback) {
     this.refact.subscribe('issues', callback);
   }
 }
-
-window.DataManager = DataManager;

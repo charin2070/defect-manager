@@ -1,0 +1,79 @@
+.message-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+}
+
+.message-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.message-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.message-text {
+    margin: 0 0 1.5rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #34495e;
+}
+
+.message-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.message-buttons .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message-buttons .btn-primary {
+    background: #3498db;
+    color: white;
+    border: none;
+}
+
+.message-buttons .btn-primary:hover {
+    background: #2980b9;
+}
+
+.message-buttons .btn-secondary {
+    background: #ecf0f1;
+    color: #2c3e50;
+    border: none;
+}
+
+.message-buttons .btn-secondary:hover {
+    background: #bdc3c7;
+}
+
+/* Animation classes (using existing view transitions) */
+.message-modal.view-enter {
+    animation: slideIn 0.3s ease forwards;
+}
+
+.message-modal.view-exit {
+    animation: slideOut 0.3s ease forwards;
+}

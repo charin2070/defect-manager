@@ -29,13 +29,11 @@ class LayoutView extends View {
         this.clearLocalStorageButton = this.navbar.addButton('', 'src/img/trash-bin-0.svg', () => {
             const dataManager = new DataManager();
             dataManager.clearLocalStorage();
-            window.location.reload();
+            // window.location.reload();
+            MessageView.showMessage('Внимание!', 'Данные удалены из Local Storage', 'Обновить', () => {
+                window.location.reload();
+            });
         });
-
-        const menuContainer = document.createElement('div');
-        this.mainMenu = new DropdownComponent(menuContainer);
-        this.mainMenu.addItem('Удалить данные', null, null, 'src/img/trash-bin-0.svg', {'dataState': 'clearLocalStorageData'});
-        this.navbar.addItem(this.mainMenu.getContainer());
 
         return this.wrapper;
     }
