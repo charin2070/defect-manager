@@ -12,6 +12,29 @@ class LayoutView extends View {
         this.navbar = NavbarComponent.create({ animate: true });
         this.wrapper.appendChild(this.navbar.getElement());
         
+        // Create main menu dropdown
+        const mainMenuContainer = document.createElement('div');
+        mainMenuContainer.className = 'dropdown';
+        mainMenuContainer.id = 'mainMenu';
+
+        const toggleButton = document.createElement('button');
+        toggleButton.className = 'dropdown-toggle';
+        toggleButton.innerHTML = `<img src="src/img/img/dot-menu.svg" alt="Menu Icon" class="navbar-icon-button" />`;
+
+        const dropdownMenu = document.createElement('div');
+        dropdownMenu.className = 'dropdown-menu';
+
+        mainMenuContainer.appendChild(toggleButton);
+        mainMenuContainer.appendChild(dropdownMenu);
+        this.navbar.getElement().appendChild(mainMenuContainer);
+
+        // Initialize DropdownComponent
+        const mainMenu = new DropdownComponent(mainMenuContainer);
+        mainMenu.addItem('Загрузить файл', 'upload', () => console.log('Upload clicked'));
+        mainMenu.addItem('Удалить данные', 'delete', () => console.log('Delete clicked'));
+        mainMenu.addItem('', '', null, null, null); // Separator
+        mainMenu.addItem('Настройки', 'settings', () => console.log('Settings clicked'));
+
         // Content container
         this.contentContainer = document.createElement('div');
         this.contentContainer.className = 'content-container';
@@ -30,8 +53,8 @@ class LayoutView extends View {
             const dataManager = new DataManager();
             dataManager.clearLocalStorage();
             // window.location.reload();
-            MessageView.showMessage('Внимание!', 'Данные удалены из Local Storage', 'Обновить', () => {
-                window.location.reload();
+            MessageView.showMessage('Данные удалены', 'Данные удалены из Local Storage', 'Удалить', () => {
+                this.refact.setState({ clearLocalStorageData: true }, 'DataManager.clearLocalStorageData');
             });
         });
 

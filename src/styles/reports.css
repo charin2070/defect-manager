@@ -1,0 +1,83 @@
+.reports-view {
+    padding: 20px;
+    width: 100%;
+}
+
+.reports-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--background-color);
+    margin-bottom: 20px;
+}
+
+.reports-table .confluenceTh,
+.reports-table .confluenceTd {
+    padding: 7px 10px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    vertical-align: top;
+    min-width: 80px;
+}
+
+.reports-table .confluenceTh {
+    background-color: #f4f5f7;
+    color: #172b4d;
+    font-weight: bold;
+    text-align: left;
+}
+
+.reports-table .highlight-grey {
+    background-color: #f4f5f7;
+}
+
+.reports-table .content-wrapper {
+    margin: 0;
+}
+
+.reports-table .content-wrapper p {
+    margin: 0;
+}
+
+.reports-table .content-wrapper a {
+    color: #0052cc;
+    text-decoration: none;
+}
+
+.reports-table .content-wrapper a:hover {
+    text-decoration: underline;
+}
+
+.reports-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* TableSorter styles */
+.reports-table .tablesorter-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.reports-table .tablesorter-header:hover {
+    background-color: #ebecf0;
+}
+
+.reports-table .tablesorter-header-inner {
+    padding-right: 20px;
+    position: relative;
+}
+
+.reports-table .tablesorter-header-inner::after {
+    content: '⇕';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    font-size: 12px;
+}

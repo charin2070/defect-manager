@@ -4,84 +4,140 @@ class ReportsView extends View {
         this.container = document.createElement('div');
         this.container.className = 'reports-view';
         
-        this.headers = ['Задача', 'Обращений', 'Статус', 'Описание', 'Создан'];
-        this.currentMonthTable = new IssueTable(this.headers);
-        this.allTimeTable = new IssueTable(this.headers);
-        
-        // Store data for re-rendering
-        this.currentMonthData = null;
-        this.allTimeData = null;
-        
+        this.headers = [
+            'Команда',
+            'Всего открыто',
+            'Всего закрыто',
+            'Обращений по ним (с даты создания)',
+            'Закрыто за пред. мес. (Т-30)',
+            'Новых за пред.мес. (Т-30)',
+            'Отклонено за пред.мес. (Т-30)',
+            'Ср.время закрытия (дни)',
+            'SLA'
+        ];
         this.setupView();
     }
     
     setupView() {
-        // Create tabs container
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'reports-tabs';
+        // Create table container
+        this.tableContainer = document.createElement('div');
+        this.tableContainer.className = 'reports-table-container';
         
-        // Create tabs
-        this.currentMonthTab = document.createElement('button');
-        this.currentMonthTab.className = 'tab-button active';
-        this.currentMonthTab.textContent = 'За текущий месяц';
-        this.currentMonthTab.addEventListener('click', () => this.switchTab('current'));
+        // Create table
+        this.table = document.createElement('table');
+        this.table.className = 'reports-table tablesorter';     
         
-        this.allTimeTab = document.createElement('button');
-        this.allTimeTab.className = 'tab-button';
-        this.allTimeTab.textContent = 'За всё время';
-        this.allTimeTab.addEventListener('click', () => this.switchTab('all'));
-  
-        //  tabsContainer.appendChild(this.logo);
-        tabsContainer.appendChild(this.currentMonthTab);
-        tabsContainer.appendChild(this.allTimeTab);
+        // Create header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'tablesorter-headerRow';
         
-        // Create content containers
-        this.currentMonthContent = document.createElement('div');
-        this.currentMonthContent.className = 'tab-content active';
+        this.headers.forEach((header, index) => {
+            const th = document.createElement('th');
+            th.className = 'confluenceTh tablesorter-header';
+            th.setAttribute('data-column', index);
+            
+            const headerInner = document.createElement('div');
+            headerInner.className = 'tablesorter-header-inner';
+            headerInner.textContent = header;
+            
+            th.appendChild(headerInner);
+            headerRow.appendChild(th);
+        });
         
-        this.allTimeContent = document.createElement('div');
-        this.allTimeContent.className = 'tab-content';
+        thead.appendChild(headerRow);
+        this.table.appendChild(thead);
         
-        // Assemble view
-        this.container.appendChild(tabsContainer);
-        this.container.appendChild(this.currentMonthContent);
-        this.container.appendChild(this.allTimeContent);
+        // Create table body
+        this.tbody = document.createElement('tbody');
+        this.table.appendChild(this.tbody);
+        
+        this.tableContainer.appendChild(this.table);
+        this.container.appendChild(this.tableContainer);
+    }
+
+    createTeamLink(team) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'content-wrapper';
+        
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        const a = document.createElement('a');
+        
+        a.href = `https://jira.moscow.alfaintra.net/issues/?jql="Команда устраняющая проблему" in ("${team}")`;
+        a.target = '_blank';
+        a.className = 'contentf-button aui-button btn-link';
+        a.style.textDecoration = 'none';
+        a.textContent = team;
+        
+        strong.appendChild(a);
+        p.appendChild(strong);
+        wrapper.appendChild(p);
+        
+        return wrapper;
     }
     
-    switchTab(tab) {
-        // Remove active class from all tabs and contents
-        this.currentMonthTab.classList.remove('active');
-        this.allTimeTab.classList.remove('active');
-        this.currentMonthContent.classList.remove('active');
-        this.allTimeContent.classList.remove('active');
-        
-        // Activate selected tab
-        if (tab === 'current') {
-            this.currentMonthTab.classList.add('active');
-            this.currentMonthContent.classList.add('active');
-        } else {
-            this.allTimeTab.classList.add('active');
-            this.allTimeContent.classList.add('active');
-        }
-    }
-    
-    render(currentMonthData, allTimeData) {
-        // Store data for potential re-renders
-        this.currentMonthData = currentMonthData;
-        this.allTimeData = allTimeData;
+    render(teamsData) {
+        if (!teamsData) return this.container;
         
         // Clear existing content
-        this.currentMonthContent.innerHTML = '';
-        this.allTimeContent.innerHTML = '';
+        this.tbody.innerHTML = '';
         
-        // Render tables
-        const currentMonthTable = this.currentMonthTable.showIssues(currentMonthData, this.headers);
-        const allTimeTable = this.allTimeTable.showIssues(allTimeData, this.headers);
+        // Sort teams by total reports
+        const sortedTeams = Object.entries(teamsData)
+            .sort(([, a], [, b]) => b.reportsTotal - a.reportsTotal);
         
-        // Append tables to content containers
-        this.currentMonthContent.appendChild(currentMonthTable);
-        this.allTimeContent.appendChild(allTimeTable);
+        // Create rows for each team
+        sortedTeams.forEach(([team, data]) => {
+            if (data.reportsTotal === 0) return; // Skip teams with no reports
+            
+            const row = document.createElement('tr');
+            
+            // Calculate values
+            const totalOpen = data.new + data.unresolved;
+            const totalClosed = data.resolved + data.rejected;
+            const reportsTotal = data.reportsTotal || '-';
+            const last30Closed = data.last30Days.closed || 0;
+            const last30New = data.last30Days.new || 0;
+            const last30Rejected = data.last30Days.rejected || 0;
+            const avgCloseTime = data.avgCloseTime ? data.avgCloseTime.toFixed(1) : '-';
+            const slaPercentage = `${data.slaPercentage.toFixed(2)}%`;
+
+            // Create cells
+            [
+                this.createTeamLink(team),
+                totalOpen,
+                totalClosed,
+                reportsTotal,
+                last30Closed,
+                last30New,
+                last30Rejected,
+                avgCloseTime,
+                slaPercentage
+            ].forEach((value, index) => {
+                const td = document.createElement('td');
+                td.className = 'confluenceTd';
+                
+                if (value === '-') {
+                    td.className += ' highlight-grey';
+                    td.style.textAlign = 'center';
+                    td.textContent = '-';
+                } else if (value instanceof Element) {
+                    td.appendChild(value);
+                } else {
+                    td.textContent = value;
+                }
+                
+                row.appendChild(td);
+            });
+            
+            this.tbody.appendChild(row);
+        });
         
+        return this.container;
+    }
+    
+    getContainer() {
         return this.container;
     }
 }

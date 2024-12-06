@@ -120,7 +120,7 @@ class StatisticManager {
 
         return issues.filter(issue => {
             if (!issue.created) {
-                console.warn(`[StatisticManager] Missing created date for issue: ${issue.id}`);
+                console.Error(`[StatisticManager] Missing created date for issue: ${issue.id}`);
                 return false;
             }
             const created = new Date(issue.created);

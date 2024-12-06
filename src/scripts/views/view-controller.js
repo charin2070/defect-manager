@@ -10,6 +10,7 @@ class ViewController {
     init(){
         this.refact.subscribe('view', this.showView.bind(this));
         this.refact.subscribe('issues', this.updateView.bind(this));
+        this.refact.subscribe('reports', this.showReport.bind(this));
     
         // First create and mount the layout
         this.layoutView = new LayoutView();
@@ -18,9 +19,11 @@ class ViewController {
         // Create and register views
         this.uploadView = new UploadView();
         this.dashboardView = new DashboardView();
+        this.reportsView = new ReportsView();
 
         this.registerView('upload', this.uploadView);
         this.registerView('dashboard', this.dashboardView);
+        this.registerView('reports', this.reportsView);
     }
 
     registerView(name, viewContainer) {
@@ -83,6 +86,15 @@ class ViewController {
         } else {
             this.showView('dashboard');
         }
+    }
+
+    showReport(report) {
+        if (!report) return;
+
+        const reportsView = this.views['reports'];
+        const view = reportsView.render(report);
+
+        this.showView('reports');
     }
 
     bindEvent(name, event, handler) {

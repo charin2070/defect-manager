@@ -3,6 +3,7 @@ class IssueTable {
         this.isUpperCase = config.isUpperCase ?? true;
         this.container = document.createElement('div');
         this.container.className = 'issue-table-container';
+        this.slidePanel = new SlidePanel();
         
         // Define available columns with their configurations
         this.availableColumns = {
@@ -106,7 +107,6 @@ class IssueTable {
         
         // Add click handler to show issue details
         tr.addEventListener('click', () => {
-            const slidePanel = SlidePanel.getInstance();
             const issueCard = new IssueCard({
                 title: issue.id,
                 timeAgo: new Date(issue.created).toLocaleDateString('ru-RU'),
@@ -114,10 +114,10 @@ class IssueTable {
                 footer: `Статус: ${issue.status || 'Новый'}`
             });
             
-            slidePanel.setTitle(`Задача ${issue.id}`);
-            slidePanel.clear();
-            slidePanel.updateContent(issueCard.createCard());
-            slidePanel.open();
+            this.slidePanel.setTitle(`Задача ${issue.id}`);
+            this.slidePanel.clear();
+            this.slidePanel.updateContent(issueCard.createCard());
+            this.slidePanel.open();
         });
         
         Object.entries(this.availableColumns)

@@ -7,7 +7,7 @@
     height: 100%;
     background: rgba(0, 0, 0, 0);
     backdrop-filter: blur(0px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
     z-index: 999;
 }
@@ -23,7 +23,7 @@
     position: fixed;
     background-color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     box-sizing: border-box;
     overflow-y: auto;
@@ -38,7 +38,7 @@
     height: 100%;
     width: 80%;
     min-width: 480px;
-    transform: translateX(20px);
+    transform: translateX(40px);
 }
 
 .slide-panel-right.open {

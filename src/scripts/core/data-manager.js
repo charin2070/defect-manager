@@ -55,7 +55,15 @@ class DataManager {
   }
 
   setupSubscriptions() {
-    this.refact.subscribe('clerLocalStorageData', () => this.clearLocalStorage());
+    this.refact.subscribe('clearLocalStorageData', (value) => {
+      if (value === true) {
+        this.clearLocalStorage();
+        this.refact.setState({ dataStatus: 'empty' }, 'DataManager.clearLocalStorageData');
+        this.refact.setState({ issues: null }, 'DataManager.clearLocalStorageData');
+        this.refact.setState({ clearLocalStorageData: false }, 'DataManager.clearLocalStorageData');
+        window.location.reload();
+      }
+    });
     this.refact.subscribe('uploadedFile', (file) => {
       if (file) {
         this.loadFromFile(file);
@@ -142,21 +150,34 @@ class DataManager {
         csvParser.loadFromCsvFile(file).then(loadedData => {
           if (isSlaUpdate && this.refact.state.issues) {
             // Update SLA dates in existing issues
-            const updatedCount = 0;
+            let updatedCount = 0;
             loadedData.forEach(loadedItem => {
-              const existingIssue = this.refact.state.issues.find(issue => issue.taskId === loadedItem['Номер драфта']);
+              const taskId = loadedItem['Номер дефекта'] || loadedItem['Номер драфта'];
+              const existingIssue = this.refact.state.issues.find(issue => issue.id === taskId);
               if (existingIssue) {
                 updatedCount++;
-                existingIssue.slaDate = loadedItem.slaDate;
+                existingIssue.slaDate = new Date(loadedItem['Дата наступления SLA']);
               }
             });
 
-            MessageView.showMessage('Внимание!', `Обновлено ${updatedCount} дат SLA`, 'Обновить', () => {
-              this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
-              this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-              this.saveToLocalStorage();
-              resolve({ issues: this.refact.state.issues, source: 'file' });
-            });
+            if (updatedCount > 0) {
+              MessageView.showMessage(
+                'Обновление SLA', 
+                `Обновлено ${updatedCount} дат SLA`, 
+                'Обновить', 
+                () => {
+                  this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
+                  this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+                  this.saveToLocalStorage();
+                }
+              );
+            } else {
+              MessageView.showMessage(
+                'Обновление SLA', 
+                'Не найдено задач для обновления SLA', 
+                'Закрыть'
+              );
+            }
             
             // Update state with modified issues
             this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');

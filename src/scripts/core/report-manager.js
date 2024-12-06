@@ -22,7 +22,7 @@ class ReportManager {
   };
 
  
-  mobileTeams = ["Meribel", "K2", "Не назначена", "Kilimanjaro", "Etna", "Olympus", "Makalu", "Everest", "Sierra", "Elbrus", "Siple", "Appalachians", "Fuji", "Matterhorn", "Weisshorn", "Citadel", "Twin Tree", "Black Rock", "Millenium", "Renaissance", "Montblanc", "Kailash"];
+  mobileTeams = ["Meribel", "K2", "Kilimanjaro", "Etna", "Olympus", "Makalu", "Everest", "Sierra", "Elbrus", "Siple", "Appalachians", "Fuji", "Matterhorn", "Weisshorn", "Citadel", "Twin Tree", "Black Rock", "Millenium", "Renaissance", "Montblanc", "Kailash"];
 
   generateReport(type) {
     switch (type) {
@@ -41,7 +41,29 @@ class ReportManager {
     return issue && issue.id && issue.created && issue.state && issue.team;
   }
 
+  isSlaOverdue(issue) {
+    if (issue.state === 'rejected') {
+      return undefined;
+    }
+
+    const today = new Date();
+    const dueDate = new Date(issue.slaDate);
+
+    if (issue.state === 'unresolved' && today > dueDate) {
+      return true;
+    }
+
+    if (issue.state === 'resolved' && new Date(issue.resolved) > dueDate) {
+      return true;
+    }
+
+    return false;
+  }
+
   getMvpReport(issues, teams) {
+    const overdueIssues = issues.filter(issue => this.isSlaOverdue(issue));
+    log(overdueIssues, 'Overdue issues');
+    log(teams,  'Teams');
     
     const teamsData = {};
     teams.forEach(team => {
@@ -53,6 +75,7 @@ class ReportManager {
             avgCloseTime: 0,
             reportsTotal: 0,
             reportsUnresolved: 0,
+            slaPercentage: 0,
             last30Days: {
                 closed: 0,
                 new: 0,
@@ -90,20 +113,14 @@ class ReportManager {
 
         // Process by state
         switch (issue.state) {
-            case 'unresolved':
-                teamsData[team].unresolved++;
-                break;
             case 'resolved':
-                teamsData[team].resolved++;
-                if (issue.resolved && issue.created) {
-                    const closeTime = new Date(issue.resolved) - new Date(issue.created);
-                    teamsData[team].avgCloseTime = 
-                        (teamsData[team].avgCloseTime * (teamsData[team].resolved - 1) + closeTime) 
-                        / teamsData[team].resolved;
+            case 'rejected':
+                const isOverdue = this.isSlaOverdue(issue);
+                if (isOverdue === false) {
+                    teamsData[team].slaPercentage++;
                 }
                 break;
-            case 'rejected':
-                teamsData[team].rejected++;
+            default:
                 break;
         }
 
@@ -123,6 +140,25 @@ class ReportManager {
                 }
             }
         }
+
+        // Process by state
+        switch (issue.state) {
+            case 'unresolved':
+                teamsData[team].unresolved++;
+                break;
+            case 'resolved':
+                teamsData[team].resolved++;
+                if (issue.resolved && issue.created) {
+                    const closeTime = new Date(issue.resolved) - new Date(issue.created);
+                    teamsData[team].avgCloseTime = 
+                        (teamsData[team].avgCloseTime * (teamsData[team].resolved - 1) + closeTime) 
+                        / teamsData[team].resolved;
+                }
+                break;
+            case 'rejected':
+                teamsData[team].rejected++;
+                break;
+        }
     });
 
     // Calculate average resolution time for each team
@@ -134,8 +170,16 @@ class ReportManager {
         }
     });
 
-    log(teamsData, 'teamsData');
+    // Calculate SLA percentage
+    Object.keys(teamsData).forEach(team => {
+        const totalIssues = teamsData[team].new + teamsData[team].resolved + teamsData[team].rejected;
+        if (totalIssues > 0) {
+            teamsData[team].slaPercentage = (teamsData[team].slaPercentage / totalIssues) * 100;
+        }
+    });
 
+    log(teamsData, 'teamsData');
+    this.refact.setState({ reports: teamsData }, 'ReportManager.getMvpReport'); // Save reports = teamsData;
     return teamsData;
 }
 

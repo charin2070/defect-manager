@@ -4,6 +4,7 @@ class DashboardView extends View {
         this.refact = Refact.getInstance();
         this.createView();
         this.setupReactivity();
+        this.slidePanel = new SlidePanel();
     }
 
     createView() {
@@ -16,6 +17,10 @@ class DashboardView extends View {
         // Cards row
         this.topCardsRow = this.createElement('div', { className: 'cards-row' });
         container.appendChild(this.topCardsRow);
+
+        // Chart container
+        this.chartContainer = this.createElement('div', { id: 'defects-chart-container' });
+        container.appendChild(this.chartContainer);
 
         this.createCards();
     }
@@ -38,23 +43,22 @@ class DashboardView extends View {
 
     createCards() {
             // Defects
-            this.defectsCard = new InfoCard(this.topCardsRow, {
-                title: 'Отркрытых дефектов',
+            this.defectsCard = new ValueCard(this.topCardsRow, {
+                title: 'Дефекты',
                 content: 'Загрузка...',
                 iconSvg: 'src/img/jira-defect.svg',
                 footer: 'Загрузка...'
             });
             this.defectsCard.element.addEventListener('click', () => {
-                const slidePanel = SlidePanel.getInstance();
-                slidePanel.setTitle('Unresolved Tasks');
+                this.slidePanel.setTitle('Unresolved Tasks');
                 const unresolvedIssues = this.refact.state.statistics.total.unresolvedIssues;
                 const issueTable = new IssueTable(
                     ['taskId', 'reports', 'status', 'description', 'created'],
                     { isUpperCase: false }
                 );
                 issueTable.render(unresolvedIssues);
-                slidePanel.updateContent(issueTable.container);
-                slidePanel.open();
+                this.slidePanel.updateContent(issueTable.container);
+                this.slidePanel.open();
             });
             this.refact.subscribe('statistics', (statistics) => {
                 if (!statistics) return;
@@ -62,11 +66,35 @@ class DashboardView extends View {
             });
     
             // Reports
-            this.unresolvedReportsCard = new InfoCard(this.topCardsRow, {
-                title: 'Открытых обращений',
+            this.unresolvedReportsCard = new ValueCard(this.topCardsRow, {
+                title: 'Оборащения',
                 content: 'Загрузка...',
                 iconSvg: 'src/img/trigger.svg',
-                footer: 'Общее количество обращений'
+                footer: ''
+            });
+            this.unresolvedReportsCard.element.addEventListener('click', () => {
+                this.slidePanel.setTitle('Unresolved Reports');
+                const unresolvedReports = this.refact.state.statistics.total.unresolvedReports;
+                const issueTable = new IssueTable(
+                    ['taskId', 'reports', 'status', 'description', 'created'],
+                    { isUpperCase: false }
+                );
+                
+                // Sort unresolvedReports by reports count in descending order
+                const sortedReports = [...unresolvedReports].sort((a, b) => (b.reports || 0) - (a.reports || 0));
+                
+                issueTable.render(sortedReports);
+                this.slidePanel.updateContent(issueTable.container);
+                this.slidePanel.open();
+                
+                // Trigger sort on the reports column to show sort indicator
+                const reportsColumn = issueTable.availableColumns.reports;
+                reportsColumn.sortDirection = 'desc';
+                issueTable.sortByColumn(reportsColumn);
+            });
+            this.refact.subscribe('statistics', (statistics) => {
+                if (!statistics) return;
+                this.unresolvedReportsCard.updateContent(statistics.total.reportsCount, 'на открытых дефектах');
             });
   
     }

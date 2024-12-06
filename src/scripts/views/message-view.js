@@ -1,4 +1,4 @@
-class MessageView extends ViewComponent {
+class MessageView extends View{
     static instance = null;
     static wrapper = null;
     static modalContent = null;
@@ -19,10 +19,26 @@ class MessageView extends ViewComponent {
         this.modalContent = document.createElement('div');
         this.modalContent.className = 'message-modal view-enter';
         
+        // Create title container with close button
+        const titleContainer = document.createElement('div');
+        titleContainer.className = 'message-title-container';
+        
         // Create title
         const titleElement = document.createElement('h2');
         titleElement.className = 'message-title';
         titleElement.textContent = title;
+        
+        // Create close icon button
+        const closeIcon = document.createElement('button');
+        closeIcon.className = 'message-close-icon';
+        closeIcon.innerHTML = '&times;';
+        closeIcon.onclick = (e) => {
+            e.stopPropagation();
+            this.hideMessage();
+        };
+        
+        titleContainer.appendChild(titleElement);
+        titleContainer.appendChild(closeIcon);
         
         // Create message
         const messageElement = document.createElement('p');
@@ -33,26 +49,32 @@ class MessageView extends ViewComponent {
         const buttonsContainer = document.createElement('div');
         buttonsContainer.className = 'message-buttons';
         
-        // Create action button
-        const actionButton = document.createElement('button');
-        actionButton.className = 'btn btn-primary';
-        actionButton.textContent = callbackText;
-        actionButton.onclick = () => {
-            callbackAction();
-            this.hideMessage();
-        };
-        
-        // Create close button
+        // Create close button first
         const closeButton = document.createElement('button');
         closeButton.className = 'btn btn-secondary';
         closeButton.textContent = 'Закрыть';
-        closeButton.onclick = () => this.hideMessage();
+        closeButton.onclick = (e) => {
+            e.stopPropagation();
+            this.hideMessage();
+        };
+        buttonsContainer.appendChild(closeButton);
+
+        // Create action button if callback provided
+        if (callbackText && callbackAction) {
+            const actionButton = document.createElement('button');
+            actionButton.className = 'btn btn-primary';
+            actionButton.textContent = callbackText;
+            actionButton.onclick = (e) => {
+                e.stopPropagation();
+                callbackAction();
+                this.hideMessage();
+            };
+            // Insert action button before close button
+            buttonsContainer.insertBefore(actionButton, closeButton);
+        }
         
         // Assemble the modal
-        buttonsContainer.appendChild(actionButton);
-        buttonsContainer.appendChild(closeButton);
-        
-        this.modalContent.appendChild(titleElement);
+        this.modalContent.appendChild(titleContainer);
         this.modalContent.appendChild(messageElement);
         this.modalContent.appendChild(buttonsContainer);
         
@@ -67,6 +89,15 @@ class MessageView extends ViewComponent {
                 this.hideMessage();
             }
         };
+
+        // Add escape key to close
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.hideMessage();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
     }
 
     static async hideMessage() {

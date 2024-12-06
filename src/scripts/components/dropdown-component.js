@@ -127,6 +127,21 @@ class DropdownComponent {
             this.close();
         }
     }
+
+    setToggleIcon(imageUrl) {
+        if (!this.button) return;
+
+        // Find existing icon or create a new one
+        let icon = this.button.querySelector('.dropdown-icon');
+        if (!icon) {
+            icon = document.createElement('img');
+            icon.className = 'dropdown-icon';
+            this.button.appendChild(icon);
+        }
+
+        // Set the new image URL
+        icon.src = imageUrl;
+    }
 }
 
 // Initialize all dropdowns when DOM is loaded

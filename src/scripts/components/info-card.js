@@ -1,4 +1,4 @@
-class InfoCard extends HtmlElement {
+class ValueCard extends HtmlElement {
     constructor(container, options = {}) {
         super(container);
         this.container = container;
@@ -74,7 +74,7 @@ class InfoCard extends HtmlElement {
             this.card.style.transform = 'scale(1)';
         }, 200);
 
-        console.log('InfoCard clicked!');
+        console.log('ValueCard clicked!');
     }
 
     setupReactivity() {

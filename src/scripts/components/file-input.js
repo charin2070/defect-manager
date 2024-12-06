@@ -24,17 +24,17 @@ class FileInputContainer {
         this.title.textContent = 'Загрузите данные из Jira';
 
         this.dragDropText = document.createElement('p');
-        this.dragDropText.className = 'file-input-drag-text';
+         this.dragDropText.className = 'file-input-drag-text';
         this.dragDropText.textContent = 'Перетащите файл или нажмите';
 
         this.uploadButton = document.createElement('button');
         this.uploadButton.className = 'file-input-upload-button';
-        this.uploadButton.textContent = 'Загрузить файл';
+        this.uploadButton.textContent = 'Выбрать файл';
         this.uploadButton.type = 'button';
 
         this.hint = document.createElement('p');
         this.hint.className = 'file-input-hint';
-        this.hint.textContent = 'в Excel или CSV';
+        this.hint.textContent = 'Excel или CSV';
 
         this.inputElement = document.createElement('input');
         this.inputElement.type = 'file';

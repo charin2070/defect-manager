@@ -4,45 +4,69 @@
     left: 0;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 .message-modal {
     background: white;
-    padding: 2rem;
+    padding: 24px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 480px;
     width: 90%;
+    position: relative;
+}
+
+.message-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
 }
 
 .message-title {
-    margin: 0 0 1rem 0;
-    font-size: 1.5rem;
+    margin: 0;
+    font-size: 20px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-color);
+}
+
+.message-close-icon {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: -4px -8px -4px 0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.message-close-icon:hover {
+    background: var(--background-color-hover);
+    color: var(--text-color);
 }
 
 .message-text {
-    margin: 0 0 1.5rem 0;
-    font-size: 1rem;
+    margin: 0 0 24px;
+    color: var(--text-color-secondary);
     line-height: 1.5;
-    color: #34495e;
 }
 
 .message-buttons {
     display: flex;
-    gap: 1rem;
     justify-content: flex-end;
+    gap: 12px;
 }
 
 .message-buttons .btn {
-    padding: 0.5rem 1rem;
+    padding: 8px 16px;
     border-radius: 4px;
     font-weight: 500;
     cursor: pointer;
@@ -50,30 +74,52 @@
 }
 
 .message-buttons .btn-primary {
-    background: #3498db;
+    background: var(--primary-color);
     color: white;
     border: none;
 }
 
 .message-buttons .btn-primary:hover {
-    background: #2980b9;
+    background: var(--primary-color-hover);
 }
 
 .message-buttons .btn-secondary {
-    background: #ecf0f1;
-    color: #2c3e50;
-    border: none;
+    background: var(--background-color-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
 }
 
 .message-buttons .btn-secondary:hover {
-    background: #bdc3c7;
+    background: var(--background-color-hover);
 }
 
-/* Animation classes (using existing view transitions) */
-.message-modal.view-enter {
-    animation: slideIn 0.3s ease forwards;
+/* Animations */
+.view-enter {
+    animation: modalEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.message-modal.view-exit {
-    animation: slideOut 0.3s ease forwards;
+.view-exit {
+    animation: modalExit 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes modalExit {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
 }
