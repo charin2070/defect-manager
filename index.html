@@ -1,4 +1,3 @@
-<!-- Мы не используем модульность ES6 -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,11 +8,12 @@
     <meta name="description" content="Defect Management as a Service">
     <meta name="author" content="DM">
     <meta name="keywords" content="defect, bug, management, jira">
-    <title>DM</title>
+    <title>Дэшборд</title>
+    <link rel="icon" href="src/img/line-chart.svg" type="image/svg+xml">
 
+    <!-- Stylesheets -->
     <link href="src/styles/app-style.css" rel="stylesheet">
     <link href="src/styles/components/layout-view.css" rel="stylesheet">
-    <link href="src/styles/components/dropdown.css" rel="stylesheet">
     <link href="src/styles/dashboard/components/buttons.css" rel="stylesheet">
     <link href="src/styles/dashboard/components/modals.css" rel="stylesheet">
     <link href="src/styles/components/info-card.css" rel="stylesheet">
@@ -21,32 +21,32 @@
     <link href="src/styles/reports.css" rel="stylesheet">
     <link href="src/styles/components/issue-table.css" rel="stylesheet">
     <link href="src/styles/components/message-view.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="src/styles/vendor/prism.css" rel="stylesheet">
-    <link rel="stylesheet" href="src/styles/components/navbar-component.css">
-    <link rel="stylesheet" href="src/styles/components/dropdown-component.css">
+    <link href="src/styles/components/navbar-component.css" rel="stylesheet">
+    <link href="src/styles/components/dropdown-component.css" rel="stylesheet">
     <link href="src/styles/components/file-input.css" rel="stylesheet">
     <link href="src/styles/components/upload-view.css" rel="stylesheet">
     <link href="src/styles/dashboard/components/console-toast.css" rel="stylesheet">
-    <link rel="stylesheet" href="src/styles/animations.css">
-    <link rel="stylesheet" href="src/styles/dashboard-view.css">
+    <link href="src/styles/animations.css" rel="stylesheet">
+    <link href="src/styles/dashboard-view.css" rel="stylesheet">
 </head>
 
 <body>
+    <!-- App container -->
     <div id="app"></div>
+
+    <!-- JavaScript files -->
     <!-- Reactivity first -->
     <script src="src/scripts/core/refact.js"></script>
     <!-- Utils -->
     <script src="src/scripts/utils/log-tools.js"></script>
-    <!-- <script src="src/scripts/components/console-toast.js"></script> -->
     <script src="src/scripts/utils/csv-parser.js"></script>
-    <!-- Vendor -->
     <script src="src/scripts/vendor/prism.js"></script>
-     <!-- Utils -->
     <script src="src/scripts/utils/graphic-utils.js"></script>
     <script src="src/scripts/utils/date-util.js"></script>
     <script src="src/scripts/utils/console-panel.js"></script>
     <script src="src/scripts/core/event-emitter.js"></script>
+
     <!-- Components -->
     <script src="src/scripts/components/html-element.js"></script>
     <script src="src/scripts/components/wide-card.js"></script>
@@ -69,6 +69,7 @@
     <script src="src/scripts/vendor/chart.js"></script>
     <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
     <script src="src/scripts/components/chart-component.js"></script>
+
     <!-- Views -->
     <script src="src/scripts/views/view-component.js"></script>
     <script src="src/scripts/views/message-view.js"></script>
@@ -79,6 +80,7 @@
     <script src="src/scripts/views/reports-view.js"></script>
     <script src="src/scripts/views/team-view.js"></script>
     <script src="src/scripts/views/backlog-view.js"></script>
+
     <!-- Managers -->
     <script src="src/scripts/core/config-manager.js"></script>
     <script src="src/scripts/core/data-transformer.js"></script>
@@ -89,7 +91,6 @@
     <script src="src/scripts/core/data-manager.js"></script>
     <script src="src/scripts/core/ui-manager.js"></script>
     <script src="src/scripts/core/app.js"></script>
-    
 </body>
 
 </html>
