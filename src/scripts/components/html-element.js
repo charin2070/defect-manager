@@ -1,47 +1,55 @@
 class HtmlElement {
-    constructor(element) {
-        this.element = element;
+    constructor(container) {
+        if (!container) {
+            throw new Error('Container is required for HtmlElement');
+        }
+        this.container = container;
     }
 
     addClass(className) {
-        this.element.classList.add(className);
-    }
-
-    createContainer() {
-        const container = document.createElement('div');
-        container.className = 'container';
-    }
-    
-    createElement(tagName, options = {}) {
-    const element = document.createElement(tagName);
-
-    const operations = {
-        applyClasses: (classes) => {
-            if (classes) {
-                element.classList.add(...classes.split(' '));
-            }
-        },
-        setAttributes: (attributes) => {
-            if (attributes) {
-                Object.keys(attributes).forEach(attr => {
-                    element.setAttribute(attr, attributes[attr]);
-                });
-            }
-        },
-        setInnerHTML: (html) => {
-            if (html) {
-                element.innerHTML = html;
-            }
-        },
-        setStyles: (styles) => {
-            if (styles) {
-                Object.assign(element.style, styles);
-            }
+        if (this.element && className) {
+            this.element.classList.add(className);
         }
-    };
+    }
 
-    Object.keys(operations).forEach(op => operations[op](options[op === 'applyClasses' ? 'className' : op]));
+    createElement(tagName, options = {}) {
+        const element = document.createElement(tagName);
 
-    return element;
-}
+        const operations = {
+            applyClasses: (classes) => {
+                if (classes) {
+                    element.classList.add(...classes.split(' ').filter(Boolean));
+                }
+            },
+            setAttributes: (attributes) => {
+                if (attributes) {
+                    Object.keys(attributes).forEach(attr => {
+                        if (attr !== 'className') {
+                            element.setAttribute(attr, attributes[attr]);
+                        }
+                    });
+                }
+            },
+            setInnerHTML: (html) => {
+                if (html) {
+                    element.innerHTML = html;
+                }
+            },
+            setStyles: (styles) => {
+                if (styles) {
+                    Object.assign(element.style, styles);
+                }
+            }
+        };
+
+        // Apply className first if exists
+        if (options.className) {
+            operations.applyClasses(options.className);
+        }
+
+        // Apply other attributes
+        operations.setAttributes(options);
+
+        return element;
+    }
 }

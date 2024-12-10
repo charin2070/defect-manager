@@ -1,5 +1,5 @@
 {
-    "liveServer.settings.port": 5500,
+    "liveServer.settings.port": 5502,
     "liveServer.settings.root": "/",
     "liveServer.settings.CustomBrowser": "chrome",
     "liveServer.settings.https": {
@@ -17,5 +17,6 @@
         "**/*.scss",
         "**/*.sass",
         "**/*.ts"
-    ]
+    ],
+    "windsurf.cascadeOpenOnReload": true
 }

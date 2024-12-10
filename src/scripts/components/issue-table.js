@@ -2,7 +2,7 @@ class IssueTable {
     constructor(headers, config = {}) {
         this.isUpperCase = config.isUpperCase ?? true;
         this.container = document.createElement('div');
-        this.container.className = 'issue-table-container';
+        this.container.className = 'overflow-hidden rounded-lg shadow ring-1 ring-black ring-opacity-5 bg-white';
         this.slidePanel = new SlidePanel();
         
         // Define available columns with their configurations
@@ -10,20 +10,25 @@ class IssueTable {
             taskId: { 
                 header: 'Задача',
                 formatter: (issue) => `
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <img src="src/img/jira-defect.svg" alt="Defect" style="width: 16px; height: 16px;">
+                    <div class="flex items-center space-x-3">
+                        <img src="src/image/bug-0.svg" alt="Defect" class="w-5 h-5">
                         <a href="https://jira.moscow.alfaintra.net/browse/${issue.id}" 
                            target="_blank" 
-                           class="jira-link"
+                           class="text-indigo-600 hover:text-indigo-900 font-medium"
                            title="Открыть в Jira">${issue.id}</a>
                     </div>`,
-                className: '',
+                className: 'pl-4',
                 sortable: true,
                 sortFn: (a, b) => a.id.localeCompare(b.id)
             },
             reports: { 
                 header: 'Обращений',
-                formatter: (issue) => issue.reports || 0,
+                formatter: (issue) => `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        issue.reports > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                    }">
+                        ${issue.reports || 0}
+                    </span>`,
                 className: 'text-center',
                 sortable: true,
                 sortFn: (a, b) => (a.reports || 0) - (b.reports || 0)
@@ -32,7 +37,17 @@ class IssueTable {
                 header: 'Статус',
                 formatter: (issue) => {
                     const status = (issue.status || 'Новый').toLowerCase();
-                    return `<span class="status-badge status-${status}">${issue.status || 'Новый'}</span>`;
+                    const statusClasses = {
+                        'новый': 'bg-blue-100 text-blue-800',
+                        'в работе': 'bg-yellow-100 text-yellow-800',
+                        'resolved': 'bg-green-100 text-green-800',
+                        'rejected': 'bg-red-100 text-red-800',
+                        'default': 'bg-gray-100 text-gray-800'
+                    };
+                    const className = statusClasses[status] || statusClasses.default;
+                    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}">
+                        ${issue.status || 'Новый'}
+                    </span>`;
                 },
                 className: '',
                 sortable: true,
@@ -40,15 +55,27 @@ class IssueTable {
             },
             description: { 
                 header: 'Описание',
-                formatter: (issue) => issue.description || '',
-                className: 'description-cell',
+                formatter: (issue) => `
+                    <div class="max-w-xl">
+                        <div class="text-sm text-gray-900 line-clamp-2 hover:line-clamp-none">
+                            ${issue.description || ''}
+                        </div>
+                    </div>`,
+                className: 'max-w-xl',
                 sortable: true,
                 sortFn: (a, b) => (a.description || '').localeCompare(b.description || '')
             },
             created: { 
                 header: 'Создан',
-                formatter: (issue) => new Date(issue.created).toLocaleDateString('ru-RU'),
-                className: '',
+                formatter: (issue) => `
+                    <div class="text-sm text-gray-500">
+                        ${new Date(issue.created).toLocaleDateString('ru-RU', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </div>`,
+                className: 'whitespace-nowrap',
                 sortable: true,
                 sortFn: (a, b) => new Date(a.created) - new Date(b.created)
             }
@@ -79,18 +106,18 @@ class IssueTable {
 
     createTableHeader() {
         const thead = document.createElement('thead');
+        thead.className = 'bg-gray-50';
         const tr = document.createElement('tr');
         
         Object.entries(this.availableColumns)
             .filter(([key]) => this.activeColumns.includes(key))
             .forEach(([key, column]) => {
                 const th = document.createElement('th');
-                th.textContent = column.header;
-                if (this.isUpperCase) {
-                    th.textContent = th.textContent.toUpperCase();
-                }
+                th.className = `px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.className || ''}`;
+                th.textContent = this.isUpperCase ? column.header.toUpperCase() : column.header;
+                
                 if (column.sortable) {
-                    th.classList.add('sortable');
+                    th.classList.add('cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
                     th.addEventListener('click', () => this.sortByColumn(column));
                 }
                 tr.appendChild(th);
@@ -137,21 +164,37 @@ class IssueTable {
     render(issues) {
         this.container.innerHTML = '';
         
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'overflow-x-auto';
+        
         const table = document.createElement('table');
-        table.className = 'issue-table';
+        table.className = 'min-w-full divide-y divide-gray-200';
         
-        // Add header
-        table.appendChild(this.createTableHeader());
-        
-        // Add body
+        const thead = this.createTableHeader();
         const tbody = document.createElement('tbody');
-        issues.forEach(issue => {
-            tbody.appendChild(this.createTableRow(issue));
+        tbody.className = 'bg-white divide-y divide-gray-200';
+        
+        issues.forEach((issue, index) => {
+            const tr = document.createElement('tr');
+            tr.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+            tr.classList.add('hover:bg-gray-100', 'transition-colors');
+            
+            Object.entries(this.availableColumns)
+                .filter(([key]) => this.activeColumns.includes(key))
+                .forEach(([key, column]) => {
+                    const td = document.createElement('td');
+                    td.className = `px-6 py-4 whitespace-nowrap text-sm ${column.className || ''}`;
+                    td.innerHTML = column.formatter(issue);
+                    tr.appendChild(td);
+                });
+            
+            tbody.appendChild(tr);
         });
         
+        table.appendChild(thead);
         table.appendChild(tbody);
-        this.container.appendChild(table);
-        return this.container;
+        tableWrapper.appendChild(table);
+        this.container.appendChild(tableWrapper);
     }
 
     showIssues(issues, headers) {

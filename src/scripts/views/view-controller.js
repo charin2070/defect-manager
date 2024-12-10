@@ -1,29 +1,49 @@
-class ViewController {
+class ViewController extends Reactive {
     constructor(container) {
-        this.refact = Refact.getInstance(container);
-        this.container = container;
-        this.views = {};
-        this.currentView = null;
+        super(container);
         this.init();
     }
     
-    init(){
-        this.refact.subscribe('view', this.showView.bind(this));
-        this.refact.subscribe('issues', this.updateView.bind(this));
-        this.refact.subscribe('reports', this.showReport.bind(this));
-    
-        // First create and mount the layout
+    init() {
+        this.views = {};
+        this.loaderView = new LoaderView();
+        
+        // Layout
         this.layoutView = new LayoutView();
+        this.layoutView.getWrapper().id = 'layout-view-container';
         this.container.appendChild(this.layoutView.getWrapper());
         
         // Create and register views
         this.uploadView = new UploadView();
         this.dashboardView = new DashboardView();
+        this.dashboardView.getContainer().id = 'dashboard-view-container';
         this.reportsView = new ReportsView();
+        this.reportsView.getContainer().id = 'reports-view-container';
 
         this.registerView('upload', this.uploadView);
         this.registerView('dashboard', this.dashboardView);
         this.registerView('reports', this.reportsView);
+        
+        // Set up subscriptions after views are registered
+        this.setupSubscriptions();
+    }
+
+    setupSubscriptions(){
+        this.subscribe('appStatus', (appStatus) => this.handleAppStatus(appStatus));
+        this.subscribe('view', (viewName) => this.showView(viewName));
+        // this.subscribe('statistics', () => this.showView('dashboard'));
+        // this.subscribe('reports', this.showReport.bind(this));
+    }
+
+    handleAppStatus(appStatus) {
+        switch (appStatus) {
+            case('initialization'):
+            this.showView('loader');
+            break;
+            case('error'):
+            this.showView('error');
+            break;
+        }
     }
 
     registerView(name, viewContainer) {
@@ -35,7 +55,18 @@ class ViewController {
         container.style.display = 'none'; // Initially hide all views
     }
 
+    showLoader() {
+        log('Showing loader');
+        this.loaderView.show();
+    }
+
+    hideLoader() {
+        log('Hiding loader');
+        this.loaderView.hide();
+    }
+
     async showView(name) {
+        log(`📺 Showing view: ${name}`);
         const targetView = this.views[name];
         if (!targetView) throw new Error(`View "${name}" not found`);
 

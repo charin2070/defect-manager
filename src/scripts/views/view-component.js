@@ -1,9 +1,9 @@
-class View {
+class View extends Reactive {
     static #idCounter = 0;
     #element = null;
     
     constructor() {
-        this.refact = Refact.getInstance();
+        super();
     }
 
     /**

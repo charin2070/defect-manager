@@ -1,8 +1,25 @@
-class App {
+class App extends Reactive {
     constructor(container) {
-        this.container = container;
-        this.refact = new Refact(container);
-        this.init();
+        try {
+            super(container);
+            this.refact = new Refact(container);
+            const defaultConfig = {
+                mode: "prod",
+                dataPrefix: "defect-manager",
+                theme: "light",
+                filters: {}
+            };
+            this.config = new ConfigManager(defaultConfig);
+            this.managers = {};
+            this.init();
+        } catch (error) {
+            console.error('Error initializing app:', error);
+        }
+    }
+
+    init() {
+        this.setDefaultStates();
+        this.setupManagers();
     }
 
     // Default config
@@ -17,104 +34,91 @@ class App {
         }
     };
 
-    init() {
-        try {
-            if (!this.container)
-                throw new Error(`App: Parent container not found.`);
-
-            this.config = new ConfigManager(this.defaultConfig);
-            this.config.loadConfigFromLocalStorage();
-
-            this.setupStates();
-            this.setupManagers();
-            this.setupEventListeners();
-
-            this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
-
-            this.refact.setState({ appStatus: 'initialized' });
-            console.log('[App] Initialized');
-        } catch (error) {
-            console.error('Error initializing app:', error);
-        }
-    }
-
-    setupStates() {            
+    setDefaultStates() {
+        // Set all initial states in one batch
         this.refact.setState({
-            config: this.config.config,
+            config: this.config.config,  // Use already loaded config instead of triggering a new load
             filters: this.config.config.filters,
-            view: null,
+            currentView: null,
+            dataStatus: 'empty',
             statistics: null,
-            appStatus: 'initializing',
-        });
+            appStatus: 'setupManagers',
+            issues: null,
+            reportType: null,
+            uploadedFile: null  // Add this to prevent unknown source later
+        }, 'App.setDefaultStates');
     }
 
     setupManagers() {
-        this.viewController = new ViewController(this.container);
-        this.dataManager = new DataManager(this.config.config.dataPrefix);
-        this.statisticManager = new StatisticManager();
-        this.reportsManager = new ReportManager();
-        this.dataTransformer = new DataTransformer();
+        this.managers = {
+            dataManager: new DataManager(this.config.config.dataPrefix),
+            viewController: new ViewController(this.getContainer()),
+            statisticManager: new StatisticManager(),
+            reportManager: new ReportManager(),
+            dataTransformer: new DataTransformer()
+        };
+
+        this.setupSubscriptions();
+        this.refact.setState({ appStatus: 'initialized' }, 'App.setupManagers');
+        console.log('[App] Initialized');
     }
 
-    setupEventListeners() {
-        // Issues
-        this.refact.subscribe('dataStatus', (status) => {
-            if (status === 'error') {
-                MessageView.showMessage('Ошибка', this.dataManager.lastError || 'Произошла ошибка при загрузке данных', 'OK', () => {
-                    this.viewController.showView('dashboard');
-                });
-                return;
-            }
+    setupSubscriptions() {
+        // Config
+        this.subscribe('config', (config) => {
+            this.config.config = config;
+        });
 
-            if (status === 'empty') {
-                this.viewController.showView('empty');
-                return;
-            }
-
-            if (status === 'loaded') {
-                this.viewController.showView('dashboard');
-                // Get issues from data manager
-            const issues = this.dataManager.getIssues();
-            if (!issues || !issues.length) return;
-
-            // Transform and update state
-            const transformedIssues = issues.map(issue => this.dataTransformer.objectToIssue(issue));
-            this.refact.setState({ issues: transformedIssues }, 'App - issues');
-            
-            // Calculate and update statistics
-            const statistics = StatisticManager.getFullStatistics(transformedIssues);
-            console.log('📦 Statistics:', statistics);
-            this.refact.setState({ statistics }, 'App - statistics');
-
-            // Show dashboard
-            this.viewController.showView('dashboard');     
-
-                return;
+        // Debug
+        this.subscribe('debug', (value) => {
+            switch (value) {
+                case 'logState':
+                    log(this.managers, 'Managers');
+                    log(this.refact, 'Refact');
+                    log(this.refact.state, 'State');
+                    break;
             }
         });
 
-        // Filters
-        this.refact.subscribe('filters', (filters) => {
-            this.config.config.filters = filters;
-            this.config.saveConfigToLocalStorage();
-            this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
+        // Data status
+        this.subscribe('dataStatus', (dataStatus) => {
+            if (dataStatus === 'loaded') {        
+                this.loadData();
+            } else if (dataStatus === 'empty') {
+                console.log('[App] No data loaded, showing upload view');
+                this.showUploadView();
+            }
         });
+
+        // Check initial data status after setup
+        setTimeout(() => {
+            const issues = this.managers.dataManager.getIssues();
+            if (!issues || issues.length === 0) {
+                this.setState({ dataStatus: 'empty' }, 'App.checkInitialData');
+            }
+        }, 0);
     }
 
-    showDashboard() {
-        if (!this.dashboardView) {
-            this.dashboardView = new DashboardView();
+    loadData(){
+        const issues = this.managers.dataManager.getIssues();
+        if (!issues || issues.length === 0) {
+            console.log('[App] No data available, showing upload view');
+            this.setState({ dataStatus: 'empty' }, 'App.loadData');
+            return;
         }
-        this.refact.setState({ currentView: 'dashboard' });
-        this.layoutView.setContent(this.dashboardView.getContainer());
+
+        const statistics = StatisticManager.getFullStatistics(issues);
+        this.setState({ statistics: statistics }, 'App.loadData');
+        this.setState({ view: 'dashboard' }, 'App.loadData');
     }
 
     showUploadView() {
-        if (!this.uploadView) {
-            this.uploadView = new UploadView();
-        }
-        this.refact.setState({ currentView: 'upload' });
-        this.layoutView.setContent(this.uploadView.getContainer());
+        this.managers.viewController.showView('upload');
+        this.setState({ currentView: 'upload' }, 'App.showUploadView');
+    }
+
+    logStates(){
+        log(this.refact, 'React');
     }
 }
 

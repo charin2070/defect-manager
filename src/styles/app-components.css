@@ -1,6 +1,5 @@
 @import url('/src/styles/app-style.css');
 
-
 /* Roboto Font Declarations */
 @font-face {
     font-family: 'Roboto';
@@ -297,93 +296,6 @@ height: 2em;
     100% {
         background-position: -200% 0;
     }
-}
-
-/* Slide Panel Styles */
-.slide-panel {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 50%;
-    height: 100%;
-    background-color: white;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-    transition: right 0.3s ease-in-out;
-    z-index: 999;
-}
-
-.slide-panel:focus {
-    outline: none;
-}
-
-.slide-panel.open {
-    right: 0;
-}
-
-.slide-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-}
-
-.slide-panel-title {
-    margin: 0;
-    font-family: 'Roboto', sans-serif;
-    font-size: 20px;
-    color: #333;
-}
-
-.slide-panel-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #7C8DB5;
-}
-
-.slide-panel-close:hover {
-    color: #333;
-}
-
-.slide-panel-content {
-    padding: 20px;
-    height: calc(100vh - 70px);
-    overflow-y: auto;
-}
-
-.panel-widget-value,
-.panel-widget-trend {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: #F8F9FD;
-    border-radius: 8px;
-}
-
-.panel-widget-value h3,
-.panel-widget-trend h3 {
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    margin: 0 0 12px 0;
-}
-
-.panel-widget-value p,
-.panel-widget-trend p {
-    font-family: 'Roboto', sans-serif;
-    font-size: 24px;
-    color: #000;
-    margin: 0;
-}
-
-.panel-widget-trend a {
-    color: #1a73e8;
-    text-decoration: none;
-}
-
-.panel-widget-trend a:hover {
-    text-decoration: underline;
 }
 
 /* Issue Table Styles */

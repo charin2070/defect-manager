@@ -3,108 +3,196 @@ class DashboardView extends View {
         super();
         this.refact = Refact.getInstance();
         this.createView();
-        this.setupReactivity();
-        this.slidePanel = new SlidePanel();
+        this.setupSubscriptions();
+        this.slidePanel = SlidePanel.getInstance();
     }
 
     createView() {
         // Container
-        const container = this.createContainer({
+        const container = this.createElement('div', {
             id: 'dashboard-view',
-            className: 'dashboard-container'
+            className: 'p-8 w-full max-w-7xl mx-auto no-cursor-select'
         });
+        this.setContainer(container);
 
         // Cards row
-        this.topCardsRow = this.createElement('div', { className: 'cards-row' });
+        this.topCardsRow = this.createElement('div', {
+            id : 'top-cards-row',
+            className: 'flex flex-row flex-wrap justify-start gap-8 my-8 p-4 w-full no-cursor-select'
+        });
         container.appendChild(this.topCardsRow);
 
         // Chart container
-        this.chartContainer = this.createElement('div', { id: 'defects-chart-container' });
+        this.chartContainer = this.createElement('div', { 
+            id: 'defects-chart-container',
+            className: 'mb-8 p-6 rounded-lg w-full bg-white shadow-sm no-cursor-select'
+        });
         container.appendChild(this.chartContainer);
 
-        this.createCards();
+        // Initialize DataStats
+        this.dataStats = new DataStats(this.topCardsRow, {
+            theme: 'light',
+            layout: 'detailed',
+            columns: 3,
+            showChange: true,
+            onStatClick: (statId) => this.handleStatClick(statId)
+        });
+
+        // Initial render with loading state
+        this.showCards();
     }
 
-    addDefectCard(card) {
-        this.topCardsRow.appendChild(card);
-    }
+    handleStatClick(statId) {
+        const slidePanel = SlidePanel.getInstance();
+        
+        if (statId === 'defects') {
+            slidePanel.setTitle('Нерешенные дефекты');
+            slidePanel.setLogo('src/image/bug-0.svg');
 
-    clearCards() {
-        while (this.topCardsRow.firstChild) {
-            this.topCardsRow.removeChild(this.topCardsRow.firstChild);
-        }
-    }
+            // Get unresolved defects
+            const unresolvedDefects = this.refact.state?.statistics?.defects?.unresolved || [];
+            
+            // Create and configure issue table
+            const issueTable = new IssueTable(['taskId', 'status', 'description', 'reports', 'created']);
+            issueTable.showIssues(unresolvedDefects);
+            
+            // Show panel with issue table
+            slidePanel.setContent(issueTable.container);
+            slidePanel.show();
+        } else if (statId.includes('defects')) {
+            const statistics = this.refact.state.statistics;
+            if (!statistics || !statistics.defects || !statistics.requests) {
+                console.warn('[DashboardView] Statistics object is incomplete', statistics);
+                return;
+            }
 
-    showLoader() {
-        this.topCardsRow.innerHTML = `
-            <div class="loader"></div>
-        `;
-    }
+            const { defects, requests } = statistics;
 
-    createCards() {
-            // Defects
-            this.defectsCard = new ValueCard(this.topCardsRow, {
-                title: 'Дефекты',
-                content: 'Загрузка...',
-                iconSvg: 'src/img/jira-defect.svg',
-                footer: 'Загрузка...'
-            });
-            this.defectsCard.element.addEventListener('click', () => {
-                this.slidePanel.setTitle('Unresolved Tasks');
-                const unresolvedIssues = this.refact.state.statistics.total.unresolvedIssues;
+            const unresolvedIssues = defects?.total?.unresolved || [];
+            
+            if (unresolvedIssues.length > 0) {
                 const issueTable = new IssueTable(
                     ['taskId', 'reports', 'status', 'description', 'created'],
                     { isUpperCase: false }
                 );
                 issueTable.render(unresolvedIssues);
-                this.slidePanel.updateContent(issueTable.container);
-                this.slidePanel.open();
-            });
-            this.refact.subscribe('statistics', (statistics) => {
-                if (!statistics) return;
-                this.defectsCard.updateContent(statistics.total.unresolved, `${statistics.currentMonth.created} в этом месяце`);
-            });
-    
-            // Reports
-            this.unresolvedReportsCard = new ValueCard(this.topCardsRow, {
-                title: 'Оборащения',
-                content: 'Загрузка...',
-                iconSvg: 'src/img/trigger.svg',
-                footer: ''
-            });
-            this.unresolvedReportsCard.element.addEventListener('click', () => {
-                this.slidePanel.setTitle('Unresolved Reports');
-                const unresolvedReports = this.refact.state.statistics.total.unresolvedReports;
+                this.slidePanel.open(issueTable.container, 'Открытые дефекты');
+            }
+        } else if (statId.includes('reports')) {
+            const statistics = this.refact.state.statistics;
+            if (!statistics || !statistics.defects || !statistics.requests) {
+                console.warn('[DashboardView] Statistics object is incomplete', statistics);
+                return;
+            }
+
+            const { defects, requests } = statistics;
+
+            const unresolvedIssues = defects?.total?.unresolved || [];
+            const issuesWithReports = unresolvedIssues.filter(issue => issue.reports > 0);
+            
+            if (issuesWithReports.length > 0) {
                 const issueTable = new IssueTable(
                     ['taskId', 'reports', 'status', 'description', 'created'],
                     { isUpperCase: false }
                 );
-                
-                // Sort unresolvedReports by reports count in descending order
-                const sortedReports = [...unresolvedReports].sort((a, b) => (b.reports || 0) - (a.reports || 0));
-                
+                const sortedReports = [...issuesWithReports].sort((a, b) => (b.reports || 0) - (a.reports || 0));
                 issueTable.render(sortedReports);
-                this.slidePanel.updateContent(issueTable.container);
-                this.slidePanel.open();
-                
-                // Trigger sort on the reports column to show sort indicator
-                const reportsColumn = issueTable.availableColumns.reports;
-                reportsColumn.sortDirection = 'desc';
-                issueTable.sortByColumn(reportsColumn);
-            });
-            this.refact.subscribe('statistics', (statistics) => {
-                if (!statistics) return;
-                this.unresolvedReportsCard.updateContent(statistics.total.reportsCount, 'на открытых дефектах');
-            });
-  
+                this.slidePanel.open(issueTable.container, 'Обращения на открытых дефектах');
+            }
+        } else if (statId.includes('requests')) {
+            const statistics = this.refact.state.statistics;
+            if (!statistics || !statistics.defects || !statistics.requests) {
+                console.warn('[DashboardView] Statistics object is incomplete', statistics);
+                return;
+            }
+
+            const { defects, requests } = statistics;
+
+            const unresolvedIssues = requests?.total?.unresolved || [];
+            
+            if (unresolvedIssues.length > 0) {
+                const issueTable = new IssueTable(
+                    ['taskId', 'status', 'description', 'created'],
+                    { isUpperCase: false }
+                );
+                issueTable.render(unresolvedIssues);
+                this.slidePanel.open(issueTable.container, 'Открытые доработки');
+            }
+        }
     }
 
-    setupReactivity() {
-        this.refact.subscribe('defects', (defects) => {
-            if (!defects) return;
+    showCards() {
+        const statistics = this.refact.state.statistics;
+        const defectsCount = statistics?.defects?.unresolved?.length || 0;
+        const requestsCount = statistics?.requests?.unresolved?.length || 0;
 
-            const { unresolved, reports } = statistics;
-    });
+        this.dataStats.update([
+            {
+                id: 'defects',
+                label: 'Дефекты',
+                icon: 'src/image/bug-0.svg',
+                value: defectsCount,
+                change: 0,
+                loading: !statistics,
+                attributes: {
+                    'data-card-type': 'defect'
+                }
+            },
+            {
+                id: 'requests',
+                label: 'Запросы',
+                icon: 'src/image/trigger.svg',
+                value: requestsCount,
+                change: 0,
+                loading: !statistics
+            }
+        ]);
     }
 
+    setupSubscriptions() {
+        this.refact.subscribe('statistics', (statistics) => {
+            if (!statistics || !statistics.defects || !statistics.requests) {
+                console.warn('[DashboardView] Statistics object is incomplete', statistics);
+                return;
+            }
+
+            const { defects, requests } = statistics;
+
+            // Безопасное получение значений с дефолтами
+            const getArrayLength = (stat, period, field, defaultValue = 0) => {
+                return stat?.[period]?.[field]?.length ?? defaultValue;
+            };
+
+            const getReportsCount = (stat, period) => {
+                return stat?.[period]?.reportsCount ?? 0;
+            };
+
+            this.dataStats.update([
+                {
+                    id: 'defects_stats',
+                    label: 'Дефекты',
+                    value: getArrayLength(defects, 'total', 'unresolved'),
+                    previousValue: getArrayLength(defects, 'lastMonth', 'unresolved'),
+                    icon: 'src/image/layers-0.svg',
+                    footer: `${getArrayLength(defects, 'currentMonth', 'all')} в этом месяце`
+                },
+                {
+                    id: 'reports_stats',
+                    label: 'Обращения',
+                    value: getReportsCount(defects, 'total'),
+                    previousValue: getReportsCount(defects, 'lastMonth'),
+                    icon: 'src/image/translation.svg',
+                    footer: 'на открытых дефектах'
+                },
+                {
+                    id: 'requests_stats',
+                    label: 'Доработки',
+                    value: getArrayLength(requests, 'total', 'unresolved'),
+                    previousValue: getArrayLength(requests, 'lastMonth', 'unresolved'),
+                    icon: 'src/image/code.svg',
+                    footer: `${getArrayLength(requests, 'currentMonth', 'all')} в этом месяце`
+                }
+            ]);
+        });
+    }
 }

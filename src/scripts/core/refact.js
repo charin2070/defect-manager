@@ -28,7 +28,8 @@ class Refact {
                 total: {
                     unresolved: 0
                 }
-            }
+            },
+            components: {} // Initialize components state
         };
         this.subscribers = new Map();
         Refact.instance = this;
@@ -44,25 +45,25 @@ class Refact {
 
     // Default state
     setState(newState, changedBy = 'unknown') {
-        for (let key in newState) {
-            this.state[key] = newState[key];
-            this.notify(key);
+        try {
+            // Update state in one go to avoid multiple re-renders
+            this.state = { ...this.state, ...newState };
             
-            // Улучшенное логирование
-            const value = this.state[key];
-            let logValue;
-            
-            if (value === null) {
-                logValue = 'null';
-            } else if (Array.isArray(value)) {
-                logValue = `Array(${value.length})`;
-            } else if (typeof value === 'object') {
-                logValue = JSON.stringify(value, null, 2);
-            } else {
-                logValue = value;
+            // Notify only once per key
+            for (const key in newState) {
+                const value = newState[key];
+                this.notify(key);
+                
+                // Log in a more concise way
+                const logValue = value === null ? 'null' : 
+                               value === undefined ? 'undefined' :
+                               typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' :
+                               String(value);
+                               
+                console.log(`⚡State "${key}" => ${logValue} (by: ${changedBy})`);
             }
-            
-            console.log(`⚡State changed: ${key} = ${logValue} (by: ${changedBy})`);
+        } catch (error) {
+            console.error('Error setting state:', error);
         }
     }
     
@@ -98,4 +99,33 @@ class Refact {
     render(template) {
         this.rootElement.innerHTML = template;
     }
+
+    /**
+     * Adds a component reference to the state.components
+     * @param {string} componentName - The name to register the component under
+     * @param {object} componentReference - Reference to the component instance or class
+     */
+    addComponent(componentName, componentReference) {
+        if (!componentName || typeof componentName !== 'string') {
+            console.error('Component name must be a non-empty string');
+            return;
+        }
+        
+        if (!componentReference) {
+            console.error('Component reference cannot be null or undefined');
+            return;
+        }
+
+        // Update components in state
+        const updatedComponents = {
+            ...this.state.components,
+            [componentName]: componentReference
+        };
+
+        // Use setState to ensure proper state updates and notifications
+        this.setState({ components: updatedComponents }, 'addComponent');
+        
+        console.log(`Component "${componentName}" registered successfully`);
+const refact = Refact.getInstance(rootElement);
+refact.addComponent('messageView', MessageView);    }
 }

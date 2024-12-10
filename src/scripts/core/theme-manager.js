@@ -24,10 +24,10 @@ class ThemeManager {
     applyTheme(theme) {
         if (theme === 'dark') {
             document.documentElement.classList.add('dark-theme');
-            this.themeIcon.src = 'src/img/sun-0.svg';
+            this.themeIcon.src = 'src/image/sun-0.svg';
         } else {
             document.documentElement.classList.remove('dark-theme');
-            this.themeIcon.src = 'src/img/moon-stars-0.svg';
+            this.themeIcon.src = 'src/image/moon-stars-0.svg';
         }
 
         // Dispatch event for other components that might need to react to theme changes
