@@ -2,7 +2,6 @@ class StatisticManager extends Reactive {
     constructor(issues) {
         super(document.body);
         this.issues = issues;
-        this.statistics = {};
         
         this.subscribe('issues', (issues) => this.updateStatistics(issues));
         if (this.issues) {
