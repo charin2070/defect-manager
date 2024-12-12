@@ -5,9 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "http-server -c-1",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "mkdir -p src/styles && tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
   },
   "dependencies": {
     "http-server": "^14.1.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32"
   }
 }

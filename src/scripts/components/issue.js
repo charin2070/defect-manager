@@ -1,81 +1,67 @@
 class Issue {
     constructor(properties) {
-        // Основные поля, которые должны быть всегда
-        this.taskId = null;
-        this.created = null;
-        this.resolved = null;
-        this.reports = 0;
-        this.slaDate = null;
-        this.status = null;
-        this.state = null;
-        this.description = null;
-        this.summary = null;
-        this.type = null;
-
-        // Дополнительные поля
-        this.priority = null;
-        this.assignee = null;
-        this.reporter = null;
-        this.team = null;
-        this.isOverdue = null;
-        this.source = null;
-        this.notes = null;
-        this.alarms = null;
-        this.component = null;
-        this.updated = null;
-
-        if (properties) {
-            this.#normalizeAndSetProperties(properties);
-        }
+        this.initializeProperties(properties);
     }
 
-    // Маппинг полей из разных источников
+    static csvObjectExample = {
+        "Issue key": "ADIRINC-361",
+        "Issue id": "1855183",
+        "Assignee": "U_M12MD",
+        "Status": "Закрыт",
+        "Created": "25.11.2021 10:59",
+        "Labels": "",
+        "Issue Type": "Дефект промсреды",
+        "Resolved": "24.01.2022 14:46",
+        "Custom field (SLA дата наступления просрочки)": "2022-02-03 00:00:00.0",
+        "Description": "Периодически не прогружается вкладка Портфель",
+        "Custom field (description )": "",
+        "Custom field (Количество обращений)": "",
+        "Custom field (Команда устраняющая проблему)": "",
+        "Custom field (Business Summary)": "",
+        "Summary": "Не загружается Портфель в МТ",
+        "Component/s": "",
+        "Custom field (Mobile application component)": "",
+        "Updated": "02.11.2023 12:35",
+        "source": "ADIRINC-361,1855183,U_M12MD,Закрыт,25.11.2021 10:59,,,,,Дефект промсреды,24.01.2022 14:46,2022-02-03 00:00:00.0,Периодически не прогружается вкладка Портфель,,,,,Не загружается Портфель в МТ,,,,02.11.2023 12:35"
+    }
+
+    // Properies mapping
     static #fieldMappings = {
-        // ID задачи
         "Issue key": "taskId",
-        "Issue id": "taskId",
         "Номер драфта": "taskId",
-        "id": "taskId",
-        
-        // Основные поля
         "Summary": "summary",
         "Description": "description",
-        "Custom field (description )": "description",
-        "Custom field (Business Summary)": "summary",
-        
-        // Даты
         "Created": "created",
         "дата открытия": "created",
-        "Resolved": "resolved",
         "дата закрытия": "resolved",
+        "Resolved": "resolved",
         "Updated": "updated",
         "updated": "updated",
         "Custom field (SLA дата наступления просрочки)": "slaDate",
-        "Дата наступления SLA": "slaDate",
-        
-        // Назначения
         "Assignee": "assignee",
         "Reporter": "reporter",
         "Custom field (Команда устраняющая проблему)": "team",
         "Команда устраняющая проблему": "team",
-        
-        // Компоненты
         "Component/s": "component",
         "component": "component",
-        
-        // Метрики
         "Custom field (Количество обращений)": "reports",
         "reports": "reports",
         "Labels": "labels",
-
-        // Статус
         "Status": "status",
         "status": "status",
-
-        // Тип
         "Issue Type": "type",
         "type": "type"
     };
+
+    static dataTypes = {
+        created: 'date',
+        updated: 'date',
+        resolved: 'date',
+        slaDate: 'date',
+        reports: 'number',
+        labels: 'array',
+        taskId: 'string'
+    }
 
     // Маппинг значений
     static #valueMappings = {
@@ -90,9 +76,9 @@ class Issue {
         },
         type: {
             "Дефект промсреды": "defect",
-            "Request (FR)": "Request (FR)",
-            "Task": "Task",
-            "Консультация": "Консультация",
+            "Request (FR)": "request",
+            "Task": "task",
+            "Консультация": "consultation",
         },
         team: {
             "Core": "Ядро",
@@ -102,52 +88,53 @@ class Issue {
         }
     };
 
-    #normalizeAndSetProperties(properties) {
+    initializeProperties(properties) {
         if (!properties) return;
-        // Первый проход: нормализуем имена полей
-        const normalizedProps = {};  
-        for (const [key, value] of Object.entries(properties)) {
-            const normalizedKey = Issue.#fieldMappings[key] || key;
+        const issueProperties = {}
+        // Rename keys
+        if (typeof properties === 'object') {
+            properties = Object.fromEntries(
+                Object.entries(properties).map(([key, value]) => {
+                    const propKey = Issue.#fieldMappings[key] || key;
+                    const parsedValue = Issue.parseValue(propKey, value);
+                    if (parsedValue) {
+                        issueProperties[propKey] = parsedValue;
+                    }
+                    return [propKey, parsedValue];
+                })
+            );
             
-            // Пропускаем пустые значения если уже есть значение
-            if (normalizedProps[normalizedKey] && (!value || value === "")) continue;
-            
-            normalizedProps[normalizedKey] = value;
+            // Add calculated properties
+            issueProperties.state = Issue.#getStateByStatus(issueProperties.status);
+            issueProperties.type = this.getType(issueProperties.type);
         }
-
-        // Второй проход: обрабатываем значения
-        for (const [key, value] of Object.entries(normalizedProps)) {
-            let processedValue = value;
-
-            // Обработка дат
-            if (["created", "resolved", "slaDate", "updated"].includes(key)) {
-                processedValue = this.#parseDate(value);
-                if (!processedValue && (key === "created" || key === "slaDate")) {
-                    console.warn(`[Issue] Failed to parse "${key}" date: "${value}" for issue: ${normalizedProps.taskId || 'unknown'}`);
-                }
-            }
-            // Обработка чисел
-            else if (key === "reports") {
-                processedValue = this.#parseNumber(value);
-            }
-            // Обработка маппированных значений
-            else if (Issue.#valueMappings[key]) {
-                processedValue = Issue.#valueMappings[key][value] || value;
-            }
-
-            this[key] = processedValue;
-        }
-
-        // Проверяем обязательные поля
-        if (!this.created || !this.slaDate) {
-            console.warn(`[Issue] Missing created date or slaDate for issue: ${this.taskId || 'unknown'}`);
-        }
-
-        // Устанавливаем состояние на основе статуса
-        this.state = this.#getStateByStatus(this.status);
+        
+        Object.keys(issueProperties).forEach(key => {
+            this[key] = issueProperties[key];
+        });
     }
 
-    #parseDate(value) {
+    static parseValue(key, value) {
+        // Date
+        if (Issue.dataTypes[key] === 'date') {
+            const date = stringToDate(value);
+            if (date) return date;
+            return false;
+        }
+        // Number
+        if (Issue.dataTypes[key] === 'number') {
+            return this.#parseNumber(value);
+        }
+        // String
+        return value;
+    }
+
+    fromJSON(object) {
+        if (!object) return;
+        this.initializeProperties(object);
+    }
+
+    static #parseDate(value) {
         if (!value) return null;
         try {
             if (typeof value === 'string') {
@@ -208,18 +195,18 @@ class Issue {
         return null;
     }
 
-    #parseNumber(value) {
+    static #parseNumber(value) {
         if (typeof value === 'number') return value;
         if (typeof value === 'string') {
             // Удаляем все нечисловые символы, кроме точки
             const cleaned = value.replace(/[^\d.]/g, '');
-            const parsed = parseFloat(cleaned);
+            const parsed = parseInt(cleaned);
             return isNaN(parsed) ? 0 : parsed;
         }
         return 0;
     }
 
-    #getStateByStatus(status) {
+    static #getStateByStatus(status) {
         switch (status) {
             case 'Закрыт':
                 return 'resolved';
@@ -230,25 +217,24 @@ class Issue {
         }
     }
 
-    #getType(data) {
+    getType(data) {
         if (!data) {
             console.log('[Issue] No type data provided');
             return null;
         }
 
-        // Проверяем поле Issue Type из CSV
-        const issueType = (data['Issue Type'] || '').trim();
-        switch (issueType) {
-            case 'Request (FR)':
-                return 'request';
-            case 'Дефект промсреды':
+        switch (data.toLowerCase()) {
+            case 'дефект промсреды':
                 return 'defect';
-            default: return issueType;
+            case 'request (fr)':
+                return 'request';
+            default:
+                return data;
         }
     }
 
     // Метод для обновления свойств
     update(properties) {
-        this.#normalizeAndSetProperties(properties);
+        this.initializeProperties(properties);
     }
 }

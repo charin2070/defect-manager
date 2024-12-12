@@ -10,6 +10,7 @@ class Reactive {
     constructor(container) {
         this.container = container;
         this.refact = Refact.getInstance(container);
+        this.state = this.refact.state;
     }
     
     getContainer() {

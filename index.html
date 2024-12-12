@@ -12,31 +12,11 @@
     <link rel="icon" href="src/image/jira-defect.svg" type="image/svg+xml">
 
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="src/styles/output.css" rel="stylesheet">
     <!-- Только те стили, которые нельзя заменить Tailwind классами -->
     <link href="src/styles/vendor/prism.css" rel="stylesheet">
     <link href="src/styles/animations.css" rel="stylesheet">
     <link href="src/styles/scrollbar-minimal.css" rel="stylesheet">
-
-    <!-- Конфигурация Tailwind для кастомных значений -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#4A90E2',
-                        secondary: '#6B7280',
-                        success: '#rgba(75, 192, 192, 1)',
-                        warning:'#rgba(255, 159, 64, 1)',
-                    },
-                    animation: {
-                        'slide-in': 'slideIn 0.3s ease-out',
-                        'fade-in': 'fadeIn 0.3s ease-out',
-                    }
-                }
-            }
-        }
-        </script>
 </head>
 
 <body class="bg-gray-50">
@@ -83,6 +63,7 @@
     <script src="src/scripts/vendor/chart.js"></script>
     <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
     <script src="src/scripts/components/chart-component.js"></script>
+    <script src="src/scripts/components/toast-component.js"></script>
 
     <!-- Views -->
     <script src="src/scripts/views/view-component.js"></script>
@@ -94,8 +75,10 @@
     <script src="src/scripts/views/reports-view.js"></script>
     <script src="src/scripts/views/team-view.js"></script>
     <script src="src/scripts/views/backlog-view.js"></script>
+    <script src="src/scripts/views/settings-view.js"></script>
     
     <!-- Managers -->
+    <script src="src/scripts/core/index-manager.js"></script>
     <script src="src/scripts/views/view-controller.js"></script>
     <script src="src/scripts/core/config-manager.js"></script>
     <script src="src/scripts/core/data-transformer.js"></script>

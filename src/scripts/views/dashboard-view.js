@@ -122,16 +122,15 @@ class DashboardView extends View {
     }
 
     showCards() {
+        // Get count of object entries
         const statistics = this.refact.state.statistics;
-        const defectsCount = statistics?.defects?.unresolved?.length || 0;
-        const requestsCount = statistics?.requests?.unresolved?.length || 0;
 
         this.dataStats.update([
             {
                 id: 'defects',
                 label: 'Дефекты',
                 icon: 'src/image/bug-0.svg',
-                value: defectsCount,
+                value: 0,
                 change: 0,
                 loading: !statistics,
                 attributes: {
@@ -142,7 +141,7 @@ class DashboardView extends View {
                 id: 'requests',
                 label: 'Запросы',
                 icon: 'src/image/trigger.svg',
-                value: requestsCount,
+                value: 0,
                 change: 0,
                 loading: !statistics
             }
@@ -171,7 +170,7 @@ class DashboardView extends View {
                 {
                     id: 'defects_stats',
                     label: 'Дефекты',
-                    value: getArrayLength(defects, 'total', 'unresolved'),
+                    value: "HERE",
                     previousValue: getArrayLength(defects, 'lastMonth', 'unresolved'),
                     icon: 'src/image/layers-0.svg',
                     footer: `${getArrayLength(defects, 'currentMonth', 'all')} в этом месяце`

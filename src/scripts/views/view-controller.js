@@ -19,10 +19,14 @@ class ViewController extends Reactive {
         this.dashboardView.getContainer().id = 'dashboard-view-container';
         this.reportsView = new ReportsView();
         this.reportsView.getContainer().id = 'reports-view-container';
+        this.settingsView = new SettingsView();
+        this.settingsView.getContainer().id = 'settings-view-container';
+        this.toast = new ToastComponent();
 
         this.registerView('upload', this.uploadView);
         this.registerView('dashboard', this.dashboardView);
         this.registerView('reports', this.reportsView);
+        this.registerView('settings', this.settingsView);
         
         // Set up subscriptions after views are registered
         this.setupSubscriptions();
@@ -30,19 +34,25 @@ class ViewController extends Reactive {
 
     setupSubscriptions(){
         this.subscribe('appStatus', (appStatus) => this.handleAppStatus(appStatus));
+        // View
         this.subscribe('view', (viewName) => this.showView(viewName));
-        // this.subscribe('statistics', () => this.showView('dashboard'));
-        // this.subscribe('reports', this.showReport.bind(this));
+        // Toast
+        this.subscribe('toast', (toast) => {
+            console.log('ViewController: Showing toast', toast);
+            if (toast && toast.message) {
+                this.toast.show(toast.message, toast.type || 'info', toast.duration || 3000);
+            }
+        });
     }
 
     handleAppStatus(appStatus) {
         switch (appStatus) {
-            case('initialization'):
-            this.showView('loader');
-            break;
+            case('loading'):
+                this.showLoader()
+                break;
             case('error'):
-            this.showView('error');
-            break;
+                this.showView('error');
+                break;
         }
     }
 

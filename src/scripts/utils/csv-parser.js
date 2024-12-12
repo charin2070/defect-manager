@@ -19,7 +19,7 @@ class CsvParser {
       "Summary": "summary",
       "Description": "description",
       "Created": "created",
-      "Resolved": "resolved",
+      "Resolved": "resolved"  ,
       "Custom field (SLA дата наступления просрочки)": "slaDate",
       "Custom field (Количество обращений)": "reports",
       "Дата наступления SLA": "slaDate"

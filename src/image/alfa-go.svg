@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#1C1C1C" rx="20" />
+
+  <!-- Circular shapes -->
+  <circle cx="100" cy="100" r="50" fill="none" stroke="#FF0000" stroke-width="12" />
+  <circle cx="100" cy="100" r="30" fill="none" stroke="#FFFFFF" stroke-width="8" />
+
+  <!-- Arrow -->
+  <path d="M150 100 L110 80 L110 120 Z" fill="#FFFFFF" />
+
+  <!-- Text -->
+  <text x="50" y="170" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="bold">
+    Alpha Bank Invest
+  </text>
+</svg>

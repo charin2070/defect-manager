@@ -1,0 +1,6 @@
+{
+    "prompt": "You are working on a defect management system based on data from Jira issues. Please consider the following context for all responses:\n \n1. Use clear and concise code comments\n2. Follow best practices in all cases \n3. Dont use ES6 modules. Use declarations in <script> tag in index.html file. \n4. Write maintainable and scalable code. \n5. Dont repeat your self. Always check overall file content. Many functions is already written. \n6. Always use Refact class from 'src/scripts/core/refact.js' as core of application interactions. All modules communicate touch them. \n 7. Always keep CSS styles in 'src/styles/' directory. \n 8. If you have any questions, please contact your supervisor. \n 8. Always keep scrips in 'src/scripts/' directory. \n 9. If you see style injection in script, move style to 'src/styles/app-styles.css'. \n 10. Main aim - is a clean, easy to read code. \n",
+    "n": 1,
+    "stop": null,
+    "temperature": 0.1
+}

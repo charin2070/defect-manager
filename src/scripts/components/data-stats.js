@@ -29,7 +29,7 @@ DataStats = class DataStats {
                     overflow: hidden;
                     z-index: 10;
                     cursor: pointer;
-                }
+                }               
                 
                 .data-stats-card:hover {
                     transform: translateY(-2px);
@@ -119,7 +119,7 @@ DataStats = class DataStats {
             const textClass = isDark ? 'text-white' : 'text-gray-900';
 
             return `
-                <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-${this.options.columns}">
+                <dl class="mt-5 flex flex-rowa gap-5">
                     ${stats.map(stat => {
                         // Convert attributes object to string of HTML attributes
                         const attributesStr = stat.attributes ? 
