@@ -16,7 +16,7 @@ class SlidePanel {
 
         // Create backdrop
         this.backdrop = document.createElement('div');
-        this.backdrop.className = 'fixed inset-0 bg-black/50 opacity-0 invisible transition-opacity duration-300 ease-in-out z-40';
+        this.backdrop.className = 'fixed inset-0 bg-black/50 opacity-0 invisible transition-opacity duration-300 ease-in-out z-40 backdrop-filter backdrop-blur-sm';
         this.backdrop.id = `slide-panel-backdrop-${Math.floor(Math.random() * 10000)}`;
         document.body.appendChild(this.backdrop);
 
@@ -37,7 +37,7 @@ class SlidePanel {
         
         // Create and store logo element
         this.logo = document.createElement('div');
-        this.logo.className = 'flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg';
+        this.logo.className = 'flex items-center justify-center w-10 h-10 rounded-lg';
         this.logo.id = `slide-panel-logo-${Math.floor(Math.random() * 10000)}`;
         const logoImg = document.createElement('img');
         logoImg.src = 'src/image/translation.svg';

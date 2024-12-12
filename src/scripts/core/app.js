@@ -1,27 +1,103 @@
 class App extends Reactive {
     constructor(container) {
         super(container);
-        this.init().then(() => {
-            this.setState({ appStatus: 'ready' }, 'App.init');
-            this.loadData();
-    });
-    }
-
-    loadData(){
-        this.setState({ dataStatus: 'loading' }, 'App.loadData');
-        return new Promise((resolve, reject) => {
-            try {
-                const issues = this.managers.dataManager.loadFromLocalStorage(['defect', 'request', 'Task']);
-                this.setState({ data: {defects: issues.defect, requests: issues.request, tasks: issues.Task}}, 'App.loadData');
-                if (issues.length > 0) {
+        
+        this.setState({ appStatus: 'loading' }, 'App.init');
+        this.init()
+            .then(() => {
+                return this.loadData();
+            })
+            .then(data => {
+                if (data && Object.keys(data).length > 0) {
+                    // Convert taskId object to a flat array of issues
+                    const issues = Object.values(data.taskId).flat();
+                    this.managers.statisticManager.updateStatistics(issues);
+                    
+                    this.setState({
+                        index: data,
+                        issues: issues,
+                        appStatus: 'loaded'
+                    }, 'App.init');
                     this.managers.viewController.showView('dashboard');
                 } else {
+                    this.setState({ 
+                        index: null,
+                        appStatus: 'loaded' 
+                    }, 'App.init');
                     this.managers.viewController.showView('upload');
                 }
-                resolve(issues);
+            })
+            .catch(error => {
+                console.error('[App] Error during initialization:', error);
+                this.setState({ 
+                    index: null,
+                    appStatus: 'loaded',
+                    appError: error 
+                }, 'App.init');
+                this.managers.viewController.showView('upload');
+            });
+    }
+
+    setupSubscriptions() {
+        // Console
+        this.subscribeForConsole();
+
+        // Debug
+        this.subscribe('process', (value) => {
+            switch (value) {
+                case 'logState':
+                    log(this.managers, 'Managers');
+                    log(this.refact, 'Refact');
+                    log(this.refact.state, 'State');
+                    break;
+                case 'test_function':
+                    this.test();
+                    break;
+            }
+        });
+
+        // Index
+        this.subscribe('index', (index) => {
+            log(this.state,'[App] State');
+            
+            // Only show dashboard if we have valid data
+            if (index && Object.keys(index).length > 0) {
+                this.managers.viewController.showView('dashboard');
+            }
+        });
+
+        this.subscribe('statistics', (statistics) => {
+            log(statistics, '[App] Statistics');
+            
+            if (this.state.statistics && typeof this.state.statistics !== undefined){
+            this.managers.viewController.showView('dashboard');
+            }
+        }
+        );
+        
+    }
+
+    loadData() {
+        return new Promise((resolve, reject) => {
+            try {
+                this.managers.dataManager.loadFromLocalStorage(['index'])
+                    .then(data => {
+                        if (!data || Object.keys(data).length === 0) {
+                            console.warn('[App] No data found in LocalStorage');
+                            resolve(null);
+                            return;
+                        }
+                        
+                        this.setState({ data }, 'App.loadData');
+                        log(data, '[App] Loaded data from LocalStorage');
+                        resolve(data);
+                    })
+                    .catch(error => {
+                        console.warn('[App] Error loading from LocalStorage:', error);
+                        resolve(null);
+                    });
             } catch (error) {
-                this.setState({ appStatus: 'ready' }, 'App.loadData');
-                this.setState({ appError: error }, 'App.loadData');
+                console.error('[App] Error in loadData:', error);
                 reject(error);
             }
         });
@@ -62,12 +138,22 @@ class App extends Reactive {
 
     subscribeForConsole() {
         const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+
         console.error = (...args) => {
             originalConsoleError.apply(console, args);
             const errorMessage = args.map(arg => 
                 typeof arg === 'object' ? JSON.stringify(arg) : arg
             ).join(' ');
             this.setState({ toast: { message: errorMessage, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+        };
+
+        console.warn = (...args) => {
+            originalConsoleWarn.apply(console, args);
+            const warnMessage = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg) : arg
+            ).join(' ');
+            this.setState({ toast: { message: warnMessage, type: 'warning', duration: 4000 } }, 'App.subscribeForConsole');
         };
 
         window.addEventListener('error', (event) => {
@@ -112,35 +198,6 @@ class App extends Reactive {
             reportManager: new ReportManager(),
             dataTransformer: new DataTransformer()
         };
-    }
-
-    setupSubscriptions() {
-        // Console
-        this.subscribeForConsole();
-
-        // Debug
-        this.subscribe('process', (value) => {
-            switch (value) {
-                case 'logState':
-                    log(this.managers, 'Managers');
-                    log(this.refact, 'Refact');
-                    log(this.refact.state, 'State');
-                    break;
-                case 'test_function':
-                    this.test();
-                    break;
-            }
-        });
-
-        // Index
-        this.subscribe('index', (index) => {
-            log(this.state,'[App] State');
-            if (this.state.dataSource != 'storage'){
-                this.managers.dataManager.saveToLocalStorage(index.byType);
-            }
-            this.managers.viewController.showView('dashboard');
-        });
-        
     }
 
     logStates(){

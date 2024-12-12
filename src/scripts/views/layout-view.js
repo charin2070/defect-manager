@@ -246,7 +246,7 @@ class LayoutView extends View {
     handleDefectCardClick() {
         const slidePanel = SlidePanel.getInstance();
         slidePanel.setTitle('Нерешенные дефекты');
-        slidePanel.setLogo('src/image/bug-0.svg');
+        slidePanel.setLogo('src/image/jira-defect.svg');
 
         // Get unresolved defects
         const unresolvedDefects = this.refact.state?.statistics?.defects?.unresolved || [];
@@ -256,8 +256,7 @@ class LayoutView extends View {
         issueTable.showIssues(unresolvedDefects);
 
         // Show panel with issue table
-        slidePanel.setContent(issueTable.container);
-        slidePanel.show();
+        slidePanel.open(issueTable.container, 'Открытые дефекты');
     }
 
     setupEventListeners() {

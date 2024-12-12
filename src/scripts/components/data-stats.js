@@ -1,7 +1,6 @@
-DataStats = class DataStats {
+class DataStats extends Reactive {
     constructor(container, options = {}) {
-        this.container = container;
-        this.refact = Refact.getInstance();
+        super(container);
         this.options = {
             theme: options.theme || 'light',
             layout: options.layout || 'default',
@@ -11,16 +10,24 @@ DataStats = class DataStats {
         };
 
         // Add animation styles
-        this._injectStyles();
+        this.#injectStyles();
         this.templates = {
-            default: this._createDefaultTemplate(),
-            simple: this._createSimpleTemplate(),
-            detailed: this._createDetailedTemplate(),
-            compact: this._createCompactTemplate()
+            default: this.#createDefaultTemplate(),
+            simple: this.#createSimpleTemplate(),
+            detailed: this.#createDetailedTemplate(),
+            compact: this.#createCompactTemplate()
         };
+
+        this.setupSubscriptions();
+    }
+    
+    setupSubscriptions() {
+        this.subscribe('statistics', (value) => {
+            this.update(value);
+        });
     }
 
-    _injectStyles() {
+    #injectStyles() {
         if (!document.getElementById('data-stats-styles')) {
             const styles = `
                 .data-stats-card {
@@ -91,9 +98,9 @@ DataStats = class DataStats {
 
         const processedStats = stats.map(stat => ({
             ...stat,
-            id: stat.id || this._generateId(),
-            change: this._calculateChange(stat),
-            trend: this._calculateTrend(stat)
+            id: stat.id || this.#generateId(),
+            change: this.#calculateChange(stat),
+            trend: this.#calculateTrend(stat)
         }));
 
         this.render(processedStats);
@@ -109,10 +116,10 @@ DataStats = class DataStats {
 
         const html = template(stats);
         this.container.innerHTML = html;
-        this._addEventListeners();
+        this.#addEventListeners();
     }
 
-    _createDetailedTemplate() {
+    #createDetailedTemplate() {
         return (stats) => {
             const isDark = this.options.theme === 'dark';
             const bgClass = isDark ? 'bg-gray-900' : 'bg-white';
@@ -142,7 +149,7 @@ DataStats = class DataStats {
                                 </dt>
                                 <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
                                     <p class="data-stats-value text-2xl font-semibold ${stat.value === 'Загрузка...' ? 'data-stats-loading' : ''}">${stat.value}</p>
-                                    ${this._renderTrendIndicator(stat)}
+                                    ${this.#renderTrendIndicator(stat)}
                                     ${stat.footer ? `
                                         <div class="absolute inset-x-0 bottom-0 bg-gray-50/30 backdrop-blur-sm px-4 py-4 sm:px-6">
                                             <div class="text-sm text-gray-600">
@@ -158,7 +165,7 @@ DataStats = class DataStats {
         };
     }
 
-    _createSimpleTemplate() {
+    #createSimpleTemplate() {
         return (stats) => {
             const isDark = this.options.theme === 'dark';
             const bgClass = isDark ? 'bg-gray-900' : 'bg-white';
@@ -176,7 +183,7 @@ DataStats = class DataStats {
         };
     }
 
-    _createDefaultTemplate() {
+    #createDefaultTemplate() {
         return (stats) => {
             const cols = this.options.columns;
             const isDark = this.options.theme === 'dark';
@@ -201,7 +208,7 @@ DataStats = class DataStats {
         };
     }
 
-    _createCompactTemplate() {
+    #createCompactTemplate() {
         return (stats) => {
             const isDark = this.options.theme === 'dark';
             const bgClass = isDark ? 'bg-gray-900' : 'bg-white';
@@ -226,10 +233,10 @@ DataStats = class DataStats {
         };
     }
 
-    _renderTrendIndicator(stat) {
+    #renderTrendIndicator(stat) {
         if (!this.options.showChange || !stat.trend) return '';
         
-        const change = this._calculateChange(stat);
+        const change = this.#calculateChange(stat);
         const isPositive = stat.trend === 'up';
         const trendClass = `data-stats-trend ${stat.trend}`;
         
@@ -249,11 +256,11 @@ DataStats = class DataStats {
     }
 
     // Helper methods
-    _generateId() {
-        return `stat_${Math.random().toString(36).substr(2, 9)}`;
+    #generateId() {
+        return `stat#${Math.random().toString(36).substr(2, 9)}`;
     }
 
-    _calculateChange(stat) {
+    #calculateChange(stat) {
         if (!stat.previousValue || !stat.value) return null;
         const prev = parseFloat(stat.previousValue);
         const curr = parseFloat(stat.value);
@@ -261,13 +268,13 @@ DataStats = class DataStats {
         return ((curr - prev) / prev * 100).toFixed(2);
     }
 
-    _calculateTrend(stat) {
-        const change = this._calculateChange(stat);
+    #calculateTrend(stat) {
+        const change = this.#calculateChange(stat);
         if (change === null) return null;
         return parseFloat(change) >= 0 ? 'up' : 'down';
     }
 
-    _addEventListeners() {
+    #addEventListeners() {
         const cards = this.container.querySelectorAll('.data-stats-card');
         cards.forEach(card => {
             card.addEventListener('click', () => {

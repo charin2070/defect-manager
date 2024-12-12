@@ -4,20 +4,14 @@ class StatisticManager extends Reactive {
         this.issues = issues;     
             
         if (this.issues) {
-            this.updateIndex(this.issues).then((index)=> {
-                this.index = index;
-                this.setState({ index: this.index }, 'StatisticManager.updateIndex');
-                this.updateStatistics(index);
-            });
+            this.updateStatistics(this.issues);
         }
 
         this.setupSubscriptions();
+
     }
 
     setupSubscriptions() {
-        this.subscribe('data', (issues) => {
-            this.updateStatistics(issues);
-        });
     }
 
     // Example of Issue object
@@ -68,111 +62,116 @@ class StatisticManager extends Reactive {
         }
     }
 
-    static filterIssues(filter, issues) {
-        if (!issues || !Array.isArray(issues)) {
-            log(issues, '[StatisticManager] filterIssues requires an array of issues');
-            return [];
-        }
-
-        return issues.filter(issue => {
-            for (const [field, condition] of Object.entries(filter)) {
-                // Handle date range filters
-                if (field === 'creation' || field === 'resolved') {
-                    const dateField = field === 'creation' ? 'created' : 'resolved';
-                    const issueDate = new Date(issue[dateField]);
-                    
-                    if (condition.startDate && new Date(condition.startDate) > issueDate) {
-                        return false;
-                    }
-                    if (condition.endDate && new Date(condition.endDate) < issueDate) {
-                        return false;
-                    }
-                }
-                // Handle relative date filters (e.g., last 30 days)
-                else if (field === 'creationDate' || field === 'resolvedDate') {
-                    const dateField = field === 'creationDate' ? 'created' : 'resolved';
-                    const issueDate = new Date(issue[dateField]);
-                    const daysAgo = condition;
-                    
-                    if (!issueDate) continue;
-                    
-                    const compareDate = new Date();
-                    compareDate.setDate(compareDate.getDate() + daysAgo);
-                    
-                    if (daysAgo < 0 && issueDate < compareDate) {
-                        return false;
-                    } else if (daysAgo > 0 && issueDate > compareDate) {
-                        return false;
-                    }
-                }
-                // Handle numeric comparisons
-                else if (typeof issue[field] === 'number') {
-                    if (typeof condition === 'string') {
-                        const operator = condition.substring(0, 2);
-                        const value = parseFloat(condition.substring(2));
-                        
-                        switch(operator) {
-                            case '>=': if (!(issue[field] >= value)) return false; break;
-                            case '<=': if (!(issue[field] <= value)) return false; break;
-                            case '==': if (!(issue[field] === value)) return false; break;
-                            case '!=': if (!(issue[field] !== value)) return false; break;
-                            default:
-                                if (condition.startsWith('>')) {
-                                    if (!(issue[field] > parseFloat(condition.substring(1)))) return false;
-                                } else if (condition.startsWith('<')) {
-                                    if (!(issue[field] < parseFloat(condition.substring(1)))) return false;
-                                }
-                        }
-                    } else if (typeof condition === 'number') {
-                        if (issue[field] !== condition) return false;
-                    }
-                }
-                // Handle team filter
-                else if (field === 'team' && condition !== 'all') {
-                    if (issue.team !== condition) return false;
-                }
-                // Handle simple equality comparisons
-                else if (issue[field] !== condition) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }
+    
 
     updateStatistics(issues) {
         log(issues, '[Statistic Manager] Updating statistics');
         
-        if (!issues) {
-            log(issues, '[StatisticManager] updateStatistics requires an array of issues');
+        if (!issues || !Array.isArray(issues)) {
+            console.warn('[StatisticManager] updateStatistics requires a defined array of issues');
             return;
         }
 
-        totalStatistics = StatisticManager.calculateStatistics(issues);
-        last30daysIssues = StatisticManager.filterIssues({creationDate: -30, resolvedDate: -30, team: 'all'}, issues);
-
-        this.statistics = {
-            lastMonth: {
-                unresolved: null,
-                resolved: null,
-                rejected: null,
-            },
-            currentMonth: {
-                unresolved: null,
-                resolved: null,
-                rejected: null,
-            },
-            total: {
-                unresolved: null,
-                resolved: null,
-                rejected: null,
+        const statistics = {
+            defects: {
+                lastMonth: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'defect', 
+                        creation: IndexManager.getDateFilter('last_month')
+                    }, issues)
+                ),
+                currentMonth: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'defect', 
+                        creation: IndexManager.getDateFilter('current_month')
+                    }, issues)
+                ),
+                total: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'defect' 
+                    }, issues)
+                )
+            },  
+            requests: {
+                lastMonth: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'request', 
+                        creation: IndexManager.getDateFilter('last_month')
+                    }, issues)
+                ),
+                currentMonth: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'request', 
+                        creation: IndexManager.getDateFilter('current_month')
+                    }, issues)
+                ),
+                total: StatisticManager.getIssueStatistics(
+                    IndexManager.getIssues({ 
+                        type: 'request' 
+                    }, issues)
+                )
             }
+        };
+
+        this.setState({ statistics: statistics }, '[StatisticManager] updateStatistics');
+        log(statistics, '[StatisticManager] Statistics updated');
+    }
+
+    static getIssueStatistics(issues, dateRanges = []) {
+        if (!issues || !Array.isArray(issues)) {
+            log(issues, '[StatisticManager] calculateIssueStatistics requires an array of issues');
+            return null;
         }
 
-        this.setState({ statistics: this.statistics }, 'StatisticManager.updateStatistics');
-        log(this.statistics, '[StatisticManager] Statistics updated');
-    }
-    
+        const calculateStatistics = (filteredIssues) => {
+            const stats = {
+                unresolved: [],
+                resolved: [],
+                rejected: [],
+                rejectedByTeam: [],
+                reports: 0
+            };
 
-    
-}   
+            filteredIssues.forEach(issue => {
+                if (!issue) return;
+
+                const state = issue.state || 'unresolved';
+                switch(state.toLowerCase()) {
+                    case 'unresolved':
+                        stats.unresolved.push(issue); 
+                        break;
+                    case 'resolved':
+                        stats.resolved.push(issue); 
+                        break;
+                    case 'rejected':
+                        stats.rejected.push(issue); 
+                        break;
+                    default:
+                        stats.unresolved.push(issue);
+                }
+
+                switch(issue.status){
+                    case 'Отклонен':
+                        stats.rejectedByTeam.push(issue);
+                        break;
+                }
+                
+                stats.reports += parseInt(issue.reports) || 0;
+            });
+
+            return stats;
+        };
+
+        if (dateRanges.length > 0) {
+            return dateRanges.map(dateFilter => {
+                const filteredIssues = issues.filter(issue => {
+                    const issueDate = new Date(issue.created);
+                    return issueDate >= dateFilter.startDate && issueDate <= dateFilter.endDate;
+                });
+                return calculateStatistics(filteredIssues);
+            });
+        }
+
+        return calculateStatistics(issues);
+    }
+}

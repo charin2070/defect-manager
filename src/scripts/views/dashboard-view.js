@@ -44,80 +44,26 @@ class DashboardView extends View {
 
     handleStatClick(statId) {
         const slidePanel = SlidePanel.getInstance();
-        
-        if (statId === 'defects') {
-            slidePanel.setTitle('Нерешенные дефекты');
-            slidePanel.setLogo('src/image/bug-0.svg');
+        const statistics = this.refact.state.statistics;
 
-            // Get unresolved defects
-            const unresolvedDefects = this.refact.state?.statistics?.defects?.unresolved || [];
-            
-            // Create and configure issue table
-            const issueTable = new IssueTable(['taskId', 'status', 'description', 'reports', 'created']);
-            issueTable.showIssues(unresolvedDefects);
-            
-            // Show panel with issue table
-            slidePanel.setContent(issueTable.container);
-            slidePanel.show();
-        } else if (statId.includes('defects')) {
-            const statistics = this.refact.state.statistics;
-            if (!statistics || !statistics.defects || !statistics.requests) {
-                console.warn('[DashboardView] Statistics object is incomplete', statistics);
-                return;
-            }
+        if (!statistics || !statistics.defects || !statistics.requests) {
+            console.warn('[DashboardView] Statistics object is incomplete', statistics);
+            return;
+        }
 
-            const { defects, requests } = statistics;
+        const isDefects = statId.includes('defects');
+        const { defects, requests } = statistics;
 
-            const unresolvedIssues = defects?.total?.unresolved || [];
-            
-            if (unresolvedIssues.length > 0) {
-                const issueTable = new IssueTable(
-                    ['taskId', 'reports', 'status', 'description', 'created'],
-                    { isUpperCase: false }
-                );
-                issueTable.render(unresolvedIssues);
-                this.slidePanel.open(issueTable.container, 'Открытые дефекты');
-            }
-        } else if (statId.includes('reports')) {
-            const statistics = this.refact.state.statistics;
-            if (!statistics || !statistics.defects || !statistics.requests) {
-                console.warn('[DashboardView] Statistics object is incomplete', statistics);
-                return;
-            }
+        const unresolvedIssues = isDefects ? defects?.total?.unresolved || [] : requests?.total?.unresolved || [];
 
-            const { defects, requests } = statistics;
-
-            const unresolvedIssues = defects?.total?.unresolved || [];
-            const issuesWithReports = unresolvedIssues.filter(issue => issue.reports > 0);
-            
-            if (issuesWithReports.length > 0) {
-                const issueTable = new IssueTable(
-                    ['taskId', 'reports', 'status', 'description', 'created'],
-                    { isUpperCase: false }
-                );
-                const sortedReports = [...issuesWithReports].sort((a, b) => (b.reports || 0) - (a.reports || 0));
-                issueTable.render(sortedReports);
-                this.slidePanel.open(issueTable.container, 'Обращения на открытых дефектах');
-            }
-        } else if (statId.includes('requests')) {
-            const statistics = this.refact.state.statistics;
-            if (!statistics || !statistics.defects || !statistics.requests) {
-                console.warn('[DashboardView] Statistics object is incomplete', statistics);
-                return;
-            }
-
-            const { defects, requests } = statistics;
-
-            const unresolvedIssues = requests?.total?.unresolved || [];
-            
-            if (unresolvedIssues.length > 0) {
-                const issueTable = new IssueTable(
-                    ['taskId', 'status', 'description', 'created'],
-                    { isUpperCase: false }
-                );
-                issueTable.render(unresolvedIssues);
-                this.slidePanel.open(issueTable.container, 'Открытые доработки');
-            }
+        if (unresolvedIssues.length > 0) {
+            const issueTable = new IssueTable(
+                ['taskId', 'status', 'description', 'created'],
+                { isUpperCase: false }
+            );
+            issueTable.render(unresolvedIssues);
+            const title = isDefects ? 'Открытые дефекты' : 'Открытые доработки';
+            slidePanel.open(issueTable.container, title);
         }
     }
 
@@ -129,7 +75,7 @@ class DashboardView extends View {
             {
                 id: 'defects',
                 label: 'Дефекты',
-                icon: 'src/image/bug-0.svg',
+                icon: 'src/image/jira-defect.svg',
                 value: 0,
                 change: 0,
                 loading: !statistics,
@@ -150,48 +96,36 @@ class DashboardView extends View {
 
     setupSubscriptions() {
         this.refact.subscribe('statistics', (statistics) => {
-            if (!statistics || !statistics.defects || !statistics.requests) {
-                console.warn('[DashboardView] Statistics object is incomplete', statistics);
-                return;
-            }
+            if (!statistics) return;
 
-            const { defects, requests } = statistics;
-
-            // Безопасное получение значений с дефолтами
-            const getArrayLength = (stat, period, field, defaultValue = 0) => {
-                return stat?.[period]?.[field]?.length ?? defaultValue;
-            };
-
-            const getReportsCount = (stat, period) => {
-                return stat?.[period]?.reportsCount ?? 0;
-            };
-
-            this.dataStats.update([
+            const stats = [
                 {
                     id: 'defects_stats',
                     label: 'Дефекты',
-                    value: "HERE",
-                    previousValue: getArrayLength(defects, 'lastMonth', 'unresolved'),
-                    icon: 'src/image/layers-0.svg',
-                    footer: `${getArrayLength(defects, 'currentMonth', 'all')} в этом месяце`
-                },
-                {
-                    id: 'reports_stats',
-                    label: 'Обращения',
-                    value: getReportsCount(defects, 'total'),
-                    previousValue: getReportsCount(defects, 'lastMonth'),
-                    icon: 'src/image/translation.svg',
-                    footer: 'на открытых дефектах'
+                    value: statistics.defects?.total?.unresolved?.length || 0,
+                    previousValue: statistics.defects?.lastMonth?.unresolved?.length || 0,
+                    icon: 'src/image/jira-defect.svg',
+                    footer: `${statistics.defects?.currentMonth?.unresolved?.length || 0} в этом месяце`
                 },
                 {
                     id: 'requests_stats',
                     label: 'Доработки',
-                    value: getArrayLength(requests, 'total', 'unresolved'),
-                    previousValue: getArrayLength(requests, 'lastMonth', 'unresolved'),
-                    icon: 'src/image/code.svg',
-                    footer: `${getArrayLength(requests, 'currentMonth', 'all')} в этом месяце`
+                    value: statistics.requests?.total?.unresolved?.length || 0,
+                    previousValue: statistics.requests?.lastMonth?.unresolved?.length || 0,
+                    icon: 'src/image/jira-task.svg',
+                    footer: `${statistics.requests?.currentMonth?.unresolved?.length || 0} в этом месяце`
+                },
+                {
+                    id: 'reports_stats',
+                    label: 'Обращения',
+                    value: statistics.defects?.total?.reports || 0,
+                    previousValue: statistics.defects?.lastMonth?.reports || 0,
+                    icon: 'src/image/jira-report.svg',
+                    footer: `${statistics.defects?.currentMonth?.reports || 0} в этом месяце`
                 }
-            ]);
+            ];
+
+            this.dataStats.update(stats);
         });
     }
 }

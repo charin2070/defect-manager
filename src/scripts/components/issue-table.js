@@ -11,11 +11,11 @@ class IssueTable {
                 header: 'Задача',
                 formatter: (issue) => `
                     <div class="flex items-center space-x-3">
-                        <img src="src/image/bug-0.svg" alt="Defect" class="w-5 h-5">
-                        <a href="https://jira.moscow.alfaintra.net/browse/${issue.id}" 
+                        <img src="src/image/jira-defect.svg" alt="Defect" class="w-5 h-5">
+                        <a href="https://jira.moscow.alfaintra.net/browse/${issue.taskId}" 
                            target="_blank" 
                            class="text-indigo-600 hover:text-indigo-900 font-medium"
-                           title="Открыть в Jira">${issue.id}</a>
+                           title="Открыть в Jira">${issue.taskId}</a>
                     </div>`,
                 className: 'pl-4',
                 sortable: true,

@@ -27,13 +27,15 @@ class ViewController extends Reactive {
         this.registerView('dashboard', this.dashboardView);
         this.registerView('reports', this.reportsView);
         this.registerView('settings', this.settingsView);
-        
-        // Set up subscriptions after views are registered
+
         this.setupSubscriptions();
     }
 
     setupSubscriptions(){
+        // App Status
         this.subscribe('appStatus', (appStatus) => this.handleAppStatus(appStatus));
+        // Stattiistics
+        this.subscribe('statistics', (statistics) => this.updateView());
         // View
         this.subscribe('view', (viewName) => this.showView(viewName));
         // Toast
@@ -49,6 +51,9 @@ class ViewController extends Reactive {
         switch (appStatus) {
             case('loading'):
                 this.showLoader()
+                break;
+            case('loaded'):
+                this.hideLoader();
                 break;
             case('error'):
                 this.showView('error');
@@ -121,8 +126,7 @@ class ViewController extends Reactive {
     }
 
     updateView() {
-        const issues = this.refact.issues;
-        if (!issues || !issues.length) {
+        if (!this.state.statistics || !this.state.statistics.length <= 0) {
             this.showView('upload');
         } else {
             this.showView('dashboard');

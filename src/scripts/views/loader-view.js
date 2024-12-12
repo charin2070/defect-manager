@@ -38,6 +38,7 @@ class LoaderView extends View {
         if (!this.#initialized) return;
         
         this.container.classList.remove('opacity-100');
+        this.container.style.display = 'none';
         this.container.addEventListener('transitionend', () => {
             this.container.classList.add('hidden');
         }, { once: true });
