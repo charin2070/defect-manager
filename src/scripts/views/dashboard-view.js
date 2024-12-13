@@ -11,7 +11,7 @@ class DashboardView extends View {
         // Container
         const container = this.createElement('div', {
             id: 'dashboard-view',
-            className: 'p-8 w-full max-w-7xl mx-auto no-cursor-select'
+            className: 'w-full max-w-7xl mx-auto no-cursor-select'
         });
         this.setContainer(container);
 
@@ -29,17 +29,41 @@ class DashboardView extends View {
         });
         container.appendChild(this.chartContainer);
 
-        // Initialize DataStats
-        this.dataStats = new DataStats(this.topCardsRow, {
-            theme: 'light',
-            layout: 'detailed',
-            columns: 3,
-            showChange: true,
-            onStatClick: (statId) => this.handleStatClick(statId)
-        });
+        log(this.state, '[DashboardView] CARD');
+        // Initialize DataCards
+        this.defectsCard = new DataCard(
+            this.topCardsRow,
+            {
+                id: 'defects-card',
+                valueSource: 'statistics.defects.total.unresolved',
+                title: 'Дефекты',
+                icon: 'src/image/electrical-sensor.svg',
+                value: 0,  
+                description: '0 в этом месяце',
+                theme: 'light',
+                attributes: {
+                    'data-card-type': 'defect'
+                },
+                onStatClick: (statId) => this.handleStatClick(statId)
+            }
+        );
+        // this.defectsCard.subscribeValue('statistics.defects.total.unresolved');
 
-        // Initial render with loading state
-        this.showCards();
+        this.requestsCard = new DataCard(
+            this.topCardsRow,    
+            {
+                title: 'Доработки',
+                icon: 'src/image/data-configuration.svg',
+                value: '0',
+                description: '0 в этом месяце',
+                theme: 'light',
+                attributes: {
+                    'data-card-type': 'request'
+                },
+                onStatClick: (statId) => this.handleStatClick(statId)
+            }
+        );
+        this.requestsCard.subscribeValue(this.refact, 'statistics.requests.total.unresolved');
     }
 
     handleStatClick(statId) {
@@ -68,64 +92,13 @@ class DashboardView extends View {
     }
 
     showCards() {
-        // Get count of object entries
-        const statistics = this.refact.state.statistics;
-
-        this.dataStats.update([
-            {
-                id: 'defects',
-                label: 'Дефекты',
-                icon: 'src/image/jira-defect.svg',
-                value: 0,
-                change: 0,
-                loading: !statistics,
-                attributes: {
-                    'data-card-type': 'defect'
-                }
-            },
-            {
-                id: 'requests',
-                label: 'Запросы',
-                icon: 'src/image/trigger.svg',
-                value: 0,
-                change: 0,
-                loading: !statistics
-            }
-        ]);
+        this.topCardsRow.style.display = 'flex';
     }
 
     setupSubscriptions() {
         this.refact.subscribe('statistics', (statistics) => {
             if (!statistics) return;
 
-            const stats = [
-                {
-                    id: 'defects_stats',
-                    label: 'Дефекты',
-                    value: statistics.defects?.total?.unresolved?.length || 0,
-                    previousValue: statistics.defects?.lastMonth?.unresolved?.length || 0,
-                    icon: 'src/image/jira-defect.svg',
-                    footer: `${statistics.defects?.currentMonth?.unresolved?.length || 0} в этом месяце`
-                },
-                {
-                    id: 'requests_stats',
-                    label: 'Доработки',
-                    value: statistics.requests?.total?.unresolved?.length || 0,
-                    previousValue: statistics.requests?.lastMonth?.unresolved?.length || 0,
-                    icon: 'src/image/jira-task.svg',
-                    footer: `${statistics.requests?.currentMonth?.unresolved?.length || 0} в этом месяце`
-                },
-                {
-                    id: 'reports_stats',
-                    label: 'Обращения',
-                    value: statistics.defects?.total?.reports || 0,
-                    previousValue: statistics.defects?.lastMonth?.reports || 0,
-                    icon: 'src/image/jira-report.svg',
-                    footer: `${statistics.defects?.currentMonth?.reports || 0} в этом месяце`
-                }
-            ];
-
-            this.dataStats.update(stats);
         });
     }
 }

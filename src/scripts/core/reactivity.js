@@ -25,5 +25,13 @@ class Reactive {
     subscribe(key, callback) {
         this.refact.subscribe(key, callback);
     }
+
+    getState(key) {
+        if (!this.state[key] || this.state[key] === undefined) {
+            console.warn(`State key not found: ${key}`);
+            return 'Загрузка...';
+        }
+        return this.state[key];
+    }
     
 }

@@ -1,4 +1,4 @@
-class DataStats extends Reactive {
+class DataStats extends HtmlComponent {
     constructor(container, options = {}) {
         super(container);
         this.options = {
@@ -9,8 +9,6 @@ class DataStats extends Reactive {
             ...options
         };
 
-        // Add animation styles
-        this.#injectStyles();
         this.templates = {
             default: this.#createDefaultTemplate(),
             simple: this.#createSimpleTemplate(),
@@ -22,98 +20,26 @@ class DataStats extends Reactive {
     }
     
     setupSubscriptions() {
-        this.subscribe('statistics', (value) => {
-            this.update(value);
+        this.subscribe('statistics', (statistics) => {
+            this.update(statistics);
         });
-    }
-
-    #injectStyles() {
-        if (!document.getElementById('data-stats-styles')) {
-            const styles = `
-                .data-stats-card {
-                    transition: all 0.3s ease-in-out;
-                    position: relative;
-                    overflow: hidden;
-                    z-index: 10;
-                    cursor: pointer;
-                }               
-                
-                .data-stats-card:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-                }
-                
-                .data-stats-icon {
-                    transition: all 0.3s ease;
-                }
-                
-                .data-stats-card:hover .data-stats-icon {
-                    transform: scale(1.1);
-                }
-                
-                .data-stats-value {
-                    transition: all 0.3s ease;
-                    background: linear-gradient(90deg, #3B82F6, #10B981);
-                    -webkit-background-clip: text;
-                    background-clip: text;
-                    color: transparent;
-                }
-                
-                .data-stats-trend {
-                    transition: all 0.3s ease;
-                }
-                
-                .data-stats-trend.up {
-                    background: linear-gradient(135deg, #059669, #10B981);
-                }
-                
-                .data-stats-trend.down {
-                    background: linear-gradient(135deg, #DC2626, #EF4444);
-                }
-                
-                @keyframes pulse {
-                    0% { opacity: 1; }
-                    50% { opacity: 0.7; }
-                    100% { opacity: 1; }
-                }
-                
-                .data-stats-loading {
-                    animation: pulse 1.5s infinite ease-in-out;
-                }
-            `;
-            
-            const styleSheet = document.createElement('style');
-            styleSheet.id = 'data-stats-styles';
-            styleSheet.textContent = styles;
-            document.head.appendChild(styleSheet);
-        }
     }
 
     // Update statistics data
     update(stats) {
-        if (!Array.isArray(stats)) {
-            console.error('Stats must be an array of stat objects');
-            return;
-        }
+        // const processedStats = stats.map(stat => ({
+        //     ...stat,
+        //     id: stat.id || this.generateId(),
+        //     change: this.#calculateChange(stat),
+        //     trend: this.#calculateTrend(stat)
+        // }));
 
-        const processedStats = stats.map(stat => ({
-            ...stat,
-            id: stat.id || this.#generateId(),
-            change: this.#calculateChange(stat),
-            trend: this.#calculateTrend(stat)
-        }));
-
-        this.render(processedStats);
+        this.render();
     }
 
     // Render statistics based on selected layout
     render(stats) {
         const template = this.templates[this.options.layout];
-        if (!template) {
-            console.error(`Layout template '${this.options.layout}' not found`);
-            return;
-        }
-
         const html = template(stats);
         this.container.innerHTML = html;
         this.#addEventListeners();
@@ -134,15 +60,15 @@ class DataStats extends Reactive {
                                 .map(([key, value]) => `${key}="${value}"`)
                                 .join(' ') 
                             : '';
-
+                            
                         return `
                             <div class="data-stats-card relative overflow-hidden rounded-lg ${bgClass} px-4 pb-12 pt-5 shadow-lg sm:px-6 sm:pt-6 backdrop-blur-sm no-cursor-select" 
                                  data-stat-id="${stat.id}"
                                  ${attributesStr}>
                                 <dt>
                                     ${stat.icon ? `
-                                        <div class="data-stats-icon absolute rounded-md p-3">
-                                            <img src="${stat.icon}" alt="${stat.label}" class="h-6 w-6 text-white" />
+                                        <div class="data-stats-icon absolute rounded-md p-1">
+                                            <img src="${stat.icon}" alt="${stat.label}" class="h-8 w-8 text-white" />
                                         </div>
                                     ` : ''}
                                     <p class="ml-16 truncate text-sm font-medium text-gray-500">${stat.label}</p>
@@ -255,23 +181,20 @@ class DataStats extends Reactive {
             </div>`;
     }
 
-    // Helper methods
-    #generateId() {
-        return `stat#${Math.random().toString(36).substr(2, 9)}`;
-    }
+
 
     #calculateChange(stat) {
         if (!stat.previousValue || !stat.value) return null;
         const prev = parseFloat(stat.previousValue);
         const curr = parseFloat(stat.value);
         if (isNaN(prev) || isNaN(curr)) return null;
-        return ((curr - prev) / prev * 100).toFixed(2);
+        return Math.round((curr - prev) / prev * 100);
     }
 
     #calculateTrend(stat) {
         const change = this.#calculateChange(stat);
         if (change === null) return null;
-        return parseFloat(change) >= 0 ? 'up' : 'down';
+        return change >= 0 ? 'up' : 'down';
     }
 
     #addEventListeners() {

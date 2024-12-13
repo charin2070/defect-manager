@@ -137,35 +137,30 @@ class App extends Reactive {
     }
 
     subscribeForConsole() {
-        const originalConsoleError = console.error;
-        const originalConsoleWarn = console.warn;
-
-        console.error = (...args) => {
-            originalConsoleError.apply(console, args);
-            const errorMessage = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : arg
-            ).join(' ');
-            this.setState({ toast: { message: errorMessage, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
-        };
-
-        console.warn = (...args) => {
-            originalConsoleWarn.apply(console, args);
-            const warnMessage = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : arg
-            ).join(' ');
-            this.setState({ toast: { message: warnMessage, type: 'warning', duration: 4000 } }, 'App.subscribeForConsole');
-        };
-
-        window.addEventListener('error', (event) => {
-            const errorMessage = `${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
-            this.setState({ toast: { message: errorMessage, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+        const consoleMethods = ['error', 'warn'];
+        consoleMethods.forEach(method => {
+            const original = console[method];
+            console[method] = (...args) => {
+                original.apply(console, args);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                ).join(' ');
+                const type = method === 'error' ? 'error' : 'warning';
+                this.setState({ toast: { message, type, duration: 5000 } }, `App.subscribeForConsole:${method}`);
+            };
         });
-
-        window.addEventListener('unhandledrejection', (event) => {
-            const errorMessage = `Unhandled Promise Rejection: ${event.reason}`;
-            this.setState({ toast: { message: errorMessage, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+    
+        window.addEventListener('error', event => {
+            const message = `${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
+            this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+        });
+    
+        window.addEventListener('unhandledrejection', event => {
+            const message = `Unhandled Promise Rejection: ${event.reason}`;
+            this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     }
+    
 
     setupDefaults() {
         this.dataKey = 'defect-manager';
