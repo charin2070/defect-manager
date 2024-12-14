@@ -37,36 +37,35 @@ class DashboardView extends View {
                 id: 'defects-card',
                 valueSource: 'statistics.defects.total.unresolved',
                 title: 'Дефекты',
-                icon: 'src/image/electrical-sensor.svg',
+                icon: 'src/image/jira-defect.svg',
                 value: 0,  
                 description: '0 в этом месяце',
                 theme: 'light',
                 attributes: {
                     'data-card-type': 'defect'
                 },
-                onStatClick: (statId) => this.handleStatClick(statId)
+                onClick: () => this.handleCardClick('defects-card')
             }
         );
-        // this.defectsCard.subscribeValue('statistics.defects.total.unresolved');
 
         this.requestsCard = new DataCard(
             this.topCardsRow,    
             {
+                id: 'requests-card',
                 title: 'Доработки',
-                icon: 'src/image/data-configuration.svg',
+                icon: 'src/image/jira-request.svg',
                 value: '0',
                 description: '0 в этом месяце',
                 theme: 'light',
                 attributes: {
                     'data-card-type': 'request'
                 },
-                onStatClick: (statId) => this.handleStatClick(statId)
+                onClick: () => this.handleCardClick('requests-card'),
             }
         );
-        this.requestsCard.subscribeValue(this.refact, 'statistics.requests.total.unresolved');
     }
 
-    handleStatClick(statId) {
+    handleCardClick(cardId) {
         const slidePanel = SlidePanel.getInstance();
         const statistics = this.refact.state.statistics;
 
@@ -75,19 +74,31 @@ class DashboardView extends View {
             return;
         }
 
-        const isDefects = statId.includes('defects');
-        const { defects, requests } = statistics;
-
-        const unresolvedIssues = isDefects ? defects?.total?.unresolved || [] : requests?.total?.unresolved || [];
-
-        if (unresolvedIssues.length > 0) {
-            const issueTable = new IssueTable(
-                ['taskId', 'status', 'description', 'created'],
-                { isUpperCase: false }
-            );
-            issueTable.render(unresolvedIssues);
-            const title = isDefects ? 'Открытые дефекты' : 'Открытые доработки';
-            slidePanel.open(issueTable.container, title);
+        let issues = [];
+        switch (cardId) {
+            case 'defects-card':
+                this.slidePanel.setLogo('src/image/jira-defect.svg');
+                this.slidePanel.setTitle('Дефекты');
+                issues = statistics.defects.total.unresolved;
+                if (issues.length > 0) {
+                    const issueTable = new IssueTable(['taskId', 'status', 'description', 'created']);
+                    issueTable.render(issues);
+                    slidePanel.open(issueTable.container, 'Открытые дефекты');
+                }
+                break;
+            case 'requests-card':
+                this.slidePanel.setLogo('src/image/jira-request.svg');
+                this.slidePanel.setTitle('Доработки');
+                issues = statistics.requests.total.unresolved;
+                if (issues.length > 0) {
+                    const issueTable = new IssueTable(['taskId', 'status', 'description', 'created']);
+                    issueTable.render(issues);
+                    slidePanel.open(issueTable.container, 'Открытые доработки');
+                }
+                break;
+            default:
+                console.warn('[DashboardView] Unknown cardId', cardId);
+                return;
         }
     }
 
@@ -98,7 +109,21 @@ class DashboardView extends View {
     setupSubscriptions() {
         this.refact.subscribe('statistics', (statistics) => {
             if (!statistics) return;
-
+            this.update(statistics);
         });
+    }
+
+    update(statistics) {
+        if (!statistics) return;
+        
+        const defectsUnresolved = statistics?.defects?.unresolved?.count;
+        const defectsCreated = statistics?.defects?.currentMonth?.created?.length || 0;
+        const requestsUnresolved = statistics?.requests?.unresolved?.count;
+        const requestsCreated = statistics?.requests?.currentMonth?.created?.length || 0;
+
+        this.defectsCard.setValue(defectsUnresolved);
+        this.defectsCard.setDescription(`${defectsCreated} в этом месяце`);
+        this.requestsCard.setValue(requestsUnresolved);
+        this.requestsCard.setDescription(`${requestsCreated} в этом месяце`);
     }
 }

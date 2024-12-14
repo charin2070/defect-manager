@@ -153,7 +153,7 @@ class LayoutView extends View {
 
         const mainMenu = new DropdownComponent(rightSection, {
             id: 'layout-navbar-main-menu',
-            buttonContent: '<img src="src/image/menu.svg" alt="Menu" class="w-5 h-5" />',
+            buttonContent: '<img src="src/image/hamburger-0.svg" alt="Menu" class="w-5 h-5" />',
             items: mainMenuItems,
             onItemClick: (action) => {
                 switch (action) {
@@ -165,7 +165,7 @@ class LayoutView extends View {
                         this.setState({ process: 'file_upload' }, 'LayoutView');
                         break;
                     case 'clearLocalStorageData':
-                        this.refact.setState({ issues: null }, 'LayoutView');
+                        this.refact.setState({ process: 'cleanup_local_storage_data' }, 'LayoutView');
                         break;
                     case 'debug':
                         // Выводим состояние Refact

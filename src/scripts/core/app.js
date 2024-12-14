@@ -4,38 +4,8 @@ class App extends Reactive {
         
         this.setState({ appStatus: 'loading' }, 'App.init');
         this.init()
-            .then(() => {
-                return this.loadData();
-            })
-            .then(data => {
-                if (data && Object.keys(data).length > 0) {
-                    // Convert taskId object to a flat array of issues
-                    const issues = Object.values(data.taskId).flat();
-                    this.managers.statisticManager.updateStatistics(issues);
-                    
-                    this.setState({
-                        index: data,
-                        issues: issues,
-                        appStatus: 'loaded'
-                    }, 'App.init');
-                    this.managers.viewController.showView('dashboard');
-                } else {
-                    this.setState({ 
-                        index: null,
-                        appStatus: 'loaded' 
-                    }, 'App.init');
-                    this.managers.viewController.showView('upload');
-                }
-            })
-            .catch(error => {
-                console.error('[App] Error during initialization:', error);
-                this.setState({ 
-                    index: null,
-                    appStatus: 'loaded',
-                    appError: error 
-                }, 'App.init');
-                this.managers.viewController.showView('upload');
-            });
+            .then(() => this.setState({ appStatus: 'initialized' }, 'App.init'))
+            .catch(error => log(error, '[App] Error during init'));
     }
 
     setupSubscriptions() {
@@ -50,8 +20,28 @@ class App extends Reactive {
                     log(this.refact, 'Refact');
                     log(this.refact.state, 'State');
                     break;
+
                 case 'test_function':
                     this.test();
+                    break;
+                case 'cleanup_local_storage_data':
+                    this.managers.dataManager.cleanupLocalStorageData();
+                    break;
+                case 'cleanup_local_storage':
+                    this.managers.dataManager.cleanupLocalStorage(true);
+                    break;
+            }
+        });
+
+        this.subscribe('dataStatus', (dataStatus) => {
+            switch (dataStatus) {
+                case 'loading': 
+                    break;
+                case 'empty': 
+                    this.managers.viewController.showView('upload');
+                    break;
+                case 'loaded': 
+                    this.managers.viewController.showView('dashboard');
                     break;
             }
         });
@@ -80,10 +70,10 @@ class App extends Reactive {
     loadData() {
         return new Promise((resolve, reject) => {
             try {
-                this.managers.dataManager.loadFromLocalStorage(['index'])
+                this.managers.dataManager.loadFromLocalStorage(['index', 'issues'])
                     .then(data => {
                         if (!data || Object.keys(data).length === 0) {
-                            console.warn('[App] No data found in LocalStorage');
+                            log('Данные не найдены в локальном хранилище', '[App]');
                             resolve(null);
                             return;
                         }
@@ -93,11 +83,11 @@ class App extends Reactive {
                         resolve(data);
                     })
                     .catch(error => {
-                        console.warn('[App] Error loading from LocalStorage:', error);
+                        log('Ошибка при загрузке данных:', error);
                         resolve(null);
                     });
             } catch (error) {
-                console.error('[App] Error in loadData:', error);
+                console.error('Ошибка в loadData:', error);
                 reject(error);
             }
         });
@@ -145,18 +135,23 @@ class App extends Reactive {
                 const message = args.map(arg => 
                     typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                 ).join(' ');
+                
+                if (message.includes('Данные не найдены') || message.includes('No data found')) {
+                    return;
+                }
+                
                 const type = method === 'error' ? 'error' : 'warning';
                 this.setState({ toast: { message, type, duration: 5000 } }, `App.subscribeForConsole:${method}`);
             };
         });
     
         window.addEventListener('error', event => {
-            const message = `${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
+            const message = `Ошибка: ${event.message}`;
             this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     
         window.addEventListener('unhandledrejection', event => {
-            const message = `Unhandled Promise Rejection: ${event.reason}`;
+            const message = `Необработанная ошибка: ${event.reason}`;
             this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     }

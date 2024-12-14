@@ -103,6 +103,36 @@ class IndexManager {
         }
     }
 
+    // taskId = new String();
+
+    // static issues = {
+    //     defects: { // type = 'defect'
+    //         resolved: {// state = 'resolved'
+    //             resolutionDates: {
+    //                 date: [taskId]
+    //             },
+    //             slaDates: {
+    //                 date: [taskId]
+    //             }
+    //         },
+    //         unresolved: { // state = 'unresolved'
+    //             creationDates: { 
+    //                 date: [taskId] // date = issue.creation, taskId=  issue.taskId
+    //             }
+    //         },
+    //         rejected: { // issue.state = 'rejected'
+    //             rejectionDates: {
+    //                 date: [taskId] // date = issue.resolved, taskId=  issue.taskId
+    //             }
+    //         } 
+    //     },
+    //     requests: { // type = 'request'
+    //         resolved: {}, // state = 'resolved'
+    //         unresolved: {}, // state = 'unresolved'
+    //         rejected: {} // state = 'rejected'
+    //     },
+    // }
+
     static indexIssues(issues) {
         return new Promise((resolve, reject) => {
             if (!issues) {
@@ -132,13 +162,13 @@ class IndexManager {
                     issues.forEach(issue => {
                         if (!issue) return;
 
-                        // Index by ID
+                        // taskId
                         if (issue.taskId) {
                             index.taskId[issue.taskId] = [];
                         }
                         index.taskId[issue.taskId].push(issue);
 
-                        // Index by type
+                        // Type
                         if (!index.type[issue.type]) {
                             index.type[issue.type] = [];
                         }
@@ -156,6 +186,24 @@ class IndexManager {
                                 index.created[issue.created] = [];
                             }
                             index.created[issue.created].push(issue.taskId);
+                        }
+
+                        // Resolved date
+                        if (issue.resolved) {
+                            if (issue.status === 'Закрыт') {
+                                if (!index.resolved[issue.resolved]) {
+                                    index.resolved[issue.resolved] = [];
+                                }
+                                index.resolved[issue.resolved].push(issue.taskId);
+                            } else if (issue.status === 'Отклонен') {
+                                if (!index.rejected[issue.resolved]) {
+                                    index.rejected[issue.resolved] = [];
+                                }
+                                index.rejected[issue.resolved].push(issue.taskId);
+                            } else {
+                                warn(`[IndexManager] Issue with taskId ${issue} has an invalid status: ${issue}`);
+                            }
+
                         }
 
                     });
@@ -179,6 +227,78 @@ class IndexManager {
     }
 
     static getIssues(filter, issues) {
+        if (!issues || !Array.isArray(issues)) {
+            console.warn(`[IndexManager] getIssues requires an array of issues, instead got: ${typeof issues}`);
+            return [];
+        }
+
+        return issues.filter(issue => {
+            for (const [field, condition] of Object.entries(filter)) {
+                // Handle date range filters
+                if (field === 'creation' || field === 'resolved') {
+                    const dateField = field === 'creation' ? 'created' : 'resolved';
+                    const issueDate = new Date(issue[dateField]);
+                    
+                    if (condition.startDate && new Date(condition.startDate) > issueDate) {
+                        return false;
+                    }
+                    if (condition.endDate && new Date(condition.endDate) < issueDate) {
+                        return false;
+                    }
+                }
+                // Handle relative date filters (e.g., last 30 days)
+                else if (field === 'creationDate' || field === 'resolvedDate') {
+                    const dateField = field === 'creationDate' ? 'created' : 'resolved';
+                    const issueDate = new Date(issue[dateField]);
+                    const daysAgo = condition;
+                    
+                    if (!issueDate) continue;
+                    
+                    const compareDate = new Date();
+                    compareDate.setDate(compareDate.getDate() + daysAgo);
+                    
+                    if (daysAgo < 0 && issueDate < compareDate) {
+                        return false;
+                    } else if (daysAgo > 0 && issueDate > compareDate) {
+                        return false;
+                    }
+                }
+                // Handle numeric comparisons
+                else if (typeof issue[field] === 'number') {
+                    if (typeof condition === 'string') {
+                        const operator = condition.substring(0, 2);
+                        const value = parseFloat(condition.substring(2));
+                        
+                        switch(operator) {
+                            case '>=': if (!(issue[field] >= value)) return false; break;
+                            case '<=': if (!(issue[field] <= value)) return false; break;
+                            case '==': if (!(issue[field] === value)) return false; break;
+                            case '!=': if (!(issue[field] !== value)) return false; break;
+                            default:
+                                if (condition.startsWith('>')) {
+                                    if (!(issue[field] > parseFloat(condition.substring(1)))) return false;
+                                } else if (condition.startsWith('<')) {
+                                    if (!(issue[field] < parseFloat(condition.substring(1)))) return false;
+                                }
+                        }
+                    } else if (typeof condition === 'number') {
+                        if (issue[field] !== condition) return false;
+                    }
+                }
+                // Handle team filter
+                else if (field === 'team' && condition !== 'all') {
+                    if (issue.team !== condition) return false;
+                }
+                // Handle simple equality comparisons
+                else if (issue[field] !== condition) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    static getIssuesEx(filter, issues) {
         if (!issues || !Array.isArray(issues)) {
             console.warn(`[IndexManager] getIssues requires an array of issues, instead got: ${typeof issues}`);
             return [];

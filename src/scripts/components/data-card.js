@@ -7,9 +7,9 @@ class DataCard extends HtmlComponent {
 
         this.options = {
             id: options.id || this.generateId('data-card'),
-            valueSource: options.valueSource || '',
             title: options.title || '',
             icon: options.icon || '',
+            onClick: options.onClick || (() => {}),
             value: options.value || '0',
             description: options.description || '',
             theme: options.theme || 'light',
@@ -46,10 +46,8 @@ class DataCard extends HtmlComponent {
         };
 
         this.elements.card.addEventListener('click', () => {
-            this.options.onClick && this.options.onClick();
+            this.options.onClick();
         });
-
-        this.setValue(this.getState(this.options.valueSource));
     }
 
     // Простые методы для обновления содержимого
@@ -73,10 +71,4 @@ class DataCard extends HtmlComponent {
         this.elements.description.textContent = description;
     }
 
-    // Метод для подписки на изменение значения
-    subscribeValue(field) {
-        this.subscribe(field, (value) => {
-            this.setValue(value);
-        });
-    }
 }
