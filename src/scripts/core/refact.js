@@ -49,12 +49,12 @@ class Refact {
             // Update state in one go to avoid multiple re-renders
             this.state = { ...this.state, ...newState };
             
-            // Notify only once per key
+            // Once per key
             for (const key in newState) {
                 const value = newState[key];
                 this.notify(key);
                 
-                // Log in a more concise way
+                // Log
                 const logValue = value === null ? 'null' : 
                                value === undefined ? 'undefined' :
                                typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' :
@@ -63,7 +63,7 @@ class Refact {
                 console.log(`⚡State "${key}" => ${logValue} (by: ${changedBy})`);
             }
         } catch (error) {
-            console.error('Error setting state:', error);
+            console.error('[Refact.setState] Error setting state:', error);
         }
     }
     

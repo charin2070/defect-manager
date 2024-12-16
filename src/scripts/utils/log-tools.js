@@ -12,8 +12,11 @@ function log(data, description) {
 
   // Логирование описания
   if (description) {
-    logStyled(`${description}:`, 'font-weight: bold; font-size: 1em; color: lightgreen');
+    // Get console-important-log selector styles
+    const cssStyles = getComputedStyle(document.body).getPropertyValue('--console-important-log');
+    logStyled(`${description}:`, cssStyles);
   }
+
 
   // Логирование данных
   if (dataType === "string") {

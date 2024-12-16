@@ -27,10 +27,8 @@ class Reactive {
     }
 
     getState(key) {
-        if (!this.state[key] || this.state[key] === undefined) {
-            console.warn(`State key not found: ${key}`);
-            return 'Загрузка...';
-        }
+        if (!key)
+            return this.state;
         return this.state[key];
     }
     

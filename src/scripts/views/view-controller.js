@@ -34,8 +34,22 @@ class ViewController extends Reactive {
     setupSubscriptions(){
         // App Status
         this.subscribe('appStatus', (appStatus) => this.handleAppStatus(appStatus));
-        // Stattiistics
-        this.subscribe('statistics', (statistics) => this.updateView());
+        // Data Status
+        this.subscribe('dataStatus', (dataStatus) => {
+            switch (dataStatus) {
+                case 'empty':
+                    this.showView('upload');
+                    break;
+                case 'loading':
+                    this.showLoader();
+                    break;
+                case 'loaded':
+                    this.showView('dashboard');
+                    this.hideLoader();
+                    break;
+            }
+        });
+        
         // View
         this.subscribe('view', (viewName) => this.showView(viewName));
         // Toast
@@ -50,9 +64,11 @@ class ViewController extends Reactive {
     handleAppStatus(appStatus) {
         switch (appStatus) {
             case('loading'):
+            case('initializing'):
                 this.showLoader()
                 break;
             case('loaded'):
+            case('initialized'):
                 this.hideLoader();
                 break;
             case('error'):
@@ -126,6 +142,19 @@ class ViewController extends Reactive {
     }
 
     updateView() {
+        switch (this.state.dataStatus) {
+            case 'loading':
+                this.showLoader();
+                break;
+            case 'loaded':
+                this.showView('dashboard');
+                this.hideLoader();
+                break;
+            case 'empty':
+                this.showView('upload');
+                break;
+        }
+
         if (!this.state.statistics || !this.state.statistics.length <= 0) {
             this.showView('upload');
         } else {

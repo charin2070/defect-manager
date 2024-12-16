@@ -59,7 +59,13 @@ class CsvParser {
     csvLines.forEach((line, index) => {
       if (index === 0) {
         formattedLines.push(line.trim());
-      } else if (line.trim().startsWith("ADIRINC-")) {
+      } else if (
+        line.startsWith("Request (FR)") || 
+        line.startsWith("Дефект промсреды") ||
+        line.startsWith("Task") ||
+        line.startsWith("Epic") ||  
+        line.startsWith("Story"))
+        { 
         if (currentLine) {
           formattedLines.push(currentLine.trim());
         }
@@ -77,7 +83,7 @@ class CsvParser {
     return formattedLines;
   }
 
-  static csvLinesToObjects(csvLines) {
+  static csvLinesToObjects(csvLines, indexField) {
     console.log("🏃‍♂️‍➡️ [CsvParser.csvLinesToObjects] Processing CSV lines:", csvLines.length);
     
     return new Promise((resolve, reject) => {

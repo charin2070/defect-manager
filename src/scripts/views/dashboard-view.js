@@ -14,13 +14,7 @@ class DashboardView extends View {
             className: 'w-full max-w-7xl mx-auto no-cursor-select'
         });
         this.setContainer(container);
-
-        // Cards row
-        this.topCardsRow = this.createElement('div', {
-            id : 'top-cards-row',
-            className: 'flex flex-row flex-wrap justify-start gap-8 my-8 p-4 w-full no-cursor-select'
-        });
-        container.appendChild(this.topCardsRow);
+        this.createCards(container);
 
         // Chart container
         this.chartContainer = this.createElement('div', { 
@@ -29,7 +23,16 @@ class DashboardView extends View {
         });
         container.appendChild(this.chartContainer);
 
-        log(this.state, '[DashboardView] CARD');
+    }
+
+    createCards(container) {
+        // Cards row
+        this.topCardsRow = this.createElement('div', {
+            id : 'top-cards-row',
+            className: 'flex flex-row flex-wrap justify-start gap-8 my-8 p-4 w-full no-cursor-select'
+        });
+        container.appendChild(this.topCardsRow);
+
         // Initialize DataCards
         this.defectsCard = new DataCard(
             this.topCardsRow,
@@ -121,8 +124,15 @@ class DashboardView extends View {
         const requestsUnresolved = statistics?.requests?.unresolved?.count;
         const requestsCreated = statistics?.requests?.currentMonth?.created?.length || 0;
 
+        const resolvedDefects = parseInt(statistics?.defects?.resolved?.count);
+        const unresolvedDefects = parseInt(statistics?.defects?.unresolved?.count);
+        const rejectedDefects = parseInt(statistics?.defects?.rejected?.count);
+        const summDefects = resolvedDefects + unresolvedDefects + rejectedDefects;
+        log(resolvedDefects, 'resolvedDefects');
+
+        const totalDefects = summDefects;
         this.defectsCard.setValue(defectsUnresolved);
-        this.defectsCard.setDescription(`${defectsCreated} в этом месяце`);
+        this.defectsCard.setDescription(`${totalDefects} всего задач`);
         this.requestsCard.setValue(requestsUnresolved);
         this.requestsCard.setDescription(`${requestsCreated} в этом месяце`);
     }

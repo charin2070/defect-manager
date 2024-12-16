@@ -1,11 +1,73 @@
 class App extends Reactive {
     constructor(container) {
         super(container);
-        
-        this.setState({ appStatus: 'loading' }, 'App.init');
-        this.init()
-            .then(() => this.setState({ appStatus: 'initialized' }, 'App.init'))
-            .catch(error => log(error, '[App] Error during init'));
+        this.initialize();
+    }
+
+    // Default config
+    defaultConfig = {
+        mode: "prod",
+        dataKey: "defect-manager",
+        theme: "light",
+        dataKeys: ["issues", "index", "statistics", "dataUpdated"],
+        dataStatus: 'empty',
+        filters : {
+            dateStart: new Date('2021-01-01').toISOString(),
+            dateEnd: new Date().toISOString(),
+            team: 'all',
+        },
+        view: 'dashboard'
+    };
+
+    async initialize() {
+        log('[App.initialize] Start App...');
+        this.setState({ appStatus: 'initializing' }, 'App.initialize');
+
+        try {
+            this.setupDefaults();
+            this.setupManagers();
+            this.setupSubscriptions();
+            this.setupKeyBindings();
+
+            // Loading from Local Storage
+            const data = await this.managers.dataManager.loadFromLocalStorage(['issues', 'index', 'statistics', 'dataUpdated']);
+            this.setState({ dataSource: 'local_storage' });
+            // No data
+            if (!data.issues) {
+                this.setState({ dataStatus: 'empty', dataSource: 'local_storage', appStatus: 'initialized' }, 'App.initialize');
+                return;
+            }
+
+            if (!this.state?.data?.index){
+                // Set this.state.data.index
+                const index = await IndexManager.getStructuredIndex(data.issues);
+                const statistics = await StatisticManager.updateStatistics(index);
+
+                this.setState({ ...data, 'index': index, 'statistics': statistics }, 'App.initialize');
+                this.managers.dataManager.saveToLocalStorage({ index: index, statistics: statistics });
+            }
+
+            this.setState({ appStatus: 'initialized' }, 'App.initialize');
+            return true;
+        } catch (error) {
+            log(error, '[App.initialize] Initialization failed');
+            throw error;
+        }
+    }
+
+
+    setupKeyBindings() {
+        document.addEventListener('keydown', (event) => {
+            if (event.shiftKey && ['D', 'd', 'В', 'в'].includes(event.key)) {
+                this.logDevInfo();
+                return;
+            }
+        });
+    }
+
+    logDevInfo() {
+        log(this.refact, '[App] Refact');
+        log(this.refact.state, '[App] Refact State');
     }
 
     setupSubscriptions() {
@@ -16,114 +78,63 @@ class App extends Reactive {
         this.subscribe('process', (value) => {
             switch (value) {
                 case 'logState':
-                    log(this.managers, 'Managers');
                     log(this.refact, 'Refact');
-                    log(this.refact.state, 'State');
+                    log(this.refact.state, 'Refact State');
                     break;
 
                 case 'test_function':
                     this.test();
                     break;
+
                 case 'cleanup_local_storage_data':
-                    this.managers.dataManager.cleanupLocalStorageData();
+                    this.managers.dataManager.cleanupLocalStorage(false, this.state.dataKeys);
                     break;
-                case 'cleanup_local_storage':
-                    this.managers.dataManager.cleanupLocalStorage(true);
-                    break;
-            }
-        });
-
-        this.subscribe('dataStatus', (dataStatus) => {
-            switch (dataStatus) {
-                case 'loading': 
-                    break;
-                case 'empty': 
-                    this.managers.viewController.showView('upload');
-                    break;
-                case 'loaded': 
-                    this.managers.viewController.showView('dashboard');
+                default:
+                    log(`[App] Unknown process: ${value}`);
                     break;
             }
         });
 
-        // Index
-        this.subscribe('index', (index) => {
-            log(this.state,'[App] State');
+        // Handle file uploads and data processing in a single subscription
+        this.subscribe('uploadedFile', async (file) => {
+            if (!file) return;
             
-            // Only show dashboard if we have valid data
-            if (index && Object.keys(index).length > 0) {
-                this.managers.viewController.showView('dashboard');
-            }
-        });
-
-        this.subscribe('statistics', (statistics) => {
-            log(statistics, '[App] Statistics');
-            
-            if (this.state.statistics && typeof this.state.statistics !== undefined){
-            this.managers.viewController.showView('dashboard');
-            }
-        }
-        );
-        
-    }
-
-    loadData() {
-        return new Promise((resolve, reject) => {
             try {
-                this.managers.dataManager.loadFromLocalStorage(['index', 'issues'])
-                    .then(data => {
-                        if (!data || Object.keys(data).length === 0) {
-                            log('Данные не найдены в локальном хранилище', '[App]');
-                            resolve(null);
-                            return;
-                        }
-                        
-                        this.setState({ data }, 'App.loadData');
-                        log(data, '[App] Loaded data from LocalStorage');
-                        resolve(data);
-                    })
-                    .catch(error => {
-                        log('Ошибка при загрузке данных:', error);
-                        resolve(null);
-                    });
+                const issues = await this.managers.dataManager.loadFromFile(file);
+                const index = await IndexManager.getStructuredIndex(issues);
+                const statistics = await StatisticManager.updateStatistics(index);
+                
+                // Update all related state in a single setState call
+                this.setState({
+                    issues,
+                    index,
+                    statistics,
+                    dataSource: 'file',
+                    dataUpdated: file.lastModified,
+                    dataStatus: 'loaded'
+                }, 'App.handleFileUpload');
+
+                // Save to localStorage after state update
+                this.managers.dataManager.saveToLocalStorage({ 
+                    issues,
+                    index,
+                    statistics
+                });
             } catch (error) {
-                console.error('Ошибка в loadData:', error);
-                reject(error);
+                log(error, '[App] Error processing uploaded file');
+                this.setState({ 
+                    dataStatus: 'error',
+                    error: error.message
+                }, 'App.handleFileUpload');
             }
         });
-    }
-    
-    // Default config
-    defaultConfig = {
-        mode: "prod",
-        dataKey: "defect-manager",
-        theme: "light",
-        filters : {
-            dateStart: new Date('2021-01-01').toISOString(),
-            dateEnd: new Date().toISOString(),
-            team: 'all'
-        }
-    };
 
+    }
+
+    // Called by state.process.test_function change
     test() {
         log('[App] Test');
         this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
-    }
-
-    init() {
-        this.setState({ appStatus: 'loading' }, 'App.init');
-        return new Promise((resolve, reject) => {
-        try {    
-            this.setupDefaults();
-            this.setupManagers();
-            this.setupSubscriptions();
-            this.subscribeForConsole();
-
-            resolve(true);
-        } catch (error) {
-            reject(error);
-        }
-    })
     }
 
     subscribeForConsole() {
@@ -161,21 +172,17 @@ class App extends Reactive {
         this.dataKey = 'defect-manager';
         this.managers = {};
         this.refact.setState({
-            config: this.defaultConfig,
-            defects: {},
-            requests: {},
-            tasks: {},
-            toast: null,
-            dataKey: 'defect-manager',
-            filters: null,
-            dataSource: 'storage',
-            currentView: null,
-            dataStatus: 'empty',
-            statistics: null,
-            appStatus: 'setupManagers',
+            appStatus: null,
+            dataStatus: null,
+            config: null,
             issues: null,
-            reportType: null,
-            uploadedFile: null  // Add this to prevent unknown source later
+            index: null,
+            statistics: null,
+            toast: null,
+            filters: null,
+            view: null,
+            uploadedFile: null,
+            reportType: null
         }, 'App.setDefaultStates');
     }
 
@@ -188,6 +195,10 @@ class App extends Reactive {
             reportManager: new ReportManager(),
             dataTransformer: new DataTransformer()
         };
+
+        this.setState({
+            config: this.managers.config
+        }, 'App.setupManagers');
     }
 
     logStates(){

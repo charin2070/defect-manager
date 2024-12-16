@@ -11,36 +11,17 @@ class StatisticManager extends Reactive {
 
     }
 
-    updateStatistics(issues) {
-        if (!issues || !Array.isArray(issues)) {
-            console.warn('[StatisticManager] updateStatistics requires a defined array of issues');
-            return;
-        }
-
-        const issueStatistics = StatisticManager.getStructuredStatistics(issues);
-        log(issueStatistics, '📊 [StatisticManager] Issue statistics');
-        // Преобразуем статистику в нужный формат
-        const formattedStatistics = {
-            defects: {
-                total: {
-                    unresolved: issueStatistics.statisticsTotal.unresolved || [],
-                },
-                currentMonth: {
-                    created: issueStatistics.currentMonthStatistics.created || [],
-                }
-            },
-            requests: {
-                total: {
-                    unresolved: issueStatistics.statisticsTotal.unresolved || [],
-                },
-                currentMonth: {
-                    created: issueStatistics.currentMonthStatistics.created || [],
-                }
+    static async updateStatistics(indexedIssues) {
+        return new Promise((resolve, reject) => {
+            if (!indexedIssues || typeof indexedIssues !== 'object') {
+                log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
+                reject(new Error('[StatisticManager.updateStatistics] Invalid indexed issues object'));
+                return;
             }
-        };
 
-        this.setState({ statistics: formattedStatistics }, '[StatisticManager] updateStatistics');
-        log(formattedStatistics, '📊 [StatisticManager] Statistics updated');
+            const issueStatistics = null;
+            resolve(issueStatistics);
+        });
     }
 
     setupSubscriptions() {
@@ -86,90 +67,6 @@ class StatisticManager extends Reactive {
             overdue: [], // Просроченные
             averageResolutionTime: 0, // Среднее время исправления
             reports: 0 // Количество обращений от пользователей на не исправленных задачах
-    }
-
-    static getStructuredStatistics(issues) {
-        const statisticsStructure = {
-            defects: {
-                resolved: {
-                    count: 0,
-                    resolutionDates: {},
-                    slaDates: {}
-                },
-                unresolved: {
-                    count: 0,
-                    creationDates: {}
-                },
-                rejected: {
-                    count: 0,
-                    rejectionDates: {}
-                }
-            },
-            requests: {
-                resolved: {
-                    count: 0
-                },
-                unresolved: {
-                    count: 0
-                },
-                rejected: {
-                    count: 0
-                }
-            }
-        };
-    
-        if (!issues || !Array.isArray(issues)) {
-            console.warn("[IndexManager] getStructuredStatistics requires an array of issues.");
-            return statisticsStructure;
-        }
-    
-        issues.forEach(issue => {
-            const type = issue.type;
-            const state = issue.state;
-            const taskId = issue.taskId;
-            const creationDate = issue.created ? new Date(issue.created).toISOString().split('T')[0] : null;
-            const resolvedDate = issue.resolved ? new Date(issue.resolved).toISOString().split('T')[0] : null;
-            const slaDate = issue.sla ? new Date(issue.sla).toISOString().split('T')[0] : null;
-    
-            if (type === 'defect') {
-                if (state === 'resolved') {
-                    statisticsStructure.defects.resolved.count++;
-                    if (resolvedDate) {
-                        statisticsStructure.defects.resolved.resolutionDates[resolvedDate] =
-                            statisticsStructure.defects.resolved.resolutionDates[resolvedDate] || [];
-                        statisticsStructure.defects.resolved.resolutionDates[resolvedDate].push(taskId);
-                    }
-                    if (slaDate) {
-                        statisticsStructure.defects.resolved.slaDates[slaDate] =
-                            statisticsStructure.defects.resolved.slaDates[slaDate] || [];
-                        statisticsStructure.defects.resolved.slaDates[slaDate].push(taskId);
-                    }
-                } else if (state === 'unresolved') {
-                    statisticsStructure.defects.unresolved.count++;
-                    if (creationDate) {
-                        statisticsStructure.defects.unresolved.creationDates[creationDate] =
-                            statisticsStructure.defects.unresolved.creationDates[creationDate] || [];
-                        statisticsStructure.defects.unresolved.creationDates[creationDate].push(taskId);
-                    }
-                } else if (state === 'rejected') {
-                    statisticsStructure.defects.rejected.count++;
-                    if (resolvedDate) {
-                        statisticsStructure.defects.rejected.rejectionDates[resolvedDate] =
-                            statisticsStructure.defects.rejected.rejectionDates[resolvedDate] || [];
-                        statisticsStructure.defects.rejected.rejectionDates[resolvedDate].push(taskId);
-                    }
-                }
-            } else if (type === 'request') {
-                const category = statisticsStructure.requests[state];
-                if (category) {
-                    category.count++;
-                    category[creationDate] = category[creationDate] || [];
-                    category[creationDate].push(taskId);
-                }
-            }
-        });
-    
-        return statisticsStructure;
     }
 
     static getIssueStatistics(issues) {

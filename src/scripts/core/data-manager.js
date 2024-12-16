@@ -1,95 +1,53 @@
 // Reads, parse and store data
 class DataManager extends Reactive {
-  constructor(dataKey = 'defect-manager') {
+  constructor() {
     super(document.body);
 
-    this.issues = [];
-    this.defects = [];
-    this.requests = [];
-    this.otherIssues = [];
-    this.lastError = null;
-    this.dataKey = dataKey;
+    this.dataKeys = ['issues', 'index', 'statistics', 'dataUpdated'];
     this.setupSubscriptions();
-    // Try to load data from Local Storage on initialization
   }
 
   setupSubscriptions() {
-    // Clear Entire Local Storage
+    // Process
     this.subscribe('process', (value) => {
       switch (value) {
+        // Cleanup entire Local Storage
         case 'cleanup_local_storage':
-          localStorage.clear();
-          this.setState({ issues: null }, 'DataManager');
-          this.setState({ process: null }, 'DataManager');
-          // window.location.reload();
+          this.cleanupLocalStorage(true);
           break;
       }
     });
 
-    this.refact.subscribe('uploadedFile', (file) => {
-      if (file) {
-        this.loadFromFile(file);
-        this.setState({ dataStatus: 'loading' }, 'DataManager.loadFromFile');
-      }
-    });
-
-    this.subscribe('appStatus', (value) => {
-      if (value === 'initialized') {
-        this.loadFromLocalStorage(['index', 'issues']).then((data) => {
-          if (data && Object.keys(data).length > 0) {
-            // Convert taskId object to a flat array of issues
-            const flatIssues = Object.values(data.issues || {}).flat();
-            const statistics = StatisticManager.getStructuredStatistics(flatIssues);
-            this.setState({ issues: data.index.taskId, index: data.index, statistics: statistics, dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-          }
-        });
-      }
-    });
-
-    ;
   }
 
+  // Load issues from file
   loadFromFile(file) {
+    log(file, '🚀 [DataManager] Loading from file');
     return new Promise((resolve, reject) => {
-      if (!file) { 
-        reject(new Error('Файл не предоставлен'));
+      if (!file) {
+        reject(new Error('Файл недоступен'));
         return;
       }
 
-      log(file, '🚀 [DataManager] Loading from file');
-
       if (file.name.endsWith('.csv')) {
         this.loadFromCsvFile(file).then((issues) => {
-          IndexManager.indexIssues(issues).then((index) => {
-            // Сохраняем taskId в issues и удаляем его из index
-            const issuesData = index.taskId;
-            delete index.taskId;
+          this.setState({
+            issues: issues,
+            dataSource: 'file',
+            // dateUpdated as date in format 'dd-mm-yyyy'
+            dataUpdated: new Date().toLocaleDateString('en-GB'),
+          }, '[DataManager] loadFromFile');
 
-            this.setState({
-              index: index,
-              issues: issuesData,
-              dataSource: 'file',
-              dateUpdated: file.lastModified,
-              dataStatus: 'loaded'
-            }, '[DataManager] loadFromFile');
-
-            // Сохраняем в localStorage с разделением на index и issues
-            this.saveToLocalStorage({
-              index: index,
-              issues: issuesData,
-              issuesUpdated:  file.lastModified,
-              slaUpdated: false,
-            }).then(() => {
-              resolve({ issues: issuesData, source: 'file' });
-            });
-          });
+          log(issues, `✅ [DataManager] ${issues.length} задач загруженно из CSV-файла`);
+          resolve(issues);
         });
       } else {
-        reject(new Error('Неподдерживаемый формат файла'));
+        reject(new Error('[Data Manager] Неподдерживаемый формат файла'));
       }
     });
   }
 
+  // Load issues from CSV file
   loadFromCsvFile(csvFile) {
     return new Promise((resolve, reject) => {
       // Get lines
@@ -109,7 +67,32 @@ class DataManager extends Reactive {
     });
   }
 
-  // Import SLA dates from Power BI
+  loadFromLocalStorage(dataKeys = this.dataKeys) {
+    log('🔃 [DataManager] Loading data from Local Storage...');
+
+    return new Promise((resolve, reject) => {
+      try {
+        const result = {};
+        dataKeys.forEach(dataKey => {
+          try {
+            result[dataKey] = JSON.parse(localStorage.getItem(dataKey));
+          } catch (error) {
+            log(error, `[DataManager.loadFromLocalStorage] При разборе данных из LocalStorage произошла ошибка (ключ: ${dataKey})`);
+            result[dataKey] = null;
+          }
+        });
+
+        log(result, '✅ [DataManager.loadFromLocalStorage] Данные загружены из LocalStorage');
+        resolve(result);
+
+      } catch (error) {
+        console.error('[DataManager.loadFromLocalStorage] При разборе данных из LocalStorage произошла неизвестная ошибка', error);
+        reject(error);
+      }
+    });
+  }
+
+  // Import SLA dates from Power BI issues
   updateSlaDates(loadedData) {
     // Convert loaded data to Issue objects if they aren't already
     const loadedIssues = loadedData.map(data => data instanceof Issue ? data : new Issue(data));
@@ -157,71 +140,24 @@ class DataManager extends Reactive {
     return { issues: this.refact.state.issues, source: 'file' };
   }
 
-  // Returns values from Local Storage by keys
-  loadFromLocalStorage(dataKeys = ['index', 'issues']) {
-    return new Promise((resolve, reject) => {
-      try {
-        log('🚀 [DataManager] Loading from LocalStorage');
-        
-        const result = {};
-        let hasData = false;
-
-        // Загружаем данные для каждого ключа
-        dataKeys.forEach(dataKey => {
-          const data = localStorage.getItem(dataKey);
-          
-          if (data) {
-            result[dataKey] = JSON.parse(data);
-            hasData = true;
-            log(`✅ [DataManager] Загружено ${dataKey} из LocalStorage`);
-          } else {
-            log(`⚠️ [DataManager] Данные не найдены для ${dataKey} в LocalStorage`);
-          }
-        });
-
-        if (!hasData) {
-          reject(new Error('Данные не найдены в локальном хранилище'));
-          return;
-        }
-
-        // Обновляем состояние только если есть все необходимые данные
-        if (result.index || result.issues) {
-          this.setState({
-            ...result,
-            dataSource: 'localStorage',
-            dataStatus: 'loaded'
-          }, '[DataManager] loadFromLocalStorage');
-        }
-
-        log(result, '✅ [DataManager] Data loaded from LocalStorage');
-        resolve(result);
-      } catch (error) {
-        console.error('Ошибка при загрузке данных из локального хранилища:', error);
-        reject(error);
-      }
-    });
-  }
-
-  saveToLocalStorage(data) {
-    log(data, '🚀 [DataManager] Saving to LocalStorage');
+  saveToLocalStorage(dataObject) {
+    log(dataObject, '🚀 [DataManager] Saving to LocalStorage');
 
     return new Promise((resolve, reject) => {
       try {
-        if (!data || typeof data !== 'object') {
+        if (!dataObject || typeof dataObject !== 'object') {
           console.error('[DataManager] saveToLocalStorage: Invalid data object provided');
           reject(new Error('Invalid data object'));
           return;
         }
 
-        // Сохраняем каждый объект под своим ключом
-        Object.entries(data).forEach(([dataKey, value]) => {
-          const serializedData = JSON.stringify(value);
-          localStorage.setItem(dataKey, serializedData);
-          log(`Saved ${dataKey} to localStorage`, '✅ [DataManager]');
+        Object.entries(dataObject).forEach(([key, value]) => {
+          localStorage.setItem(key, JSON.stringify(value));
+          log(`Saved ${key} to localStorage`, '✅ [DataManager]');
         });
-        
+
         this.setState({
-          ...data,
+          ...dataObject,
           dataStatus: 'loaded'
         }, '[DataManager] saveToLocalStorage');
 
@@ -234,23 +170,20 @@ class DataManager extends Reactive {
     });
   }
 
-  cleanupLocalStorage(isAll = false, dataKeys = []) {
+  cleanupLocalStorage(isAll = false, dataKeys = this.dataKeys) {
     if (isAll) {
       localStorage.clear();
-      console.log('🗑️ [Data Manager] All data removed from LocalStorage');
+      log(localStorage, '🗑️ [Data Manager] All data removed from LocalStorage');
+      this.setState({ dataStatus: 'empty' }, 'DataManager.removeFromLocalStorage');
+      return;
     } else {
       dataKeys.forEach(key => {
         localStorage.removeItem(key);
         this.setState({ [key]: null }, 'DataManager.removeFromLocalStorage');
-        console.log(`🗑️ [Data Manager] Removed ${key} from LocalStorage`);
+        log(localStorage, `🗑️ [Data Manager] Removed ${key} from LocalStorage`);
       });
     }
 
-    this.setState({ dataStatus: 'empty' }, 'DataManager.removeFromLocalStorage');
-  }
-
-  cleanupLocalStorageData() {
-    this.cleanupLocalStorage(false, ['index', 'issues']);
   }
 
   // Returns file lines
@@ -264,11 +197,11 @@ class DataManager extends Reactive {
   }
 
   getIssues() {
-    return this.issues;
+    return this.state.issues;
   }
 
   getIndex() {
-    return this.index;
+    return this.state.index;
   }
 
 }

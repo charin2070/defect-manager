@@ -1,5 +1,6 @@
-class IndexManager {
+class IndexManager extends Refact {
     constructor(issues) {
+        super(document.body);
         this.issues = issues;
         this.index = null;
     }
@@ -103,35 +104,94 @@ class IndexManager {
         }
     }
 
-    // taskId = new String();
+    static async getStructuredIndex(issues) {
+        log ('[IndexManager] Building structured index...');
 
-    // static issues = {
-    //     defects: { // type = 'defect'
-    //         resolved: {// state = 'resolved'
-    //             resolutionDates: {
-    //                 date: [taskId]
-    //             },
-    //             slaDates: {
-    //                 date: [taskId]
-    //             }
-    //         },
-    //         unresolved: { // state = 'unresolved'
-    //             creationDates: { 
-    //                 date: [taskId] // date = issue.creation, taskId=  issue.taskId
-    //             }
-    //         },
-    //         rejected: { // issue.state = 'rejected'
-    //             rejectionDates: {
-    //                 date: [taskId] // date = issue.resolved, taskId=  issue.taskId
-    //             }
-    //         } 
-    //     },
-    //     requests: { // type = 'request'
-    //         resolved: {}, // state = 'resolved'
-    //         unresolved: {}, // state = 'unresolved'
-    //         rejected: {} // state = 'rejected'
-    //     },
-    // }
+        if (!issues || !Array.isArray(issues)) {
+            console.warn("[IndexManager] getStructuredStatistics requires an array of issues. Current issues: " + issues);
+            return null;
+        }
+
+        const index = {
+            id: {},
+            defects: {
+                resolved: {
+                    count: 0,
+                    resolutionDates: {},
+                    slaDates: {}
+                },
+                unresolved: {
+                    count: 0,
+                    creationDates: {}
+                },
+                rejected: {
+                    count: 0,
+                    rejectionDates: {}
+                }
+            },
+            requests: {
+                resolved: {
+                    count: 0
+                },
+                unresolved: {
+                    count: 0
+                },
+                rejected: {
+                    count: 0
+                }
+            }
+        };
+    
+        issues.forEach(issue => {
+            const type = issue.type;
+            const state = issue.state;
+            const taskId = issue.taskId;
+            const creationDate = issue.created ? new Date(issue.created).toISOString().split('T')[0] : null;
+            const resolvedDate = issue.resolved ? new Date(issue.resolved).toISOString().split('T')[0] : null;
+            const slaDate = issue.sla ? new Date(issue.sla).toISOString().split('T')[0] : null;
+    
+            index.id[taskId] = issue;
+
+            if (type === 'defect') {
+                if (state === 'resolved') {
+                    index.defects.resolved.count++;
+                    if (resolvedDate) {
+                        index.defects.resolved.resolutionDates[resolvedDate] =
+                            index.defects.resolved.resolutionDates[resolvedDate] || [];
+                        index.defects.resolved.resolutionDates[resolvedDate].push(taskId);
+                    }
+                    if (slaDate) {
+                        index.defects.resolved.slaDates[slaDate] =
+                            index.defects.resolved.slaDates[slaDate] || [];
+                        index.defects.resolved.slaDates[slaDate].push(taskId);
+                    }
+                } else if (state === 'unresolved') {
+                    index.defects.unresolved.count++;
+                    if (creationDate) {
+                        index.defects.unresolved.creationDates[creationDate] =
+                            index.defects.unresolved.creationDates[creationDate] || [];
+                        index.defects.unresolved.creationDates[creationDate].push(taskId);
+                    }
+                } else if (state === 'rejected') {
+                    index.defects.rejected.count++;
+                    if (resolvedDate) {
+                        index.defects.rejected.rejectionDates[resolvedDate] =
+                            index.defects.rejected.rejectionDates[resolvedDate] || [];
+                        index.defects.rejected.rejectionDates[resolvedDate].push(taskId);
+                    }
+                }
+            } else if (type === 'request') {
+                const category = index.requests[state];
+                if (category) {
+                    category.count++;
+                    category[creationDate] = category[creationDate] || [];
+                    category[creationDate].push(taskId);
+                }
+            }
+        });
+    
+        return index;
+    }
 
     static indexIssues(issues) {
         return new Promise((resolve, reject) => {

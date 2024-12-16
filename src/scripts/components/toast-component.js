@@ -1,5 +1,6 @@
-class ToastComponent {
+class ToastComponent extends HtmlComponent {
     constructor() {
+        super();
         this.container = this.createContainer();
         document.body.appendChild(this.container);
         this.addGlobalStyles();
@@ -7,64 +8,12 @@ class ToastComponent {
 
     addGlobalStyles() {
         const style = document.createElement('style');
-        style.textContent = `
-            @keyframes toastSlideIn {
-                0% { transform: translateY(150%) scale(0.7); opacity: 0; }
-                100% { transform: translateY(0) scale(1); opacity: 1; }
-            }
-            @keyframes toastSlideOut {
-                0% { transform: translateY(0) scale(1); opacity: 1; }
-                100% { transform: translateY(150%) scale(0.7); opacity: 0; }
-            }
-            @keyframes iconBounce {
-                0% { transform: scale(0); }
-                70% { transform: scale(1.2); }
-                100% { transform: scale(1); }
-            }
-            @keyframes messageSlide {
-                0% { opacity: 0; transform: translateY(10px); }
-                100% { opacity: 1; transform: translateY(0); }
-            }
-            .toast-enter {
-                animation: toastSlideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-            }
-            .toast-exit {
-                animation: toastSlideOut 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-            }
-            .toast {
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            }
-            .toast-icon {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.2);
-            }
-        `;
         document.head.appendChild(style);
     }
 
     createContainer() {
         const container = document.createElement('div');
-        container.style.cssText = `
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            pointer-events: none;
-            max-width: 90vw;
-            width: max-content;
-        `;
+        container.className = 'toast-container';
         container.id = 'toast-container';
         return container;
     }
@@ -135,10 +84,26 @@ class ToastComponent {
             closeButton.style.opacity = '0.8';
             closeButton.style.background = 'rgba(255, 255, 255, 0.2)';
         };
-        closeButton.onclick = () => this.removeToast(toast);
-        toast.appendChild(closeButton);
+        // closeButton.onclick = () => this.removeToast(toast);
+        // toast.appendChild(closeButton);
+
+
+        toast.onclick = () => {
+            // Copy toast messages to clipboard
+            navigator.clipboard.writeText(message);
+            
+            // Set clicked toast message to "Скопировано"
+            if (toast.parentElement === this.container) {
+                toast.querySelector('p').textContent = 'Скопировано';
+                this.removeToast(toast);
+            }
+        };
 
         return toast;
+    }
+
+    setMessage(message) {
+        this.container.appendChild(this.createToast(message));
     }
 
     getTypeStyles(type) {
@@ -189,26 +154,39 @@ class ToastComponent {
         return icons[type] || icons.info;
     }
 
-    show(message, type = 'info', duration = 4000) {
+    show(message, type = 'info', duration = 5000) {
         const toast = this.createToast(message, type);
         this.container.appendChild(toast);
         
-        setTimeout(() => {
-            toast.classList.remove('toast-enter');
-            toast.classList.add('toast-exit');
-            setTimeout(() => {
-                this.container.removeChild(toast);
-            }, 500);
+        // Store the timeout ID on the toast element
+        toast.timeoutId = setTimeout(() => {
+            this.removeToast(toast);
         }, duration);
     }
 
+        /**
+         * Removes a toast element from the container with an exit animation.
+         * Clears any associated timeout to prevent automatic removal.
+         * Ensures the toast is still present in the container before removing.
+         * 
+         * @param {HTMLElement} toast - The toast element to be removed.
+         */
     removeToast(toast) {
-        toast.classList.remove('toast-enter');
-        toast.classList.add('toast-exit');
-        setTimeout(() => {
-            if (toast.parentElement === this.container) {
-                this.container.removeChild(toast);
-            }
-        }, 500);
+        // Clear any existing timeout
+        if (toast.timeoutId) {
+            clearTimeout(toast.timeoutId);
+            toast.timeoutId = null;
+        }
+
+        // Only proceed if toast is still in container
+        if (toast.parentElement === this.container) {
+            toast.classList.remove('toast-enter');
+            toast.classList.add('toast-exit');
+            setTimeout(() => {
+                if (this.container && toast.parentElement === this.container) {
+                    this.container.removeChild(toast);
+                }
+            }, 500);
+        }
     }
 }
