@@ -179,8 +179,6 @@ class App extends Reactive {
             index: null,
             statistics: null,
             toast: null,
-            filters: null,
-            view: null,
             uploadedFile: null,
             reportType: null
         }, 'App.setDefaultStates');
@@ -193,7 +191,6 @@ class App extends Reactive {
             viewController: new ViewController(this.getContainer()),
             statisticManager: new StatisticManager(),
             reportManager: new ReportManager(),
-            dataTransformer: new DataTransformer()
         };
 
         this.setState({
