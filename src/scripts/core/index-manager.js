@@ -103,100 +103,86 @@ class IndexManager extends Refact {
                 };
         }
     }
-
-    static async getStructuredIndex(issues) {
-        log ('[IndexManager] Building structured index...');
+ static getStructuredIndex(issues) {
+    return new Promise((resolve, reject) => {
+        log('[IndexManager] Building structured index...');
 
         if (!issues || !Array.isArray(issues)) {
             console.warn("[IndexManager] getStructuredStatistics requires an array of issues. Current issues: " + issues);
-            return null;
+            reject(new Error("Invalid input: issues must be an array"));
+            return;
         }
 
         const index = {
             id: {},
             defects: {
-                resolved: {
-                    count: 0,
-                    resolutionDates: {},
-                    slaDates: {}
-                },
-                unresolved: {
-                    count: 0,
-                    creationDates: {}
-                },
-                rejected: {
-                    count: 0,
-                    rejectionDates: {}
-                }
+                resolved: { count: 0, resolutionDates: {}, slaDates: {} },
+                unresolved: { count: 0, creationDates: {} },
+                rejected: { count: 0, rejectionDates: {} }
             },
             requests: {
-                resolved: {
-                    count: 0
-                },
-                unresolved: {
-                    count: 0
-                },
-                rejected: {
-                    count: 0
-                }
+                resolved: { count: 0 },
+                unresolved: { count: 0 },
+                rejected: { count: 0 }
             }
         };
-    
-        issues.forEach(issue => {
-            const type = issue.type;
-            const state = issue.state;
-            const taskId = issue.taskId;
-            const creationDate = issue.created ? new Date(issue.created).toISOString().split('T')[0] : null;
-            const resolvedDate = issue.resolved ? new Date(issue.resolved).toISOString().split('T')[0] : null;
-            const slaDate = issue.sla ? new Date(issue.sla).toISOString().split('T')[0] : null;
-    
-            index.id[taskId] = issue;
 
-            if (type === 'defect') {
-                if (state === 'resolved') {
-                    index.defects.resolved.count++;
-                    if (resolvedDate) {
-                        index.defects.resolved.resolutionDates[resolvedDate] =
-                            index.defects.resolved.resolutionDates[resolvedDate] || [];
-                        index.defects.resolved.resolutionDates[resolvedDate].push(taskId);
+        Promise.all(issues.map(issue => {
+            return new Promise((resolveIssue) => {
+                const { type, state, taskId, created, resolved, sla } = issue;
+                const creationDate = created ? new Date(created).toISOString().split('T')[0] : null;
+                const resolvedDate = resolved ? new Date(resolved).toISOString().split('T')[0] : null;
+                const slaDate = sla ? new Date(sla).toISOString().split('T')[0] : null;
+
+                index.id[taskId] = issue;
+
+                if (type === 'defect') {
+                    if (state === 'resolved') {
+                        index.defects.resolved.count++;
+                        if (resolvedDate) {
+                            index.defects.resolved.resolutionDates[resolvedDate] = index.defects.resolved.resolutionDates[resolvedDate] || [];
+                            index.defects.resolved.resolutionDates[resolvedDate].push(taskId);
+                        }
+                        if (slaDate) {
+                            index.defects.resolved.slaDates[slaDate] = index.defects.resolved.slaDates[slaDate] || [];
+                            index.defects.resolved.slaDates[slaDate].push(taskId);
+                        }
+                    } else if (state === 'unresolved') {
+                        index.defects.unresolved.count++;
+                        if (creationDate) {
+                            index.defects.unresolved.creationDates[creationDate] = index.defects.unresolved.creationDates[creationDate] || [];
+                            index.defects.unresolved.creationDates[creationDate].push(taskId);
+                        }
+                    } else if (state === 'rejected') {
+                        index.defects.rejected.count++;
+                        if (resolvedDate) {
+                            index.defects.rejected.rejectionDates[resolvedDate] = index.defects.rejected.rejectionDates[resolvedDate] || [];
+                            index.defects.rejected.rejectionDates[resolvedDate].push(taskId);
+                        }
                     }
-                    if (slaDate) {
-                        index.defects.resolved.slaDates[slaDate] =
-                            index.defects.resolved.slaDates[slaDate] || [];
-                        index.defects.resolved.slaDates[slaDate].push(taskId);
-                    }
-                } else if (state === 'unresolved') {
-                    index.defects.unresolved.count++;
-                    if (creationDate) {
-                        index.defects.unresolved.creationDates[creationDate] =
-                            index.defects.unresolved.creationDates[creationDate] || [];
-                        index.defects.unresolved.creationDates[creationDate].push(taskId);
-                    }
-                } else if (state === 'rejected') {
-                    index.defects.rejected.count++;
-                    if (resolvedDate) {
-                        index.defects.rejected.rejectionDates[resolvedDate] =
-                            index.defects.rejected.rejectionDates[resolvedDate] || [];
-                        index.defects.rejected.rejectionDates[resolvedDate].push(taskId);
+                } else if (type === 'request') {
+                    const category = index.requests[state];
+                    if (category) {
+                        category.count++;
+                        category[creationDate] = category[creationDate] || [];
+                        category[creationDate].push(taskId);
                     }
                 }
-            } else if (type === 'request') {
-                const category = index.requests[state];
-                if (category) {
-                    category.count++;
-                    category[creationDate] = category[creationDate] || [];
-                    category[creationDate].push(taskId);
-                }
-            }
+
+                resolveIssue();
+            });
+        })).then(() => {
+            resolve(index);
+        }).catch(error => {
+            reject(error);
         });
-    
-        return index;
-    }
+    });
+}
 
     static indexIssues(issues) {
         return new Promise((resolve, reject) => {
             if (!issues) {
-                console.warn('[IndexManager] Input issues is null or undefined');
+                сonsole.warn('[IndexManager] Input issues is null or undefined');
                 resolve({
                     byType: {},
                     byId: {},

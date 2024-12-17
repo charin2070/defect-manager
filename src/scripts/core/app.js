@@ -13,17 +13,15 @@ class App extends Refact {
         theme: "light",
         dataKeys: ["issues", "index", "statistics", "dataUpdated"],
         dataStatus: 'empty',
-        uploadedFile: null,
         dataSource: null,
-        appStatus: 'initializing',
         error: null,
+        view: 'upload',
         process: null,
         filters : {
             dateStart: new Date('2021-01-01').toISOString(),
             dateEnd: new Date().toISOString(),
             team: 'all',
         },
-        view: 'dashboard'
     };
 
     initialize() {
@@ -39,7 +37,7 @@ class App extends Refact {
             // Loading data from Local Storage
             this.managers.dataManager.loadFromLocalStorage(['issues', 'index', 'statistics', 'dateUpdated']);
             
-    }        catch (error) {
+        } catch (error) {
             console.error('[App.initialize] Error initializing App:', error);
             this.setState({ error: error }, 'App.initialize');
         }
@@ -95,6 +93,13 @@ class App extends Refact {
         });
     }
 
+      // Called by state.process.test_function change
+      test() {
+        log('[App] Test');
+        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+    }
+    
+
     setupSubscriptions() {
         // Console
         this.subscribeForConsole();
@@ -110,28 +115,12 @@ class App extends Refact {
                 case 'test_function':
                     this.test();
                     break;
-
-                case 'cleanup_local_storage_data':
-                    if (this.state?.config?.dataKeys) {
-                        this.managers.dataManager.cleanupLocalStorage(false, this.state.config.dataKeys);
-                    } else {
-                        log('Error: config.dataKeys is not defined', '[App] cleanup_local_storage_data');
-                    }
-                    break;
-                case 'cleanup_local_storage':
-                    this.managers.dataManager.cleanupLocalStorage(true);
-                    break;
             }
         });
-    }
 
-    
-    // Called by state.process.test_function change
-    test() {
-        log('[App] Test');
-        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+        this.subscribe('uploadedFile', (file) => {
+        });
     }
-    
 
     setupDefaults() {
         log('[App] Setting up defaults...');
@@ -140,9 +129,6 @@ class App extends Refact {
             index: null,
             statistics: null,
             dataSource: null,
-            appStatus: 'initializing',
-            error: null,
-            toast: null,
             uploadedFile: null,
         }, 'App.setDefaultStates');
     }
@@ -159,42 +145,23 @@ class App extends Refact {
             
             // Initialize managers one by one
             log('Stting up ConfigManager...');
-                this.managers.config = new ConfigManager(this.defaultConfig, container);
-            log('Stting up DataManager...');
-                this.managers.dataManager = new DataManager(container);
-            log('Stting up ViewController...');
-                this.managers.viewController = new ViewController(container);
-            log('Stting up StatisticManager...');
-                this.managers.statisticManager = new StatisticManager(container);
-            log('Stting up ReportManager...');
-                this.managers.reportManager = new ReportManager(container);
-                
+            this.managers.config = new ConfigManager(this.defaultConfig, container);
+             this.setState({ config: this.managers.config }, 'App.setupManagers');
+            this.managers.chartManager = new ChartManager(container);
+            this.setState({ chartManager: this.managers.chartManager }, 'App.setupManagers');
+            this.managers.dataManager = new DataManager(container);
+            this.managers.viewController = new ViewController(container);
+            this.managers.statisticManager = new StatisticManager(container)
+            this.managers.reportManager = new ReportManager(container);
+            
+            this.setState({ managers: this.managers }, 'App.setupManagers');
             log('Managers setup complete');
         } catch (error) {
             console.error('[App.setupManagers] Error:', error);
-            this.setState({ 
-                dataStatus: 'error',
-                appStatus: 'error',
-                error: error.message
-            }, 'App.setupManagers');
             throw error;  // Re-throw to prevent continuation
-        }                
-                this.managers.dataManager = new DataManager();
-                this.managers.viewController = new ViewController(this.getContainer());
-                this.managers.statisticManager = new StatisticManager(this.getContainer());
-                this.managers.reportManager = new ReportManager(this.getContainer());
-                
-                log('Managers setup complete');
-            } catch (error) {
-                console.error('[App.setupManagers] Error:', error);
-                this.setState({ 
-                    dataStatus: 'error',
-                    appStatus: 'error',
-                    error: error.message
-                }, 'App.setupManagers');
-                throw error;  // Re-throw to prevent continuation
-            }
-        
+        }
+    }
+
 
     logStates(){
         log(this, '[App] App');

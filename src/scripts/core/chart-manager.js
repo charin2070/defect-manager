@@ -2,13 +2,7 @@ class ChartManager {
   constructor() {
       this.chartContainer = document.getElementById('chart-container');
       this.charts = new Map(); // Хранилище для графиков
-      this.currentTheme = localStorage.getItem('theme') || 'light';
-      
-      // Listen for theme changes
-      window.addEventListener('themeChanged', (e) => {
-          this.currentTheme = e.detail.theme;
-          this.updateChartsTheme();
-      });
+      this.chartType = 'line';
   }
 
   createChart(container, data, type) {

@@ -1,7 +1,7 @@
-class ViewController extends View {
-    constructor(container) {
-        super(container);
-        this.init();
+    class ViewController extends View {
+        constructor(container) {
+            super(container);
+            this.init();
     }
     
     init() {
@@ -14,14 +14,14 @@ class ViewController extends View {
         this.container.appendChild(this.layoutView.getWrapper());
         
         // Create and register views
-        this.uploadView = new UploadView();
-        this.dashboardView = new DashboardView();
+        this.uploadView = new UploadView(this.container);
+        this.dashboardView = new DashboardView(this.container);
         this.dashboardView.getContainer().id = 'dashboard-view-container';
-        this.reportsView = new ReportsView();
+        this.reportsView = new ReportsView(this.container);
         this.reportsView.getContainer().id = 'reports-view-container';
-        this.settingsView = new SettingsView();
+        this.settingsView = new SettingsView(this.container);
         this.settingsView.getContainer().id = 'settings-view-container';
-        this.toast = new ToastComponent();
+        this.toast = new ToastComponent(this.container);
 
         this.registerView('upload', this.uploadView);
         this.registerView('dashboard', this.dashboardView);
@@ -45,7 +45,7 @@ class ViewController extends View {
         });
         
         // View
-        this.subscribe('currentView', (viewName) => this.showView(viewName));
+        this.subscribe('view', (viewName) => this.showView(viewName));
         // Toast
         this.subscribe('toast', (toast) => {
             console.log('ViewController: Showing toast', toast);
@@ -113,7 +113,12 @@ class ViewController extends View {
                 container.classList.remove('view-exit', 'view-enter');
             }
         });
+        if (name === 'dashboard') {
+            log('[ViewController.showView] Rendering backlog chart...');    
+            this.dashboardView.createBacklogChart();
+            this.dashboardView.backlogData = this.state.chartManager.prepareChartData(this.state.issues);
 
+        }
         // If there's a current view, animate it out
         if (this.currentView && this.currentView !== targetView) {
             const currentContainer = this.currentView.getContainer();
@@ -126,6 +131,8 @@ class ViewController extends View {
                     resolve();
                 }, { once: true });
             });
+
+       
         }
 
         // Animate new view in
@@ -140,14 +147,11 @@ class ViewController extends View {
         });
 
         this.currentView = targetView;
-        this.refact.setState({ currentView: name }, 'ViewController.showView');
+        this.setState({ currentView: name }, 'ViewController.showView');
     }
 
     updateView() {
         switch (this.state.dataStatus) {
-            case 'loading':
-                this.showLoader();
-                break;
             case 'loaded':
                 this.showView('dashboard');
                 this.hideLoader();

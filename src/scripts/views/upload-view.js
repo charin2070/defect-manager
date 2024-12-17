@@ -1,11 +1,11 @@
 class UploadView extends View {
-    constructor() {
-        super();
+    constructor(container) {
+        super(container);
         this.createView();
     }
 
     createView() {
-        this.uploadContainer = document.createElement('div');
+        this.uploadContainer = this.createElement('div');
         this.uploadContainer.className = 'flex h-full w-full items-center justify-center';
         this.uploadContainer.id = 'upload-view';
 

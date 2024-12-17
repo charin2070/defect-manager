@@ -1,15 +1,15 @@
 class StatisticManager extends Refact {
     constructor() {
-        super(document.body);   
+        super(document.body);
     }
 
-    static async updateStatistics(indexedIssues) {
+    static updateStatistics(indexedIssues) {
         log(indexedIssues, '[StatisticManager.updateStatistics] Updating statistics with indexed issues...');
 
         return new Promise((resolve, reject) => {
             if (!indexedIssues || typeof indexedIssues !== 'object') {
                 log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
-                reject(new Error('Invalid input data'));
+                resolve(new Error('Invalid input data'));
                 return;
             }
 
@@ -17,7 +17,7 @@ class StatisticManager extends Refact {
                 currentMonth: null,
                 last30days: null,
                 last90days: null,
-                total: null
+                total: indexedIssues
             };
 
             try {
@@ -28,7 +28,7 @@ class StatisticManager extends Refact {
                 const last90Days = new Date(now.setDate(now.getDate() - 90));
 
                 // Обрабатываем каждый период
-                issueStatistics.currentMonth = this.getIssueStatistics(indexedIssues, { 
+                issueStatistics.currentMonth = this.getIssueStatistics(indexedIssues, {
                     dateStart: startOfMonth,
                     dateEnd: new Date()
                 });
@@ -45,7 +45,7 @@ class StatisticManager extends Refact {
                 log(issueStatistics, '[StatisticManager] Statistics updated');
                 resolve(issueStatistics);
             } catch (error) {
-                reject(error);
+                resolve(error);
             }
         });
     }
@@ -81,20 +81,20 @@ class StatisticManager extends Refact {
 
     // Statiistics structure
     issueStatistics = {
-            unresolved: [], // Не исправленные
-            resolved: [], // Исправленные
-            rejected: [], // Отклоненные
-            rejectedByTeam: [], // Отклонены командой сопровождени
-            created: [],  // Созданные
-            verified: [], // Приняты к исправлению
-            overdue: [], // Просроченные
-            averageResolutionTime: 0, // Среднее время исправления
-            reports: 0 // Количество обращений от пользователей на не исправленных задачах
+        unresolved: [], // Не исправленные
+        resolved: [], // Исправленные
+        rejected: [], // Отклоненные
+        rejectedByTeam: [], // Отклонены командой сопровождени
+        created: [],  // Созданные
+        verified: [], // Приняты к исправлению
+        overdue: [], // Просроченные
+        averageResolutionTime: 0, // Среднее время исправления
+        reports: 0 // Количество обращений от пользователей на не исправленных задачах
     }
 
     static async getIssueStatistics(issues, dateRange) {
         if (!issues || !issues.index || !issues.issues) {
-            log(issues, '[StatisticManager] getIssueStatistics requires an object with index and issues.'); 
+            log(issues, '[StatisticManager] getIssueStatistics requires an object with index and issues.');
             console.error("[StatisticManager] getIssueStatistics requires an object with index and issues.");
             return null;
         }
@@ -123,7 +123,7 @@ class StatisticManager extends Refact {
         // Подсчитываем статистику только если есть диапазон дат
         if (dateRange) {
             const { dateStart, dateEnd } = dateRange;
-            
+
             // Фильтруем задачи по дате создания
             if (index.created) {
                 Object.entries(index.created)

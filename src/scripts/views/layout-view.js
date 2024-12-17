@@ -1,7 +1,6 @@
 class LayoutView extends View {
-    constructor() {
-        super();
-        this.refact = Refact.getInstance();
+    constructor(container) {
+        super(container);
         this.init();
     }
 

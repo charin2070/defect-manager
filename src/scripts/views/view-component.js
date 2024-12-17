@@ -7,11 +7,6 @@ class View extends HtmlComponent {
         this.container = container;
     }
 
-    /**
-     * Generates a unique element ID based on the component name and a counter
-     * @param {string} prefix - Optional prefix for the ID
-     * @returns {string} Unique ID
-     */
     generateId(prefix = '') {
         const componentName = this.constructor.name.toLowerCase();
         return `${componentName}-${prefix ? prefix + '-' : ''}${++View.#idCounter}`;

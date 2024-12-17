@@ -1,7 +1,7 @@
 class DashboardView extends View {
-    constructor() {
-        super();
-        this.refact = Refact.getInstance();
+    constructor(container) {
+        super(container);
+        this.container = container;
         this.createView();
         this.setupSubscriptions();
         this.slidePanel = SlidePanel.getInstance();
@@ -16,14 +16,22 @@ class DashboardView extends View {
         this.setContainer(container);
         this.createCards(container);
 
+        this.backlogData = null;
+        log(this.state, '[DashboardView] State received');
+        this.state.chartManager.createBacklogLineChart(this.backlogCanvas, this.backlogData);
+
         // Chart container
         this.chartContainer = this.createElement('div', { 
-            id: 'defects-chart-container',
+            id: 'chart-container',
             className: 'mb-8 p-6 rounded-lg w-full bg-white shadow-sm no-cursor-select'
         });
         container.appendChild(this.chartContainer);
 
+
+        this.createBacklogChart();
+
     }
+
 
     createCards(container) {
         // Cards row
@@ -107,6 +115,33 @@ class DashboardView extends View {
 
     showCards() {
         this.topCardsRow.style.display = 'flex';
+    }
+    createBacklogChart() {
+        if (!this.state.issues || this.state.issues.length === 0) {
+            log('[DashboardView] No issues for Backlog Chart');
+            return;
+        }
+        const canvasId = 'backlog-chart-canvas';
+        if (!this.backlogCanvas) {
+            this.backlogCanvas = document.createElement('canvas');
+            this.backlogCanvas.id = canvasId;
+            this.chartContainer.appendChild(this.backlogCanvas); // Append to the appropriate parent
+        }
+    
+    }
+
+    renderBacklogChart( ){
+        this.backlogData = this.state.chartManager.prepareChartData(this.state.issues);
+        this.state.chartManager.createBacklogLineChart(this.backlogCanvas, this.backlogData);
+        this.showBacklogChart();
+    }
+
+    showBacklogChart() {
+        this.chartContainer.style.display = 'block';
+    }
+
+    hideBacklogChart() {
+        this.chartContainer.style.display = 'none';
     }
 
     setupSubscriptions() {

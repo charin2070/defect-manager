@@ -133,6 +133,19 @@ class CsvParser {
     return csvObjects;
   }
 
+    // Load issues from CSV file
+    static async loadIssuesFromCsvFile(csvFile) {
+      try {
+        const csvLines = await this.readFile(csvFile);
+        const csvObjects = await CsvParser.csvLinesToObjects(csvLines);
+        const issues = csvObjects.map(csvObject => new Issue(csvObject));
+        return issues;
+      } catch (error) {
+        console.error("[DataManager.loadFromCsvFile] Error:", error);
+        throw error;
+      }
+    }
+
   // Returns an object from a CSV line
   csvLineToObject(csvLine, headers, propsMap = {}) {
     const fields = csvLine.split(/,(?=(?:[^"]|"[^"]*")*$)/);

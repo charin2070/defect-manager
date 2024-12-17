@@ -15,7 +15,7 @@ class ConfigManager {
         if (loadedConfig) {
             this.setConfig(loadedConfig);
         } else {
-            this.setConfig(defaultConfig);
+            this.setConfig(this.defaultConfig);
         }
     }
 
