@@ -3,13 +3,6 @@ class FileInputContainer extends Reactive {
         super(container);
         this.container = container;
         this.options = this.getDefaultOptions(options);
-        this.state = {
-            isDragging: false,
-            uploadedFile: null
-        };
-        
-        this.refact = new Refact();
-        this.refact.setState({ uploadedFile: null });
         
         this.initialize();
     }
@@ -25,6 +18,15 @@ class FileInputContainer extends Reactive {
     }
 
     initialize() {
+        this.state = {
+            isDragging: false,
+            uploadedFile: null
+        };
+
+        // this.refact = new Refact();
+
+
+
         this.container.className = 'w-full h-full flex items-center justify-center';
         this.createWrapper();
         this.createHiddenInput();
@@ -59,12 +61,13 @@ class FileInputContainer extends Reactive {
     }
 
     createElement(tag, attributes = {}) {
-        const element = document.createElement(tag);
-        Object.entries(attributes).forEach(([key, value]) => {
-            element[key] = value;
-        });
-        return element;
-    }
+            const element = document.createElement(tag);
+            Object.entries(attributes).forEach(([key, value]) => {
+                element[key] = value;
+            });
+            
+            return element;
+        }
 
 
     createUploadIcon() {

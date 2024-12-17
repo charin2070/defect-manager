@@ -1,6 +1,6 @@
 /** Refact:
  * 
- * This class is a minimalistic reactive framework designed to manage application state and synchronize UI with state changes.
+ * This class is a minimalistic Refact framework designed to manage application state and synchronize UI with state changes.
  * Key Responsibilities:
  * 1. **State Management:** Maintains a central `state` object that holds application data.
  * 2. **Reactivity:** Tracks changes to specific state keys and notifies subscribers (callbacks) whenever a key is updated.
@@ -10,10 +10,10 @@
  * How it works:
  * - Use `setState` to update the application state, triggering notifications to all subscribed callbacks.
  * - Subscribe to specific state keys using `subscribe`, enabling modules or components to react to changes.
- * - Use `bind` to link DOM elements to state keys, making your UI reactive and declarative.
+ * - Use `bind` to link DOM elements to state keys, making your UI Refact and declarative.
  * - Render HTML templates via `render` to set up the initial UI structure.
  * 
- * Refact is a foundation for building lightweight, reactive JavaScript applications without relying on external frameworks.
+ * Refact is a foundation for building lightweight, Refact JavaScript applications without relying on external frameworks.
 я */
 class Refact {
     static instance;
@@ -22,16 +22,11 @@ class Refact {
         if (Refact.instance) {
             return Refact.instance;
         }
+
         this.rootElement = rootElement;
-        this.state = {
-            statistics: {
-                total: {
-                    unresolved: 0
-                }
-            },
-            components: {} // Initialize components state
-        };
+        this.state = {};
         this.subscribers = new Map();
+        
         Refact.instance = this;
     }
 
@@ -40,7 +35,6 @@ class Refact {
             Refact.instance = new Refact(rootElement);
         }
         return Refact.instance;
-
     }
 
     // Default state
@@ -67,6 +61,11 @@ class Refact {
         }
     }
     
+    setState(updates, context) {
+        Object.assign(this.state, updates);
+        this.notifySubscribers(context);
+    }
+
     subscribe(key, callback) {
         if (!this.subscribers.has(key)) {
             this.subscribers.set(key, []);
@@ -77,6 +76,16 @@ class Refact {
     notify(key) {
         const callbacks = this.subscribers.get(key) || [];
         callbacks.forEach(callback => callback(this.state[key]));
+    }
+
+    notifySubscribers(context) {
+        this.subscribers.forEach((callbacks, key) => {
+            callbacks.forEach(callback => {
+                if (typeof callback === 'function') {
+                    callback(this.state[key], context);
+                }
+            });
+        });
     }
 
     // Bind element to state
@@ -126,6 +135,5 @@ class Refact {
         this.setState({ components: updatedComponents }, 'addComponent');
         
         console.log(`Component "${componentName}" registered successfully`);
-const refact = Refact.getInstance(rootElement);
-refact.addComponent('messageView', MessageView);    }
+    }
 }

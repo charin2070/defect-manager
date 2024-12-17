@@ -110,30 +110,16 @@ class DashboardView extends View {
     }
 
     setupSubscriptions() {
-        this.refact.subscribe('statistics', (statistics) => {
-            if (!statistics) return;
-            this.update(statistics);
-        });
     }
 
     update(statistics) {
-        if (!statistics) return;
+        console.log(statistics, '[DashboardView.update] Updating statistics...');
+        const { defects, requests } = statistics.total;
         
-        const defectsUnresolved = statistics?.defects?.unresolved?.count;
-        const defectsCreated = statistics?.defects?.currentMonth?.created?.length || 0;
-        const requestsUnresolved = statistics?.requests?.unresolved?.count;
-        const requestsCreated = statistics?.requests?.currentMonth?.created?.length || 0;
-
-        const resolvedDefects = parseInt(statistics?.defects?.resolved?.count);
-        const unresolvedDefects = parseInt(statistics?.defects?.unresolved?.count);
-        const rejectedDefects = parseInt(statistics?.defects?.rejected?.count);
-        const summDefects = resolvedDefects + unresolvedDefects + rejectedDefects;
-        log(resolvedDefects, 'resolvedDefects');
-
-        const totalDefects = summDefects;
-        this.defectsCard.setValue(defectsUnresolved);
-        this.defectsCard.setDescription(`${totalDefects} всего задач`);
-        this.requestsCard.setValue(requestsUnresolved);
-        this.requestsCard.setDescription(`${requestsCreated} в этом месяце`);
+        // Подсчет нерешенных дефектов
+        const unresolvedDefects = (defects.unresolved.count);
+        
+        this.defectsCard.setValue(unresolvedDefects);
+        this.defectsCard.setDescription(`${unresolvedDefects} всего задач`);
     }
 }

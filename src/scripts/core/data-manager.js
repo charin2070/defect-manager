@@ -18,8 +18,28 @@ class DataManager extends Reactive {
       }
     });
 
+    this.subscribe('uploadedFile', (file) => {
+      this.onFileUpload(file);
+    });
+
   }
 
+  onFileUpload(file) {
+    if (!file) {
+      return;
+    }
+    this.loadFromFile(file).then((issues) => {
+      const index = IndexManager.getStructuredIndex(issues);
+      this.setState({
+        issues: issues,
+        index: index,
+        dataSource: 'file',
+        // dateUpdated as date in format 'dd-mm-yyyy'
+        dataUpdated: new Date(file.lastModified).toLocaleDateString('en-GB')
+      }, '[DataManager] onFileUpload');
+    });
+  }
+  
   // Load issues from file
   loadFromFile(file) {
     log(file, '🚀 [DataManager] Loading from file');
@@ -69,29 +89,47 @@ class DataManager extends Reactive {
 
   loadFromLocalStorage(dataKeys = this.dataKeys) {
     log('🔃 [DataManager] Loading data from Local Storage...');
-
     return new Promise((resolve, reject) => {
       try {
-        const result = {};
-        dataKeys.forEach(dataKey => {
-          try {
-            result[dataKey] = JSON.parse(localStorage.getItem(dataKey));
-          } catch (error) {
-            log(error, `[DataManager.loadFromLocalStorage] При разборе данных из LocalStorage произошла ошибка (ключ: ${dataKey})`);
-            result[dataKey] = null;
-          }
-        });
+        const issues = JSON.parse(localStorage.getItem('issues'));
+        if (issues) {
+          const index = JSON.parse(localStorage.getItem('index'));
+          if (!index) {
+            const index = IndexManager.getStructuredIndex(issues);
+        }
 
-        log(result, '✅ [DataManager.loadFromLocalStorage] Данные загружены из LocalStorage');
-        resolve(result);
+        const statistics = JSON.parse(localStorage.getItem('statistics'));
+        if (!statistics) {
+            statistics = StatisticManager.updateStatistics(index);
+        };
 
-      } catch (error) {
-        console.error('[DataManager.loadFromLocalStorage] При разборе данных из LocalStorage произошла неизвестная ошибка', error);
-        reject(error);
-      }
-    });
+        this.saveToLocalStorage({ issues: issues, statistics: statistics })
+        this.setState({
+          index: index,
+          statistics:statistics,
+          dataSource: 'local_storage',
+        }, '[DataManager] loadFromLocalStorage');
+        log(issues, `✅ [DataManager] ${issues.length} задач загруженно из LocalStorage`);
+        resolve({ issues: issues, source: 'local_storage' });
+        } else {
+          this.setEmptyState();
+          resolve(null);
+        }
   }
+  catch (error) {   
+          this.setEmptyState();
+          reject(error);
+          console.error('[DataManager.loadFromLocalStorage] Error:', error);
+        }
+      });
+    }
+      
 
+         setEmptyState() {
+          this.setState({ issues: null, dataStatus: 'empty', index: null, statistics: null, dataSource: null, appStatus: 'initializing', error: null, toast: null, uploadedFile: null, })
+        }
+
+        
   // Import SLA dates from Power BI issues
   updateSlaDates(loadedData) {
     // Convert loaded data to Issue objects if they aren't already
@@ -151,20 +189,21 @@ class DataManager extends Reactive {
           return;
         }
 
+        // Ensure we're not saving undefined or null values
         Object.entries(dataObject).forEach(([key, value]) => {
-          localStorage.setItem(key, JSON.stringify(value));
-          log(`Saved ${key} to localStorage`, '✅ [DataManager]');
+          if (value !== undefined && value !== null) {
+            try {
+              localStorage.setItem(key, JSON.stringify(value));
+              log(`Saved ${key} to localStorage`, '✅ [DataManager]');
+            } catch (error) {
+              console.error(`[DataManager] Error saving ${key} to localStorage:`, error);
+            }
+          }
         });
 
-        this.setState({
-          ...dataObject,
-          dataStatus: 'loaded'
-        }, '[DataManager] saveToLocalStorage');
-
-        log(localStorage, '✅ [DataManager] All data successfully saved to LocalStorage');
         resolve(true);
       } catch (error) {
-        console.error('[DataManager] Error saving to localStorage:', error);
+        console.error('[DataManager] saveToLocalStorage error:', error);
         reject(error);
       }
     });

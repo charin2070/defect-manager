@@ -1,4 +1,4 @@
-class ViewController extends Reactive {
+class ViewController extends View {
     constructor(container) {
         super(container);
         this.init();
@@ -32,26 +32,20 @@ class ViewController extends Reactive {
     }
 
     setupSubscriptions(){
-        // App Status
-        this.subscribe('appStatus', (appStatus) => this.handleAppStatus(appStatus));
         // Data Status
         this.subscribe('dataStatus', (dataStatus) => {
             switch (dataStatus) {
-                case 'empty':
-                    this.showView('upload');
-                    break;
-                case 'loading':
-                    this.showLoader();
-                    break;
                 case 'loaded':
                     this.showView('dashboard');
-                    this.hideLoader();
+                    break;
+                case 'empty':
+                    this.showView('upload');
                     break;
             }
         });
         
         // View
-        this.subscribe('view', (viewName) => this.showView(viewName));
+        this.subscribe('currentView', (viewName) => this.showView(viewName));
         // Toast
         this.subscribe('toast', (toast) => {
             console.log('ViewController: Showing toast', toast);
@@ -97,9 +91,17 @@ class ViewController extends Reactive {
     }
 
     async showView(name) {
+        // Skip if no name provided
+        if (!name) {
+            log(name, 'No view name provided to showView');
+            return;
+        }
+        
         log(`📺 Showing view: ${name}`);
         const targetView = this.views[name];
-        if (!targetView) throw new Error(`View "${name}" not found`);
+        
+        // If view not found, default to upload view
+ 
 
         const targetContainer = targetView.getContainer();
         

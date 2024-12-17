@@ -1,16 +1,23 @@
-class App extends Reactive {
+class App extends Refact {
     constructor(container) {
         super(container);
+
+        this.container = container;
+
         this.initialize();
     }
 
-    // Default config
     defaultConfig = {
-        mode: "prod",
+        mode: "dev",
         dataKey: "defect-manager",
         theme: "light",
         dataKeys: ["issues", "index", "statistics", "dataUpdated"],
         dataStatus: 'empty',
+        uploadedFile: null,
+        dataSource: null,
+        appStatus: 'initializing',
+        error: null,
+        process: null,
         filters : {
             dateStart: new Date('2021-01-01').toISOString(),
             dateEnd: new Date().toISOString(),
@@ -19,39 +26,22 @@ class App extends Reactive {
         view: 'dashboard'
     };
 
-    async initialize() {
+    initialize() {
         log('[App.initialize] Start App...');
         this.setState({ appStatus: 'initializing' }, 'App.initialize');
 
         try {
             this.setupDefaults();
-            this.setupManagers();
             this.setupSubscriptions();
+            this.setupManagers();
             this.setupKeyBindings();
 
-            // Loading from Local Storage
-            const data = await this.managers.dataManager.loadFromLocalStorage(['issues', 'index', 'statistics', 'dataUpdated']);
-            this.setState({ dataSource: 'local_storage' });
-            // No data
-            if (!data.issues) {
-                this.setState({ dataStatus: 'empty', dataSource: 'local_storage', appStatus: 'initialized' }, 'App.initialize');
-                return;
-            }
-
-            if (!this.state?.data?.index){
-                // Set this.state.data.index
-                const index = await IndexManager.getStructuredIndex(data.issues);
-                const statistics = await StatisticManager.updateStatistics(index);
-
-                this.setState({ ...data, 'index': index, 'statistics': statistics }, 'App.initialize');
-                this.managers.dataManager.saveToLocalStorage({ index: index, statistics: statistics });
-            }
-
-            this.setState({ appStatus: 'initialized' }, 'App.initialize');
-            return true;
-        } catch (error) {
-            log(error, '[App.initialize] Initialization failed');
-            throw error;
+            // Loading data from Local Storage
+            this.managers.dataManager.loadFromLocalStorage(['issues', 'index', 'statistics', 'dateUpdated']);
+            
+    }        catch (error) {
+            console.error('[App.initialize] Error initializing App:', error);
+            this.setState({ error: error }, 'App.initialize');
         }
     }
 
@@ -62,79 +52,17 @@ class App extends Reactive {
                 this.logDevInfo();
                 return;
             }
+
+            if (event.shiftKey && ['C', 'c', 'C', 'c'].includes(event.key)) {
+                this.setState({ process: 'cleanup_local_storage' }, 'App.setupKeyBindings');
+                return;
+            }   
         });
     }
 
     logDevInfo() {
-        log(this.refact, '[App] Refact');
-        log(this.refact.state, '[App] Refact State');
-    }
-
-    setupSubscriptions() {
-        // Console
-        this.subscribeForConsole();
-
-        // Debug
-        this.subscribe('process', (value) => {
-            switch (value) {
-                case 'logState':
-                    log(this.refact, 'Refact');
-                    log(this.refact.state, 'Refact State');
-                    break;
-
-                case 'test_function':
-                    this.test();
-                    break;
-
-                case 'cleanup_local_storage_data':
-                    this.managers.dataManager.cleanupLocalStorage(false, this.state.dataKeys);
-                    break;
-                default:
-                    log(`[App] Unknown process: ${value}`);
-                    break;
-            }
-        });
-
-        // Handle file uploads and data processing in a single subscription
-        this.subscribe('uploadedFile', async (file) => {
-            if (!file) return;
-            
-            try {
-                const issues = await this.managers.dataManager.loadFromFile(file);
-                const index = await IndexManager.getStructuredIndex(issues);
-                const statistics = await StatisticManager.updateStatistics(index);
-                
-                // Update all related state in a single setState call
-                this.setState({
-                    issues,
-                    index,
-                    statistics,
-                    dataSource: 'file',
-                    dataUpdated: file.lastModified,
-                    dataStatus: 'loaded'
-                }, 'App.handleFileUpload');
-
-                // Save to localStorage after state update
-                this.managers.dataManager.saveToLocalStorage({ 
-                    issues,
-                    index,
-                    statistics
-                });
-            } catch (error) {
-                log(error, '[App] Error processing uploaded file');
-                this.setState({ 
-                    dataStatus: 'error',
-                    error: error.message
-                }, 'App.handleFileUpload');
-            }
-        });
-
-    }
-
-    // Called by state.process.test_function change
-    test() {
-        log('[App] Test');
-        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+        log(this, '[App] App');
+        log(this.state, '[App] App State');
     }
 
     subscribeForConsole() {
@@ -166,40 +94,113 @@ class App extends Reactive {
             this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     }
+
+    setupSubscriptions() {
+        // Console
+        this.subscribeForConsole();
+
+        // Debug
+        this.subscribe('process', (value) => {
+            switch (value) {
+                case 'logState':
+                    log(this, 'App');
+                    log(this.state, 'App State');
+                    break;
+
+                case 'test_function':
+                    this.test();
+                    break;
+
+                case 'cleanup_local_storage_data':
+                    if (this.state?.config?.dataKeys) {
+                        this.managers.dataManager.cleanupLocalStorage(false, this.state.config.dataKeys);
+                    } else {
+                        log('Error: config.dataKeys is not defined', '[App] cleanup_local_storage_data');
+                    }
+                    break;
+                case 'cleanup_local_storage':
+                    this.managers.dataManager.cleanupLocalStorage(true);
+                    break;
+            }
+        });
+    }
+
+    
+    // Called by state.process.test_function change
+    test() {
+        log('[App] Test');
+        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+    }
     
 
     setupDefaults() {
-        this.dataKey = 'defect-manager';
-        this.managers = {};
-        this.refact.setState({
-            appStatus: null,
-            dataStatus: null,
-            config: null,
+        log('[App] Setting up defaults...');
+        this.setState({
             issues: null,
             index: null,
             statistics: null,
+            dataSource: null,
+            appStatus: 'initializing',
+            error: null,
             toast: null,
             uploadedFile: null,
-            reportType: null
         }, 'App.setDefaultStates');
     }
 
-    setupManagers() {
-        this.managers = {
-            config: new ConfigManager(this.defaultConfig),
-            dataManager: new DataManager(this.dataKey),
-            viewController: new ViewController(this.getContainer()),
-            statisticManager: new StatisticManager(),
-            reportManager: new ReportManager(),
-        };
-
-        this.setState({
-            config: this.managers.config
-        }, 'App.setupManagers');
+    getContainer() {
+        return this.container;
     }
 
+    setupManagers() {
+        log('Setting up managers...');
+        try {
+            const container = this.getContainer();
+            this.managers = {};  // Initialize empty object first
+            
+            // Initialize managers one by one
+            log('Stting up ConfigManager...');
+                this.managers.config = new ConfigManager(this.defaultConfig, container);
+            log('Stting up DataManager...');
+                this.managers.dataManager = new DataManager(container);
+            log('Stting up ViewController...');
+                this.managers.viewController = new ViewController(container);
+            log('Stting up StatisticManager...');
+                this.managers.statisticManager = new StatisticManager(container);
+            log('Stting up ReportManager...');
+                this.managers.reportManager = new ReportManager(container);
+                
+            log('Managers setup complete');
+        } catch (error) {
+            console.error('[App.setupManagers] Error:', error);
+            this.setState({ 
+                dataStatus: 'error',
+                appStatus: 'error',
+                error: error.message
+            }, 'App.setupManagers');
+            throw error;  // Re-throw to prevent continuation
+        }                
+                this.managers.dataManager = new DataManager();
+                this.managers.viewController = new ViewController(this.getContainer());
+                this.managers.statisticManager = new StatisticManager(this.getContainer());
+                this.managers.reportManager = new ReportManager(this.getContainer());
+                
+                log('Managers setup complete');
+            } catch (error) {
+                console.error('[App.setupManagers] Error:', error);
+                this.setState({ 
+                    dataStatus: 'error',
+                    appStatus: 'error',
+                    error: error.message
+                }, 'App.setupManagers');
+                throw error;  // Re-throw to prevent continuation
+            }
+        
+
     logStates(){
-        log(this.refact, '[App] Refact');
+        log(this, '[App] App');
+        log(this.state, '[App] App State');
+        log(localStorage, '[App] LocalStorage');
+        
     }
 }
 

@@ -1,30 +1,53 @@
-class StatisticManager extends Reactive {
-    constructor(issues) {
-        super(document.body);
-        this.issues = issues;     
-            
-        if (this.issues) {
-            this.updateStatistics(this.issues);
-        }
-
-        this.setupSubscriptions();
-
+class StatisticManager extends Refact {
+    constructor() {
+        super(document.body);   
     }
 
     static async updateStatistics(indexedIssues) {
+        log(indexedIssues, '[StatisticManager.updateStatistics] Updating statistics with indexed issues...');
+
         return new Promise((resolve, reject) => {
             if (!indexedIssues || typeof indexedIssues !== 'object') {
                 log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
-                reject(new Error('[StatisticManager.updateStatistics] Invalid indexed issues object'));
+                reject(new Error('Invalid input data'));
                 return;
             }
 
-            const issueStatistics = null;
-            resolve(issueStatistics);
-        });
-    }
+            const issueStatistics = {
+                currentMonth: null,
+                last30days: null,
+                last90days: null,
+                total: null
+            };
 
-    setupSubscriptions() {
+            try {
+                // Получаем текущую дату и начало месяца
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const last30Days = new Date(now.setDate(now.getDate() - 30));
+                const last90Days = new Date(now.setDate(now.getDate() - 90));
+
+                // Обрабатываем каждый период
+                issueStatistics.currentMonth = this.getIssueStatistics(indexedIssues, { 
+                    dateStart: startOfMonth,
+                    dateEnd: new Date()
+                });
+                issueStatistics.last30days = this.getIssueStatistics(indexedIssues, {
+                    dateStart: last30Days,
+                    dateEnd: new Date()
+                });
+                issueStatistics.last90days = this.getIssueStatistics(indexedIssues, {
+                    dateStart: last90Days,
+                    dateEnd: new Date()
+                });
+                issueStatistics.total = indexedIssues;
+
+                log(issueStatistics, '[StatisticManager] Statistics updated');
+                resolve(issueStatistics);
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     // Example of Issue object
@@ -36,7 +59,7 @@ class StatisticManager extends Reactive {
         "slaDate": "2023-11-01T21:00:00.000Z",
         "status": "Закрыт",
         "state": null,
-        "description": "10.08 по инструментам проставился запрет на торговлю инструментом, \r  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]",
+        "description": "10.08 по инструментам проставился запрет на торговлю инструментом, \р  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]",
         "summary": "Изменение IdTradePeriodStatus в [AdFront].[fi].[FinInfoExt] и [AdFront].[ts].[FinInfoExt]",
         "type": "Дефект промсреды",
         "priority": null,
@@ -44,7 +67,7 @@ class StatisticManager extends Reactive {
         "reporter": null,
         "team": "Core",
         "isOverdue": null,
-        "source": "ADIRINC-1203,3529833,U_M00ZM,Закрыт,10.08.2023 13:17,,,,,Дефект промсреды,07.02.2024 11:49,2023-11-02 00:00:00.0,\"10.08 по инструментам проставился запрет на торговлю инструментом, \r  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]\",,67.0,Core,,Изменение IdTradePeriodStatus в [AdFront].[fi].[FinInfoExt] и [AdFront].[ts].[FinInfoExt],Портфель - Некорректный состав портфеля (вкл. некорректный минус по счету) (1) - critical,,,08.08.2024 23:49",
+        "source": "ADIRINC-1203,3529833,U_M00ZM,Закрыт,10.08.2023 13:17,,,,,Дефект промсреды,07.02.2024 11:49,2023-11-02 00:00:00.0,\"10.08 по инструментам проставился запрет на торговлю инструментом, \р  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]\",,67.0,Core,,Изменение IdTradePeriodStatus в [AdFront].[fi].[FinInfoExt] и [AdFront].[ts].[FinInfoExt],Портфель - Некорректный состав портфеля (вкл. некорректный минус по счету) (1) - critical,,,08.08.2024 23:49",
         "notes": null,
         "alarms": null,
         "component": "",
@@ -69,233 +92,68 @@ class StatisticManager extends Reactive {
             reports: 0 // Количество обращений от пользователей на не исправленных задачах
     }
 
-    static getIssueStatistics(issues) {
-        const now = new Date();
-        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const last30Days = new Date(now);
-        last30Days.setDate(now.getDate() - 30);
-        const last90Days = new Date(now);
-        last90Days.setDate(now.getDate() - 90);
-    
-        const statisticsTotal = {
-            unresolved: [],
-            resolved: [],
-            rejected: [],
-            rejectedByTeam: [],
-            created: [],
-            verified: [],
-            averageResolutionTime: 0,
-            reports: 0
-        };
-    
-        const currentMonthStatistics = JSON.parse(JSON.stringify(statisticsTotal));
-        const last30daysStatistics = JSON.parse(JSON.stringify(statisticsTotal));
-        const last90daysStatistics = JSON.parse(JSON.stringify(statisticsTotal));
-    
-        if (!issues || !Array.isArray(issues)) {
-            console.error("[StatisticManager] getIssueStatistics requires an array of issues.");
-            return { statisticsTotal, currentMonthStatistics, last30daysStatistics, last90daysStatistics };
+    static async getIssueStatistics(issues, dateRange) {
+        if (!issues || !issues.index || !issues.issues) {
+            log(issues, '[StatisticManager] getIssueStatistics requires an object with index and issues.'); 
+            console.error("[StatisticManager] getIssueStatistics requires an object with index and issues.");
+            return null;
         }
-    
-        let totalResolutionTime = 0;
-        let resolvedCount = 0;
-    
-        const updateStatistics = (statistics, issue, createdDate, resolvedDate) => {
-            if (issue.state === 'unresolved') {
-                statistics.unresolved.push(issue);
-                statistics.reports += issue.reports || 0;
-            }
-    
-            if (issue.state === 'resolved') {
-                statistics.resolved.push(issue);
-                if (resolvedDate) {
-                    statistics.totalResolutionTime = (statistics.totalResolutionTime || 0) + (resolvedDate - createdDate);
-                    statistics.resolvedCount = (statistics.resolvedCount || 0) + 1;
-                }
-            }
-    
-            if (issue.state === 'rejected') {
-                statistics.rejected.push(issue);
-            }
-    
-            if (issue.status === 'Отклонен командой') {
-                statistics.rejectedByTeam.push(issue);
-            }
-    
-            if (issue.status !== 'Новый' && issue.state !== 'unresolved') {
-                statistics.verified.push(issue);
-            }
+
+        return {
+            index: issues.index,
+            issues: issues.issues
         };
-    
-        issues.forEach(issue => {
-            const createdDate = new Date(issue.created);
-            const resolvedDate = issue.resolved ? new Date(issue.resolved) : null;
-    
-            // Update Total Statistics
-            updateStatistics(statisticsTotal, issue, createdDate, resolvedDate);
-    
-            // Update Current Month Statistics
-            if (createdDate >= startOfCurrentMonth || (resolvedDate && resolvedDate >= startOfCurrentMonth)) {
-                updateStatistics(currentMonthStatistics, issue, createdDate, resolvedDate);
-            }
-    
-            // Update Last 30 Days Statistics
-            if (createdDate >= last30Days || (resolvedDate && resolvedDate >= last30Days)) {
-                updateStatistics(last30daysStatistics, issue, createdDate, resolvedDate);
-            }
-    
-            // Update Last 90 Days Statistics
-            if (createdDate >= last90Days || (resolvedDate && resolvedDate >= last90Days)) {
-                updateStatistics(last90daysStatistics, issue, createdDate, resolvedDate);
-            }
-        });
-    
-        // Finalize Average Resolution Time Calculation
-        const finalizeAverageResolutionTime = (statistics) => {
-            if (statistics.resolvedCount > 0) {
-                statistics.averageResolutionTime = 
-                    (statistics.totalResolutionTime / statistics.resolvedCount) / (1000 * 60 * 60 * 24);
-            }
-            delete statistics.totalResolutionTime;
-            delete statistics.resolvedCount;
-        };
-    
-        finalizeAverageResolutionTime(statisticsTotal);
-        finalizeAverageResolutionTime(currentMonthStatistics);
-        finalizeAverageResolutionTime(last30daysStatistics);
-        finalizeAverageResolutionTime(last90daysStatistics);
-    
-        return { statisticsTotal, currentMonthStatistics, last30daysStatistics, last90daysStatistics };
     }
-    
 
     static getStatisticsFromIndex(index, issues, dateRange) {
-        const { dateStart: startDate, dateEnd: endDate } = dateRange;
+        if (!index || !issues) {
+            log({ index, issues }, '[StatisticManager.getStatisticsFromIndex] Invalid input');
+            return null;
+        }
+
         const statistics = {
             unresolved: [],
             resolved: [],
             rejected: [],
-            rejectedByTeam: [],
             created: [],
-            verified: [],
-            overdue: [],
-            averageResolutionTime: 0,
-            reports: 0
+            index: index,
+            issues: issues
         };
 
-        // Используем Set для быстрого поиска и исключения дубликатов
-        const processedTasks = new Set();
-        let totalResolutionTime = 0;
-        let resolvedCount = 0;
-
-        // Обработка созданных задач
-        if (index.created) {
-            Object.entries(index.created).forEach(([dateStr, taskIds]) => {
-                const date = new Date(dateStr);
-                if (date >= startDate && date <= endDate) {
-                    taskIds.forEach(taskId => {
-                        if (!processedTasks.has(taskId)) {
-                            const issue = issues[taskId];
-                            if (issue) {
-                                statistics.created.push(issue);
-                                processedTasks.add(taskId);
+        // Подсчитываем статистику только если есть диапазон дат
+        if (dateRange) {
+            const { dateStart, dateEnd } = dateRange;
+            
+            // Фильтруем задачи по дате создания
+            if (index.created) {
+                Object.entries(index.created)
+                    .filter(([date]) => {
+                        const taskDate = new Date(date);
+                        return taskDate >= dateStart && taskDate <= dateEnd;
+                    })
+                    .forEach(([_, taskIds]) => {
+                        taskIds.forEach(taskId => {
+                            if (issues[taskId]) {
+                                statistics.created.push(issues[taskId]);
                             }
-                        }
+                        });
                     });
-                }
-            });
+            }
         }
 
-        // Обработка решенных задач и подсчет среднего времени
-        if (index.resolved) {
-            Object.entries(index.resolved).forEach(([dateStr, taskIds]) => {
-                const date = new Date(dateStr);
-                if (date >= startDate && date <= endDate) {
-                    taskIds.forEach(taskId => {
-                        if (!processedTasks.has(taskId)) {
-                            const issue = issues[taskId];
-                            if (issue) {
-                                statistics.resolved.push(issue);
-                                processedTasks.add(taskId);
-
-                                // Подсчет среднего времени решения
-                                if (issue.created && issue.resolved) {
-                                    const createdDate = new Date(issue.created);
-                                    const resolvedDate = new Date(issue.resolved);
-                                    totalResolutionTime += resolvedDate - createdDate;
-                                    resolvedCount++;
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-        }
-
-        // Обработка отклоненных задач
-        if (index.rejected) {
-            Object.entries(index.rejected).forEach(([dateStr, taskIds]) => {
-                const date = new Date(dateStr);
-                if (date >= startDate && date <= endDate) {
-                    taskIds.forEach(taskId => {
-                        if (!processedTasks.has(taskId)) {
-                            const issue = issues[taskId];
-                            if (issue) {
-                                if (issue.team) {
-                                    statistics.rejectedByTeam.push(issue);
-                                } else {
-                                    statistics.rejected.push(issue);
-                                }
-                                processedTasks.add(taskId);
-                            }
-                        }
-                    });
-                }
-            });
-        }
-
-        // Обработка состояний (verified, unresolved, overdue)
+        // Добавляем общую статистику независимо от дат
         if (index.state) {
-            Object.entries(index.state).forEach(([state, taskIds]) => {
-                taskIds.forEach(taskId => {
-                    if (!processedTasks.has(taskId)) {
-                        const issue = issues[taskId];
-                        if (issue) {
-                            const createdDate = new Date(issue.created);
-                            if (createdDate >= startDate && createdDate <= endDate) {
-                                switch (state) {
-                                    case 'verified':
-                                        statistics.verified.push(issue);
-                                        break;
-                                    case 'unresolved':
-                                        statistics.unresolved.push(issue);
-                                        statistics.reports += issue.reports || 0;
-                                        // Проверка на просроченные
-                                        if (issue.slaDate && new Date(issue.slaDate) < new Date()) {
-                                            statistics.overdue.push(issue);
-                                        }
-                                        break;
-                                }
-                                processedTasks.add(taskId);
-                            }
+            ['unresolved', 'resolved', 'rejected'].forEach(state => {
+                if (index.state[state]) {
+                    index.state[state].forEach(taskId => {
+                        if (issues[taskId]) {
+                            statistics[state].push(issues[taskId]);
                         }
-                    }
-                });
+                    });
+                }
             });
         }
-
-        // Вычисление среднего времени решения
-        statistics.averageResolutionTime = resolvedCount > 0 
-            ? totalResolutionTime / resolvedCount 
-            : 0;
-
-        console.log('Processing statistics for range:', { startDate, endDate });
-        console.log('Index structure:', Object.keys(index));
-        console.log('Number of issues:', Object.keys(issues).length);
-        console.log('Processed tasks:', processedTasks.size);
 
         return statistics;
     }
-
-    
 }

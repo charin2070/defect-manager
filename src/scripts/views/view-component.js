@@ -1,9 +1,10 @@
-class View extends Reactive {
+class View extends HtmlComponent {
     static #idCounter = 0;
     #element = null;
     
-    constructor() {
-        super();
+    constructor(container) {
+        super(container);
+        this.container = container;
     }
 
     /**
@@ -13,36 +14,23 @@ class View extends Reactive {
      */
     generateId(prefix = '') {
         const componentName = this.constructor.name.toLowerCase();
-        const uniqueId = `${componentName}-${prefix ? prefix + '-' : ''}${++View.#idCounter}`;
-        return uniqueId;
+        return `${componentName}-${prefix ? prefix + '-' : ''}${++View.#idCounter}`;
     }
 
     createContainer(options = {}) {
-        const container = this.createElement('div', options);
-        for (const [key, value] of Object.entries(options)) {
-            container.setAttribute(key, value);
-        }
-        this.setContainer(container);
-        return container;
-    }
-
-    /**
-     * Creates an HTML element with a unique ID
-     * @param {string} tagName - HTML tag name
-     * @param {Object} options - Element options (className, id prefix, etc.)
-     * @returns {HTMLElement} Created element with unique ID
-     */
-    createElement(tagName, options = {}) {
-        const element = document.createElement(tagName);
+        const container = this.createElement('div', {
+            className: options.className,
+            id: options.id || this.generateId('container')
+        });
         
-        if (options.className) {
-            element.className = options.className;
+        if (options.attributes) {
+            Object.entries(options.attributes).forEach(([key, value]) => {
+                container.setAttribute(key, value);
+            });
         }
-
-        const idPrefix = options.idPrefix || '';
-        element.id = this.generateId(idPrefix);
-
-        return element;
+        
+        this.container = container;
+        return container;
     }
 
     /**
@@ -53,30 +41,47 @@ class View extends Reactive {
         return this.#element;
     }
 
-    getContainer() {
-        return this.#element;
-    }
-
-    setContainer(container) {
-        this.#element = container;
-    }
-
     /**
      * Sets the main element of the component
-     * @param {HTMLElement} element 
+     * @param {HTMLElement} element - Element to set
      */
     setElement(element) {
-        if (!(element instanceof HTMLElement)) {
-            throw new Error('Element must be an instance of HTMLElement');
-        }
         this.#element = element;
     }
 
     /**
-     * Renders the component
-     * Must be implemented by child classes
+     * Gets the container element
+     * @returns {HTMLElement}
      */
-    render() {
-        throw new Error('render() method must be implemented by child class');
+    getContainer() {
+        return this.container;
+    }
+
+    /**
+     * Sets the container element
+     * @param {HTMLElement} container - Container element to set
+     */
+    setContainer(container) {
+        this.container = container;
+    }
+
+    /**
+     * Mounts the component to a target element
+     * @param {HTMLElement} targetElement - Element to mount the component to
+     */
+    mount(targetElement) {
+        if (targetElement && this.getElement()) {
+            targetElement.appendChild(this.getElement());
+        }
+    }
+
+    /**
+     * Unmounts the component from its parent
+     */
+    unmount() {
+        const element = this.getElement();
+        if (element && element.parentNode) {
+            element.parentNode.removeChild(element);
+        }
     }
 }
