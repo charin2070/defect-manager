@@ -1,15 +1,14 @@
 // Get/set/store config data
 class ConfigManager {
     constructor(defaultConfig, container) {
-        // super(container);
         this.refact = new Refact(container);
         this.container = container;
         this.defaultConfig = defaultConfig;
+        this.properties = {};
         this.init();
     }
 
     init() {
-    
         const loadedConfig = this.loadFromLocalStorage();
         console.log('🔃 [ConfigManager] Loaded config from LocalStorage:', loadedConfig);
         if (loadedConfig) {
@@ -19,39 +18,50 @@ class ConfigManager {
         }
     }
 
-
     setConfig(config) {
         if (!config) {
             console.log('⚙️ [ConfigManager.setConfig] Config is null:', config);
             return;
         }
 
-        this.properties = config;
-        this.saveToLocalStorage(this);
-        this.refact.setState({ config: this });
+        // Копируем только свойства конфигурации
+        this.properties = { ...config };
+        
+        // Сохраняем только properties, а не весь this
+        this.saveToLocalStorage(this.properties);
+        
+        // Отправляем в состояние только properties
+        this.refact.setState({ config: this.properties }, 'ConfigManager.setConfig');
     }
 
     saveToLocalStorage(config) {
-        localStorage.setItem('config', JSON.stringify(config));
-        log(localStorage.getItem('config'), '🚀 [ConfigManager.saveToLocalStorage] Saved config to LocalStorage');
+        try {
+            localStorage.setItem('config', JSON.stringify(config));
+            console.log('🚀 [ConfigManager.saveToLocalStorage] Saved config to LocalStorage:', config);
+        } catch (error) {
+            console.error('❌ [ConfigManager.saveToLocalStorage] Error saving config:', error);
+        }
     }
 
     getValue(key) {
-        return this[key];
+        return this.properties[key];
     }
 
     loadFromLocalStorage() {
         console.log('🔃 [ConfigManager.loadFromLocalStorage] Loading config from LocalStorage...');
-        const savedConfig = localStorage.getItem('config');
-        
-        if (!savedConfig) {
-            console.log('🔃 [ConfigManager.loadFromLocalStorage] Config not found in LocalStorage');
-            return null
+        try {
+            const savedConfig = localStorage.getItem('config');
+            
+            if (!savedConfig) {
+                console.log('🔃 [ConfigManager.loadFromLocalStorage] Config not found in LocalStorage');
+                return null;
+            }
+            
+            return JSON.parse(savedConfig);
+        } catch (error) {
+            console.error('❌ [ConfigManager.loadFromLocalStorage] Error loading config:', error);
+            return null;
         }
-        
-        const parsedConfig = JSON.parse(savedConfig);
-        log(parsedConfig, '✅ [ConfigManager.loadFromLocalStorage] Config loaded from LocalStorage');
-        return parsedConfig;
     }
 
     resetToDefault() {

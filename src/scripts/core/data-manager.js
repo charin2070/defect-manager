@@ -1,4 +1,5 @@
 class DataManager extends Reactive {
+
     constructor(container) {
         super(container);
         log('[DataManager] Initialized');
@@ -8,7 +9,6 @@ class DataManager extends Reactive {
 
     setupSubscriptions() {
         this.subscribe('process', (value) => {
-            log(`[DataManager] Process event received: ${value}`);
             switch (value) {
                 case 'cleanup_local_storage':
                     this.cleanupLocalStorage(true);
@@ -19,41 +19,92 @@ class DataManager extends Reactive {
             }
         });
 
+        // Add subscription for issuesFile changes
         this.subscribe('issuesFile', (file) => {
-            this.loadIssuesFromFile(file);
+            if (file) {
+                log(`[DataManager] New file received: ${file.name}`);
+                this.loadIssuesFromFile(file);
+            }
         });
     }
 
     async loadIssuesFromFile(file) {
         try {
-            return await new Promise((resolve, reject) => {
-                if (file) {
-                    if (!file.name.endsWith('.csv'))
-                        DataManager.loadIssuesFromCsvFile(file);
-                }
-                else return ('null_file');
+            log('[DataManager] Loading issues from file...');
+            this.state.managers.viewController.showLoader('reading');
+            
+            const startRead = performance.now();
+            const issues = await CsvParser.loadIssuesFromCsvFile(file);
+            const readTime = performance.now() - startRead;
+            log(`[DataManager] File reading completed in ${readTime.toFixed(2)}ms`);
+
+            this.state.managers.viewController.showLoader('indexing');
+            const startIndex = performance.now();
+            const index = await IndexManager.getStructuredIndex(issues);
+            const indexTime = performance.now() - startIndex;
+            log(`[DataManager] Index building completed in ${indexTime.toFixed(2)}ms`);
+            
+            this.state.managers.viewController.showLoader('statistics');
+            const startStats = performance.now();
+            const statistics = await StatisticManager.getIssueStatistics({ issues, dateRange: IndexManager.getDateFilter("-30d")});
+            const statsTime = performance.now() - startStats;
+            log(`[DataManager] Statistics calculation completed in ${statsTime.toFixed(2)}ms`);
+            
+            this.setState({
+                issues: issues,
+                index: index,
+                statistics: statistics,
+                dataStatus: 'loaded',
+                dataSource: 'file',
+                dataUpdated: new Date().toLocaleDateString('en-GB'),
+                view: 'dashboard'
             });
+
+            this.state.managers.viewController.showLoader('saving');
+            const startSave = performance.now();
+            await this.saveToLocalStorage();
+            const saveTime = performance.now() - startSave;
+            log(`[DataManager] Data saved to localStorage in ${saveTime.toFixed(2)}ms`);
+            
+            const totalTime = readTime + indexTime + statsTime + saveTime;
+            log(`[DataManager] Total processing time: ${totalTime.toFixed(2)}ms`);
+            log(`[DataManager] Performance breakdown:
+                - Reading: ${(readTime / totalTime * 100).toFixed(1)}%
+                - Indexing: ${(indexTime / totalTime * 100).toFixed(1)}%
+                - Statistics: ${(statsTime / totalTime * 100).toFixed(1)}%
+                - Saving: ${(saveTime / totalTime * 100).toFixed(1)}%`);
+            
+            this.state.managers.viewController.hideLoader();
+            return true;
         } catch (error) {
-            return (error);
+            console.error('[DataManager] Error loading issues from file:', error);
+            this.state.managers.viewController.hideLoader();
+            throw error;
         }
     }
 
-    static async loadIssuesFromCsvFile(file) {
-        return new Promise((resolve, reject) => {
-            log(file, '🚀 [DataManager] Loading from file');
-            this.loadFromFile(file).then((issues) => {
-                log(issues, '[DataManager] Issues loaded from file');
-                const index = IndexManager.getStructuredIndex(issues);
-                this.setState({
-                    issues: issues,
-                    index: index,
-                    dataSource: 'file',
-                    dataUpdated: new Date(file.lastModified).toLocaleDateString('en-GB')
-                }, '[DataManager] onFileUpload');
-                log('[DataManager] State updated after file upload');
-            });
-        });
-    }
+    // async loadIssuesFromCsvFile(file) {
+    //     try {
+    //         const lines = await this.readFile(file);
+    //         // Process CSV lines into issues array
+    //         // Skip header row
+    //         const issues = lines.slice(1)
+    //             .filter(line => line.trim())
+    //             .map(line => {
+    //                 const [taskId, status, description, created] = line.split(',');
+    //                 return {
+    //                     taskId: taskId?.trim(),
+    //                     status: status?.trim(),
+    //                     description: description?.trim(),
+    //                     created: created?.trim()
+    //                 };
+    //             });
+    //         return issues;
+    //     } catch (error) {
+    //         log(`❌ [DataManager] Error parsing CSV file: ${error.message}`);
+    //         throw error;
+    //     }
+    // }
 
     cleanupLocalStorage(isAll = false, dataKeys = this.dataKeys) {
         if (isAll) {
@@ -71,10 +122,9 @@ class DataManager extends Reactive {
 
     }
 
-    // Returns file lines
-    readFile(file) {
+    async readFile(file) {
         return new Promise((resolve, reject) => {
-            let reader = new FileReader();
+            const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result.split('\n'));
             reader.onerror = (e) => reject(e);
             reader.readAsText(file);
@@ -93,61 +143,189 @@ class DataManager extends Reactive {
         }, '[DataManager] setEmptyState');
     }
 
-    loadFromLocalStorage(dataKeys = this.dataKeys) {
-        log('🔃 [DataManager] Loading data from Local Storage...');
-        return new Promise((resolve, reject) => {
-            try {
-                const issues = JSON.parse(localStorage.getItem('issues'));
-                log(issues, '[DataManager] Issues retrieved from Local Storage');
-                if (issues) {
-                    const index = JSON.parse(localStorage.getItem('index'));
-                    log(index, '[DataManager] Index retrieved from Local Storage');
-                    if (!index) {
-                        log('[DataManager] Index not found, generating new index');
-                        const index = IndexManager.getStructuredIndex(issues);
-                    }
+    async loadFromLocalStorage(dataKeys = this.dataKeys) {
+        try {
+            log('[DataManager] Loading data from Local Storage...');
+            
+            // Get index from localStorage
+            const storedIndex = localStorage.getItem('index');
+            let index;
+            
+            if (storedIndex) {
+                index = JSON.parse(storedIndex);
+                log(index, '[DataManager] Index retrieved from Local Storage');
+                
+                // Extract issues from index
+                const issues = Object.values(index.id);
+                log(issues, '[DataManager] Issues extracted from index');
 
-                    const statistics = JSON.parse(localStorage.getItem('statistics'));
-                    log(statistics, '[DataManager] Statistics retrieved from Local Storage');
-                    if (!statistics) {
-                        log('[DataManager] Statistics not found, updating statistics');
-                        StatisticManager.updateStatistics(index).then(statistics => {
-                            this.saveToLocalStorage({ issues: issues, statistics: statistics })
-                            this.setState({
-                                index: index,
-                                statistics: statistics,
-                                issues: issues,
-                                dataStatus: 'loaded',
-                                dataSource: 'local_storage',
-                            }, '[DataManager] loadFromLocalStorage');
-                            log(issues, `✅ [DataManager] ${issues.length} tasks loaded from LocalStorage`);
-                            this.setState({ view: 'dashboard' });
-                            resolve({ issues: issues, source: 'local_storage' });
-                        }).catch(error => {
-                            log(error, '[DataManager] Error updating statistics');
-                            reject(error);
-                        });
-                    } else {
-                        this.setState({
-                            issues: issues,
-                            index: index,
-                            statistics: statistics,
-                            dataSource: 'local_storage',
-                            view: 'dashboard'
-                        }, '[DataManager] loadFromLocalStorage');
-                        log(issues, `✅ [DataManager] ${issues.length} tasks loaded from LocalStorage`);
-                        resolve({ issues: issues, index: index, statistics: statistics, dataStatus: 'loaded', datasource: 'local_storage' });
-                    }
-                } else {
-                    log('[DataManager] No issues found in Local Storage');
-                    this.setEmptyState();
-                    resolve(null);
-                }
-            } catch (error) {
-                log(error, '[DataManager] Error loading from Local Storage');
+                // Calculate fresh statistics from index
+                log('[DataManager] Calculating fresh statistics from index');
+                const statistics = await StatisticManager.updateStatistics(index);
+
+                // Update state with loaded data
+                this.setState({
+                    issues,
+                    index,
+                    statistics,
+                    dataStatus: 'loaded',
+                    dataSource: 'local_storage',
+                    dataUpdated: new Date().toLocaleDateString('en-GB')
+                }, '[DataManager] loadFromLocalStorage');
+
+                log(issues, `✅ [DataManager] ${issues.length} tasks loaded from index`);
+                return { issues, index, statistics };
+            } else {
+                log('[DataManager] No index found in Local Storage');
                 this.setEmptyState();
-                reject(error);
+                return null;
             }
-        });
+        } catch (error) {
+            log(error, '[DataManager] Error loading from Local Storage');
+            this.setEmptyState();
+            throw error;
+        }
+    }
+
+    async loadData() {
+        try {
+            log('[DataManager] Loading data from localStorage...');
+            this.state.managers.viewController.showLoader('reading');
+            
+            const startRead = performance.now();
+            const storedIssues = localStorage.getItem('issues');
+            const storedIndex = localStorage.getItem('index');
+            const readTime = performance.now() - startRead;
+            log(`[DataManager] LocalStorage reading completed in ${readTime.toFixed(2)}ms`);
+            
+            if (storedIssues && storedIndex) {
+                const startParse = performance.now();
+                let issues = JSON.parse(storedIssues);
+                const parseTime = performance.now() - startParse;
+                log(`[DataManager] JSON parsing completed in ${parseTime.toFixed(2)}ms`);
+
+                // Check if we have compressed issues
+                if (!issues[0]?.description) {
+                    log('[DataManager] Found compressed issues, expanding...');
+                    issues = issues.map(issue => ({
+                        ...issue,
+                        description: '',
+                        summary: '',
+                        reporter: '',
+                        priority: '',
+                        labels: [],
+                        components: []
+                    }));
+                }
+
+                this.state.managers.viewController.showLoader('indexing');
+                const startIndex = performance.now();
+                let index = JSON.parse(storedIndex);
+                
+                // Check if we have compressed index
+                if (Object.values(index)[0]?.s) {
+                    log('[DataManager] Found compressed index, expanding...');
+                    const expandedIndex = {
+                        id: {},
+                        defects: {
+                            resolved: { count: 0, resolutions: {} },
+                            unresolved: { count: 0, statuses: {} }
+                        },
+                        requests: {
+                            resolved: { count: 0, resolutions: {} },
+                            unresolved: { count: 0, statuses: {} }
+                        }
+                    };
+
+                    Object.entries(index).forEach(([id, data]) => {
+                        // Expand basic issue data
+                        expandedIndex.id[id] = {
+                            id: id,
+                            status: data.s,
+                            type: data.t,
+                            created: data.d,
+                            team: data.m || '',
+                            resolved: data.r || null
+                        };
+
+                        // Update statistics
+                        const isDefect = data.t === 'defect';
+                        const isResolved = data.s === 'resolved';
+                        const category = isDefect ? 'defects' : 'requests';
+                        const state = isResolved ? 'resolved' : 'unresolved';
+
+                        expandedIndex[category][state].count++;
+                        if (isResolved) {
+                            expandedIndex[category].resolved.resolutions[data.s] = 
+                                (expandedIndex[category].resolved.resolutions[data.s] || 0) + 1;
+                        } else {
+                            expandedIndex[category].unresolved.statuses[data.s] = 
+                                (expandedIndex[category].unresolved.statuses[data.s] || 0) + 1;
+                        }
+                    });
+
+                    index = expandedIndex;
+                }
+
+                const indexTime = performance.now() - startIndex;
+                log(`[DataManager] Index parsing completed in ${indexTime.toFixed(2)}ms`);
+                
+                this.state.managers.viewController.showLoader('statistics');
+                const startStats = performance.now();
+                const statistics = await StatisticManager.getIssueStatistics({ issues, index });
+                const statsTime = performance.now() - startStats;
+                log(`[DataManager] Statistics calculation completed in ${statsTime.toFixed(2)}ms`);
+                
+                this.setState({
+                    issues,
+                    index,
+                    statistics,
+                    dataStatus: 'loaded',
+                    dataSource: 'localStorage',
+                    dataUpdated: new Date().toLocaleDateString('en-GB'),
+                    view: 'dashboard'
+                });
+                
+                const totalTime = readTime + parseTime + indexTime + statsTime;
+                log(`[DataManager] Total loading time: ${totalTime.toFixed(2)}ms`);
+                log(`[DataManager] Performance breakdown:
+                    - Reading: ${(readTime / totalTime * 100).toFixed(1)}%
+                    - Parsing: ${(parseTime / totalTime * 100).toFixed(1)}%
+                    - Indexing: ${(indexTime / totalTime * 100).toFixed(1)}%
+                    - Statistics: ${(statsTime / totalTime * 100).toFixed(1)}%`);
+                
+                log('[DataManager] Successfully loaded data from localStorage');
+                this.state.managers.viewController.hideLoader();
+                return true;
+            }
+            
+            log('[DataManager] No data found in localStorage');
+            this.state.managers.viewController.hideLoader();
+            return false;
+        } catch (error) {
+            console.error('[DataManager] Error loading data:', error);
+            this.state.managers.viewController.hideLoader();
+            this.setEmptyState();
+            throw error;
+        }
+    }
+
+    async saveToLocalStorage() {
+        try {
+            const { index } = this.state;
+            
+            if (!index) {
+                log('[DataManager] No index to save');
+                return;
+            }
+
+            // Save only index to localStorage
+            localStorage.setItem('index', JSON.stringify(index));
+            log('[DataManager] Index saved to Local Storage');
+            return true;
+        } catch (error) {
+            log(error, '[DataManager] Error saving to Local Storage');
+            throw error;
+        }
     }
 }

@@ -89,3 +89,11 @@ function getDateRange(condition) {
   }
 
 }
+
+function isInDateRange(date, dateStart, dateEnd) {
+  if (!date || !dateStart || !dateEnd) return false;
+  if (typeof date === String)
+    date = stringToDate(date);
+  
+  return date >= dateStart && date <= dateEnd;
+}

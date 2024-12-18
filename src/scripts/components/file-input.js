@@ -227,11 +227,7 @@ class FileInputContainer extends Reactive {
 
     handleFileSelection(event) {
         const files = Array.from(event.target.files || []);
-        if (files.length > 0) {
-            // this.handleFile(files[0]);
-        }
-
-        this.setState({ uploadedFile: files[0] }, 'FileInputContainer.handleFileSelection');    
+        this.setState({ issuesFile: files[0] }, 'FileInputContainer.handleFileSelection');    
     }
 
     handleDragEnter(e) {
@@ -296,6 +292,6 @@ class FileInputContainer extends Reactive {
             return;
         }
 
-        this.state.uploadedFile = file;
+        this.state.issuesFile = file;
     }
 }

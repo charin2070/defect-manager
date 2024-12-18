@@ -1,148 +1,141 @@
 class BacklogChart extends BaseChart {
-
-  constructor(issues, canvasId, labelsData) {
-    super(issues, canvasId);
-    this.createBacklogChart(issues, canvasId, labelsData);
+  constructor(index, container) {
+    super(container);
+    this.createBacklogChart(index);
   }
 
-  createBacklogChart(tasks, canvasId, labelsData) {
-    if(this.chart) {
-      this.chart.destroy();
+  createBacklogChart(index) {
+    if (!index || !index.defects) return;
+
+    const monthlyData = {};
+    const allDates = new Set();
+
+    // Initialize data structure for each month
+    const initMonthData = () => ({ unresolved: 0, resolved: 0, backlog: 0 });
+
+    // Process unresolved defects
+    if (index.defects.unresolved?.creationDates) {
+      Object.entries(index.defects.unresolved.creationDates).forEach(([date, issues]) => {
+        const month = new Date(date).toLocaleString('default', { year: 'numeric', month: 'short' });
+        if (!monthlyData[month]) monthlyData[month] = initMonthData();
+        monthlyData[month].unresolved += issues.length;
+        allDates.add(month);
+      });
     }
+
+    // Process resolved defects
+    if (index.defects.resolved?.resolutionDates) {
+      Object.entries(index.defects.resolved.resolutionDates).forEach(([date, issues]) => {
+        const month = new Date(date).toLocaleString('default', { year: 'numeric', month: 'short' });
+        if (!monthlyData[month]) monthlyData[month] = initMonthData();
+        monthlyData[month].resolved += issues.length;
+        allDates.add(month);
+      });
+    }
+
+    // Sort months chronologically from oldest to newest
+    const sortedMonths = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
+
+    // Calculate backlog for each month
+    let previousBacklog = 0;
+    sortedMonths.forEach(month => {
+      const monthData = monthlyData[month];
+      // For each month, we add new unresolved and subtract newly resolved
+      const monthlyChange = monthData.unresolved - monthData.resolved;
+      monthData.backlog = previousBacklog + monthlyChange;
+      previousBacklog = monthData.backlog;
+    });
+
+    // Find minimum backlog value
+    const minBacklog = Math.min(...sortedMonths.map(month => monthlyData[month].backlog));
     
-    const createdCounts = {};
-    const resolvedCounts = {};
-    const backlogCounts = {};
-    const labels = new Set();
+    // If minimum is negative, shift all values up
+    if (minBacklog < 0) {
+      const shift = Math.abs(minBacklog);
+      sortedMonths.forEach(month => {
+        monthlyData[month].backlog += shift;
+      });
+    }
 
-    // Сначала собираем все даты
-    tasks.forEach(task => {
-      const createdDate = new Date(task.created);
-      const monthYearCreated = `${createdDate.getFullYear()}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}`;
-      labels.add(monthYearCreated);
-    });
+    // Reverse months for display (newest to oldest)
+    const displayMonths = [...sortedMonths].reverse();
 
-    // Сортируем даты
-    const sortedLabels = Array.from(labels).sort();
-
-    // Для каждой даты считаем метрики
-    sortedLabels.forEach(currentDate => {
-      const [currentYear, currentMonth] = currentDate.split('-').map(Number);
-      const currentDateTime = new Date(currentYear, currentMonth - 1).getTime();
-
-      // Считаем созданные задачи до этой даты
-      createdCounts[currentDate] = tasks.filter(task => {
-        const taskDate = new Date(task.created);
-        const monthYear = `${taskDate.getFullYear()}-${(taskDate.getMonth() + 1).toString().padStart(2, '0')}`;
-        return monthYear === currentDate;
-      }).length;
-
-      // Считаем решенные задачи до этой даты
-      resolvedCounts[currentDate] = tasks.filter(task => {
-        if (!task.resolved) return false;
-        const resolvedDate = new Date(task.resolved);
-        const resolvedDateTime = resolvedDate.getTime();
-        return resolvedDateTime <= new Date(currentYear, currentMonth).getTime();
-      }).length;
-
-      // Считаем текущий бэклог на эту дату (созданные минус решенные)
-      const totalCreated = tasks.filter(task => {
-        const createdDate = new Date(task.created);
-        return createdDate.getTime() <= new Date(currentYear, currentMonth).getTime();
-      }).length;
-
-      const totalResolved = tasks.filter(task => {
-        if (!task.resolved) return false;
-        const resolvedDate = new Date(task.resolved);
-        return resolvedDate.getTime() <= new Date(currentYear, currentMonth).getTime();
-      }).length;
-
-      backlogCounts[currentDate] = totalCreated - totalResolved;
-    });
-
-    const createdData = sortedLabels.map(label => createdCounts[label] || 0);
-    const resolvedData = sortedLabels.map(label => resolvedCounts[label] || 0);
-    const backlogData = sortedLabels.map(label => backlogCounts[label] || 0);
-
-    // Создаем график
-    this.chart = new Chart(canvasId, {
-      type: 'line',
-      data: {
-        labels: sortedLabels,
-        datasets: [
-          {
-            label: labelsData? `Открыто (${labelsData.unresolved})`: `Открыто`,
-            data: createdData,
-            tension: 0.3,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            fill: true
-          },
-          {
-            label: `Закрыто (${resolvedData.reduce((a, b) => a + b, 0)})`,
-            data: resolvedData,
-            tension: 0.3,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: true
-          },
-          {
-            label: 'Бэклог',
-            data: backlogData,
-            tension: 0.3,
-            borderColor: '#FE981C',
-            backgroundColor: '#fe981c3b',
-            fill: true
+    const chartData = {
+      labels: displayMonths,
+      datasets: [
+        {
+          label: 'Бэклог',
+          data: displayMonths.map(month => monthlyData[month].backlog),
+          borderColor: 'rgb(128, 128, 128)',
+          backgroundColor: 'rgba(128, 128, 128, 0.1)',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4
+        }
+      ]
+    };
+    
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Тренд бэклога',
+          font: {
+            size: 16,
+            weight: 'bold'
           }
-        ]
-      },
-      options: {
-        responsive: true,
-        animations: {
-          tension: {
-            duration: 3000,
-            easing: 'linear',
-            from: 0,
-            to: 0.5,
-            loop: false,
-          },
         },
-        maintainAspectRatio: false,
-        plugins: {
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        x: {
+          type: 'category',
           title: {
             display: true,
-            text: '',
-            font: {
-              size: 16,
-              weight: 'bold'
-            }
+            text: 'Дата'
           },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          },
-          legend: {
+          grid: {
             display: true,
-            position: 'bottom'
+            drawBorder: true,
+            drawOnChartArea: true,
+            drawTicks: true
           }
         },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Дата'
-            }
+        y: {
+          title: {
+            display: true,
+            text: 'Количество дефектов'
           },
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Количество дефектов'
-            }
+          beginAtZero: true,
+          suggestedMin: 0,
+          suggestedMax: 50,
+          ticks: {
+            stepSize: 10
+          },
+          grid: {
+            display: true,
+            drawBorder: true,
+            drawOnChartArea: true,
+            drawTicks: true
           }
         }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
       }
-    });
-    this.chart.update();
+    };
+
+    this.createChart('line', chartData, null, options);
+  }
+
+  update(index) {
+    this.createBacklogChart(index);
   }
 }

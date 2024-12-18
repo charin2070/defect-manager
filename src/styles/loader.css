@@ -1,8 +1,95 @@
-
 .lds-ellipsis,
 .lds-ellipsis div {
   box-sizing: border-box;
   color: #EF3124;
+}
+
+.loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.loader-overlay.visible {
+  opacity: 1;
+}
+
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+.loader-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.loader-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0.5;
+  transition: all 0.3s ease-out;
+}
+
+.loader-step.active {
+  opacity: 1;
+}
+
+.loader-step.completed {
+  opacity: 0.7;
+}
+
+.step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  position: relative;
+  transition: all 0.3s ease-out;
+}
+
+.loader-step.active .step-dot {
+  background: #3B82F6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.loader-step.completed .step-dot {
+  background: #10B981;
+}
+
+.loader-step.completed .step-dot::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 8px;
+}
+
+.step-text {
+  font-size: 0.95rem;
+  color: #374151;
+  font-weight: 500;
 }
 
 .lds-ellipsis {
@@ -11,53 +98,84 @@
   width: 80px;
   height: 80px;
 }
+
 .lds-ellipsis div {
   position: absolute;
-  top: 33.33333px;
-  width: 13.33333px;
-  height: 13.33333px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  background: currentColor;
+  background: #3B82F6;
   animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
+
 .lds-ellipsis div:nth-child(1) {
   left: 8px;
   animation: lds-ellipsis1 0.6s infinite;
 }
+
 .lds-ellipsis div:nth-child(2) {
   left: 8px;
   animation: lds-ellipsis2 0.6s infinite;
 }
+
 .lds-ellipsis div:nth-child(3) {
   left: 32px;
   animation: lds-ellipsis2 0.6s infinite;
 }
+
 .lds-ellipsis div:nth-child(4) {
   left: 56px;
   animation: lds-ellipsis3 0.6s infinite;
 }
-@keyframes lds-ellipsis1 {
+
+@keyframes pulse {
   0% {
-    transform: scale(0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
   }
   100% {
-    transform: scale(1);
-  }
-}
-@keyframes lds-ellipsis3 {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0);
-  }
-}
-@keyframes lds-ellipsis2 {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(24px, 0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 }
 
+@keyframes lds-ellipsis1 {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+@keyframes lds-ellipsis3 {
+  0% { transform: scale(1); }
+  100% { transform: scale(0); }
+}
+
+@keyframes lds-ellipsis2 {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(24px, 0); }
+}
+
+[data-theme="dark"] .loader-overlay {
+  background: rgba(17, 24, 39, 0.95);
+}
+
+[data-theme="dark"] .step-text {
+  color: #E5E7EB;
+}
+
+[data-theme="dark"] .step-dot {
+  background: #4B5563;
+}
+
+[data-theme="dark"] .loader-step.active .step-dot {
+  background: #60A5FA;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .loader-step.completed .step-dot {
+  background: #34D399;
+}
+
+[data-theme="dark"] .lds-ellipsis div {
+  background: #60A5FA;
+}

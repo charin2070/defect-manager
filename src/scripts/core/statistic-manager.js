@@ -1,53 +1,115 @@
-class StatisticManager extends Refact {
+class StatisticManager extends Reactive {
     constructor() {
-        super(document.body);
+        super();
+        this.state = {
+            statistics: null
+        };
     }
 
-    static updateStatistics(indexedIssues) {
+    static async updateStatistics(indexedIssues) {
         log(indexedIssues, '[StatisticManager.updateStatistics] Updating statistics with indexed issues...');
 
-        return new Promise((resolve, reject) => {
-            if (!indexedIssues || typeof indexedIssues !== 'object') {
-                log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
-                resolve(new Error('Invalid input data'));
-                return;
+        if (!indexedIssues || typeof indexedIssues !== 'object') {
+            log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
+            throw new Error('Invalid input data');
+        }
+
+        try {
+            // Get current date and calculate period dates
+            const now = new Date();
+            const last30Days = new Date(now);
+            last30Days.setDate(now.getDate() - 30);
+            
+            const last90Days = new Date(now);
+            last90Days.setDate(now.getDate() - 90);
+            
+            const last180Days = new Date(now);
+            last180Days.setDate(now.getDate() - 180);
+
+            // Get all issues from the indexed data
+            let allIssues = [];
+            
+            // Handle different input formats
+            if (Array.isArray(indexedIssues)) {
+                // If input is array of issues
+                allIssues = indexedIssues;
+            } else if (indexedIssues.issues && Array.isArray(indexedIssues.issues)) {
+                // If input has issues array property
+                allIssues = indexedIssues.issues;
+            } else if (typeof indexedIssues === 'object') {
+                // If input is object with issue entries
+                allIssues = Object.values(indexedIssues).filter(item => 
+                    item && typeof item === 'object' && item.taskId && item.created
+                );
             }
 
-            const issueStatistics = {
-                currentMonth: null,
-                last30days: null,
-                last90days: null,
-                total: indexedIssues
+            log(allIssues, '[StatisticManager] Processing issues:', allIssues.length);
+
+            if (!allIssues.length) {
+                log('[StatisticManager] No valid issues found in input data');
+                return {
+                    last30days: { index: {}, issues: [] },
+                    last90days: { index: {}, issues: [] },
+                    last180days: { index: {}, issues: [] },
+                    total: { index: {}, issues: [] }
+                };
+            }
+
+            // Filter issues for each period
+            const filterIssuesByDate = (issues, startDate) => {
+                return issues.filter(issue => {
+                    if (!issue || !issue.created) return false;
+                    const issueDate = new Date(issue.created);
+                    return issueDate >= startDate && issueDate <= now;
+                });
             };
 
-            try {
-                // Получаем текущую дату и начало месяца
-                const now = new Date();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const last30Days = new Date(now.setDate(now.getDate() - 30));
-                const last90Days = new Date(now.setDate(now.getDate() - 90));
+            // Create period-specific issue arrays
+            const last30DaysIssues = filterIssuesByDate(allIssues, last30Days);
+            const last90DaysIssues = filterIssuesByDate(allIssues, last90Days);
+            const last180DaysIssues = filterIssuesByDate(allIssues, last180Days);
 
-                // Обрабатываем каждый период
-                issueStatistics.currentMonth = this.getIssueStatistics(indexedIssues, {
-                    dateStart: startOfMonth,
-                    dateEnd: new Date()
-                });
-                issueStatistics.last30days = this.getIssueStatistics(indexedIssues, {
-                    dateStart: last30Days,
-                    dateEnd: new Date()
-                });
-                issueStatistics.last90days = this.getIssueStatistics(indexedIssues, {
-                    dateStart: last90Days,
-                    dateEnd: new Date()
-                });
-                issueStatistics.total = indexedIssues;
+            log('[StatisticManager] Filtered issues:', {
+                total: allIssues.length,
+                last30: last30DaysIssues.length,
+                last90: last90DaysIssues.length,
+                last180: last180DaysIssues.length
+            });
 
-                log(issueStatistics, '[StatisticManager] Statistics updated');
-                resolve(issueStatistics);
-            } catch (error) {
-                resolve(error);
+            // Get structured indexes for each period
+            const last30DaysIndex = await IndexManager.getStructuredIndex(last30DaysIssues);
+            const last90DaysIndex = await IndexManager.getStructuredIndex(last90DaysIssues);
+            const last180DaysIndex = await IndexManager.getStructuredIndex(last180DaysIssues);
+            const totalIndex = await IndexManager.getStructuredIndex(allIssues);
+
+            // Create statistics object with all periods
+            const statistics = {
+                last30days: {
+                    index: last30DaysIndex,
+                    issues: last30DaysIssues
+                },
+                last90days: {
+                    index: last90DaysIndex,
+                    issues: last90DaysIssues
+                },
+                last180days: {
+                    index: last180DaysIndex,
+                    issues: last180DaysIssues
+                },
+                total: {
+                    index: totalIndex,
+                    issues: allIssues
+                }
             }
-        });
+
+            this.setState({ statistics }, '[StatisticManager.updateStatistics]');   
+
+            log(statistics, '[StatisticManager] Statistics updated');
+            return statistics;
+        } catch (error) {
+            log(error, '[StatisticManager] Error updating statistics');
+            throw error;
+        }
     }
 
     // Example of Issue object
@@ -92,22 +154,17 @@ class StatisticManager extends Refact {
         reports: 0 // Количество обращений от пользователей на не исправленных задачах
     }
 
-    static async getIssueStatistics(issues, dateRange) {
-        if (!issues || !issues.index || !issues.issues) {
-            log(issues, '[StatisticManager] getIssueStatistics requires an object with index and issues.');
-            console.error("[StatisticManager] getIssueStatistics requires an object with index and issues.");
+    static getFlatStatistics(index) {
+        if (!index) {
+            log({ index, issues }, '[StatisticManager.getStatisticsFromIndex] Index is null');
             return null;
         }
 
-        return {
-            index: issues.index,
-            issues: issues.issues
-        };
     }
 
-    static getStatisticsFromIndex(index, issues, dateRange) {
-        if (!index || !issues) {
-            log({ index, issues }, '[StatisticManager.getStatisticsFromIndex] Invalid input');
+    static getStatisticsFromIndex(index, filters = {type: 'defect', dateRange: IndexManager.getDateFilter("all_time")}) {
+        if (!index) {
+            log({ index, issues }, '[StatisticManager.getStatisticsFromIndex] Index is null');
             return null;
         }
 
@@ -115,45 +172,82 @@ class StatisticManager extends Refact {
             unresolved: [],
             resolved: [],
             rejected: [],
+            rejectedByTeam: [],
             created: [],
-            index: index,
-            issues: issues
+            slaOverdue: [],
+            averageResolutionTime: 0,
+            reports: 0,
+            activeReports: 0,
+            reportsTop: 0,
+            reportsDynamic: null,
+            slaAchieved: []
         };
 
-        // Подсчитываем статистику только если есть диапазон дат
-        if (dateRange) {
-            const { dateStart, dateEnd } = dateRange;
+        const { dateStart, dateEnd } = filters.dateRange;
+        const issues = Object.values(index.id).flat();
+        log(issues, '[StatisticManager.getStatisticsFromIndex] Filtered issues');
 
-            // Фильтруем задачи по дате создания
-            if (index.created) {
-                Object.entries(index.created)
-                    .filter(([date]) => {
-                        const taskDate = new Date(date);
-                        return taskDate >= dateStart && taskDate <= dateEnd;
-                    })
-                    .forEach(([_, taskIds]) => {
-                        taskIds.forEach(taskId => {
-                            if (issues[taskId]) {
-                                statistics.created.push(issues[taskId]);
-                            }
-                        });
-                    });
+        // Created
+        issues.forEach(issue => {
+            if (issue) {
+                const issueDate = new Date(issue.created);
+                if (issueDate >= dateStart && issueDate <= dateEnd) {
+                statistics.created.push(issue);
             }
-        }
 
-        // Добавляем общую статистику независимо от дат
-        if (index.state) {
-            ['unresolved', 'resolved', 'rejected'].forEach(state => {
-                if (index.state[state]) {
-                    index.state[state].forEach(taskId => {
-                        if (issues[taskId]) {
-                            statistics[state].push(issues[taskId]);
-                        }
-                    });
+            // Resolved
+            if (issue.state === "resolved") {
+                if (isInDateRange(issue.resolved, dateStart, dateEnd))
+                    statistics.resolved.push(issue);
+            } else {
+                if (issue.state === "unresolved" && isInDateRange(issue.created, dateStart, dateEnd) && issue.status !== "Отклонен")
+                    statistics.unresolved.push(issue);
+            }
+
+            // Rejected
+            if (issue.state === "rejected") {
+                if (isInDateRange(issue.resolved, dateStart, dateEnd)) {
                 }
-            });
-        }
+            }
 
-        return statistics;
+            // Rejected by team
+            if (issue.status === "Отклонен командой" && isInDateRange(issue.created, dateStart, dateEnd))
+                    statistics.rejectedByTeam.push(issue);
+             
+            // SLA overdue
+            if (issue.state === "unresolved" && isInDateRange(issue.slaDate, dateStart, dateEnd) && new Date(issue.created) > new Date(issue.slaDate)) {
+                statistics.slaOverdue.push(issue);
+            } else {
+                statistics.slaAchieved.push(issue);
+            }
+            
+            // Average resolution time
+            if (issue.state === "resolved" && isInDateRange(issue.resolved, dateStart, dateEnd)) {
+                const createdDate = new Date(issue.created);
+                const resolvedDate = new Date(issue.resolved);
+                statistics.averageResolutionTime += (resolvedDate - createdDate) / (1000 * 60 * 60 * 24); // Перевод миллисекунд в дни
+            }
+
+            // Reports
+            if (isInDateRange(issue.created, dateStart, dateEnd)) {
+                statistics.reports += issue.reports;
+            }
+
+            // Active reports
+            if (issue.state === "unresolved" && isInDateRange(issue.created, dateStart, dateEnd) && issue.reports > 0) {
+                statistics.activeReports += 1;
+            }
+
+            // Reports top
+            if (issue.state === "unresolved" && isInDateRange(issue.created, dateStart, dateEnd) && issue.reports > 0) {
+                statistics.reportsTop[issue.taskId] += issue.reports;
+            }
+
+            // Reports dynamic
+            if (issue.state === "unresolved" && isInDateRange(issue.created, dateStart, dateEnd) && issue.reports > 0) {
+                statistics.reportsDynamic[issue.taskId] = StatisticManager.getDynamicReports(issue);
+            }
+            }
+        }); 
     }
 }

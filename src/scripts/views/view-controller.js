@@ -1,11 +1,13 @@
     class ViewController extends View {
-        constructor(container) {
-            super(container);
-            this.init();
+    constructor(container) {
+        super(container);
+        this.init();
     }
     
     init() {
         this.views = {};
+        
+        // Initialize loader first
         this.loaderView = new LoaderView();
         
         // Layout
@@ -29,23 +31,39 @@
         this.registerView('settings', this.settingsView);
 
         this.setupSubscriptions();
+        
+        // Initialize loader after everything else
+        requestAnimationFrame(() => {
+            if (this.loaderView) {
+                this.loaderView.initLoader();
+            }
+        });
     }
 
     setupSubscriptions(){
-        // Data Status
+        // Data Status is the primary driver for view transitions
         this.subscribe('dataStatus', (dataStatus) => {
             switch (dataStatus) {
                 case 'loaded':
                     this.showView('dashboard');
+                    this.hideLoader();
                     break;
                 case 'empty':
                     this.showView('upload');
                     break;
+                case 'loading':
+                    this.showLoader();
+                    break;
             }
         });
         
-        // View
-        this.subscribe('view', (viewName) => this.showView(viewName));
+        // View subscription is only for explicit view changes (e.g., from UI actions)
+        this.subscribe('view', (viewName) => {
+            if (viewName && viewName !== this.currentView?.name) {
+                this.showView(viewName);
+            }
+        });
+
         // Toast
         this.subscribe('toast', (toast) => {
             console.log('ViewController: Showing toast', toast);
@@ -80,28 +98,36 @@
         container.style.display = 'none'; // Initially hide all views
     }
 
-    showLoader() {
-        log('Showing loader');
-        this.loaderView.show();
+    showLoader(step = 'reading') {
+        if (!this.loaderView) return;
+        log('[ViewController] Showing loader');
+        requestAnimationFrame(() => {
+            this.loaderView.show(step);
+        });
     }
 
     hideLoader() {
-        log('Hiding loader');
-        this.loaderView.hide();
+        if (!this.loaderView) return;
+        log('[ViewController] Hiding loader');
+        requestAnimationFrame(() => {
+            this.loaderView.hide();
+        });
     }
 
     async showView(name) {
-        // Skip if no name provided
-        if (!name) {
-            log(name, 'No view name provided to showView');
+        // Skip if no name provided or if it's the same as current view
+        if (!name || (this.currentView && this.views[name] === this.currentView)) {
+            log(name ? 'View is already active' : 'No view name provided to showView');
             return;
         }
         
         log(`📺 Showing view: ${name}`);
         const targetView = this.views[name];
         
-        // If view not found, default to upload view
- 
+        if (!targetView) {
+            log(`View "${name}" not found`);
+            return;
+        }
 
         const targetContainer = targetView.getContainer();
         
@@ -113,12 +139,7 @@
                 container.classList.remove('view-exit', 'view-enter');
             }
         });
-        if (name === 'dashboard') {
-            log('[ViewController.showView] Rendering backlog chart...');    
-            this.dashboardView.createBacklogChart();
-            this.dashboardView.backlogData = this.state.chartManager.prepareChartData(this.state.issues);
-
-        }
+        
         // If there's a current view, animate it out
         if (this.currentView && this.currentView !== targetView) {
             const currentContainer = this.currentView.getContainer();
@@ -151,20 +172,22 @@
     }
 
     updateView() {
-        switch (this.state.dataStatus) {
-            case 'loaded':
-                this.showView('dashboard');
-                this.hideLoader();
-                break;
-            case 'empty':
-                this.showView('upload');
-                break;
+        // Check data status first
+        if (this.state.dataStatus === 'empty') {
+            this.showView('upload');
+            return;
         }
 
-        if (!this.state.statistics || !this.state.statistics.length <= 0) {
+        // Then check if we have valid statistics
+        if (!this.state.statistics || Object.keys(this.state.statistics).length === 0) {
             this.showView('upload');
-        } else {
+            return;
+        }
+
+        // If we have data and statistics, show dashboard
+        if (this.state.dataStatus === 'loaded') {
             this.showView('dashboard');
+            this.hideLoader();
         }
     }
 

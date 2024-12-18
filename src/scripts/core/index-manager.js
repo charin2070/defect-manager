@@ -1,8 +1,7 @@
-class IndexManager extends Refact {
+class IndexManager extends Reactive {
     constructor(issues) {
-        super(document.body);
+        super();
         this.issues = issues;
-        this.index = null;
     }
 
     static getDateFilter(condition){
@@ -17,6 +16,13 @@ class IndexManager extends Refact {
                     endDate: new Date()
                 };
             }
+        }
+
+        if (condition === 'all_time') {
+            return {
+                startDate: new Date('2021-01-01'),
+                endDate: new Date()
+            };
         }
 
         // Process condition format 'current_month', 'last_month'
@@ -103,36 +109,52 @@ class IndexManager extends Refact {
                 };
         }
     }
- static getStructuredIndex(issues) {
-    return new Promise((resolve, reject) => {
+
+    static isValidDate(dateStr) {
+        if (!dateStr) return false;
+        const date = new Date(dateStr);
+        return date instanceof Date && !isNaN(date) && date.getTime() > 0;
+    }
+
+    static formatDate(dateStr) {
+        if (!this.isValidDate(dateStr)) return null;
+        try {
+            return new Date(dateStr).toISOString().split('T')[0];
+        } catch (error) {
+            console.warn(`[IndexManager] Invalid date format: ${dateStr}`);
+            return null;
+        }
+    }
+
+    static async getStructuredIndex(issues) {
         log('[IndexManager] Building structured index...');
 
         if (!issues || !Array.isArray(issues)) {
             console.warn("[IndexManager] getStructuredStatistics requires an array of issues. Current issues: " + issues);
-            reject(new Error("Invalid input: issues must be an array"));
-            return;
+            throw new Error("Invalid input: issues must be an array");
         }
 
-        const index = {
-            id: {},
-            defects: {
-                resolved: { count: 0, resolutionDates: {}, slaDates: {} },
-                unresolved: { count: 0, creationDates: {} },
-                rejected: { count: 0, rejectionDates: {} }
-            },
-            requests: {
-                resolved: { count: 0 },
-                unresolved: { count: 0 },
-                rejected: { count: 0 }
-            }
-        };
+        try {
+            const index = {
+                id: {},
+                defects: {
+                    resolved: { count: 0, resolutionDates: {}, slaDates: {} },
+                    unresolved: { count: 0, creationDates: {} },
+                    rejected: { count: 0, rejectionDates: {} }
+                },
+                requests: {
+                    resolved: { count: 0 },
+                    unresolved: { count: 0 },
+                    rejected: { count: 0 }
+                }
+            };
 
-        Promise.all(issues.map(issue => {
-            return new Promise((resolveIssue) => {
+            // Process each issue
+            for (const issue of issues) {
                 const { type, state, taskId, created, resolved, sla } = issue;
-                const creationDate = created ? new Date(created).toISOString().split('T')[0] : null;
-                const resolvedDate = resolved ? new Date(resolved).toISOString().split('T')[0] : null;
-                const slaDate = sla ? new Date(sla).toISOString().split('T')[0] : null;
+                const creationDate = this.formatDate(created);
+                const resolvedDate = this.formatDate(resolved);
+                const slaDate = this.formatDate(sla);
 
                 index.id[taskId] = issue;
 
@@ -164,103 +186,19 @@ class IndexManager extends Refact {
                     const category = index.requests[state];
                     if (category) {
                         category.count++;
-                        category[creationDate] = category[creationDate] || [];
-                        category[creationDate].push(taskId);
+                        if (creationDate) {
+                            category[creationDate] = category[creationDate] || [];
+                            category[creationDate].push(taskId);
+                        }
                     }
                 }
-
-                resolveIssue();
-            });
-        })).then(() => {
-            resolve(index);
-        }).catch(error => {
-            reject(error);
-        });
-    });
-}
-
-    static indexIssues(issues) {
-        return new Promise((resolve, reject) => {
-            if (!issues) {
-                сonsole.warn('[IndexManager] Input issues is null or undefined');
-                resolve({
-                    byType: {},
-                    byId: {},
-                    byCreationDate: {},
-                    byResolvedDate: {},
-                    byRejectedDate: {},
-                    byState: { resolved: [], unresolved: [], rejected: [] }
-                });
-                return;
             }
 
-            try {
-                const index = {
-                    type: {},
-                    taskId: {},
-                    created: {},
-                    resolved: {},
-                    rejected: {},
-                    state: { resolved: [], unresolved: [], rejected: [] }
-                };
-
-                if (Array.isArray(issues)) {
-                    issues.forEach(issue => {
-                        if (!issue) return;
-
-                        // taskId
-                        if (issue.taskId) {
-                            index.taskId[issue.taskId] = [];
-                        }
-                        index.taskId[issue.taskId].push(issue);
-
-                        // Type
-                        if (!index.type[issue.type]) {
-                            index.type[issue.type] = [];
-                        }
-                        index.type[issue.type].push(issue.taskId);
-
-                        // State
-                        if (!index.state[issue.state]) {
-                            index.state[issue.state] = [];
-                        }
-                        index.state[issue.state].push(issue.taskId);
-
-                        // Creation date
-                        if (issue.created) {
-                            if (!index.created[issue.created]) {
-                                index.created[issue.created] = [];
-                            }
-                            index.created[issue.created].push(issue.taskId);
-                        }
-
-                        // Resolved date
-                        if (issue.resolved) {
-                            if (issue.status === 'Закрыт') {
-                                if (!index.resolved[issue.resolved]) {
-                                    index.resolved[issue.resolved] = [];
-                                }
-                                index.resolved[issue.resolved].push(issue.taskId);
-                            } else if (issue.status === 'Отклонен') {
-                                if (!index.rejected[issue.resolved]) {
-                                    index.rejected[issue.resolved] = [];
-                                }
-                                index.rejected[issue.resolved].push(issue.taskId);
-                            } else {
-                                warn(`[IndexManager] Issue with taskId ${issue} has an invalid status: ${issue}`);
-                            }
-
-                        }
-
-                    });
-                }
-
-                resolve(index);
-            } catch (error) {
-                console.error('[IndexManager] Error indexing issues:', error);
-                reject(error);
-            }
-        });
+            return index;
+        } catch (error) {
+            console.error('[IndexManager] Error building structured index:', error);
+            throw error;
+        }
     }
 
     static getByTaskId(taskId, issues) {
@@ -272,15 +210,80 @@ class IndexManager extends Refact {
         return issues.find(issue => issue.taskId === taskId);
     }
 
-    static getIssues(filter, issues) {
+    static filterIndex(filters = {}, index) {
+        const filteredIndex = {
+            type: {},
+            taskId: {},
+            created: {},
+            resolved: {},
+            rejected: {},
+            state: { resolved: [], unresolved: [], rejected: [] }
+        };
+
+        const filterKeys = Object.keys(filters);
+
+        filterKeys.forEach(key => {
+            if (index[key]) {
+                if (Array.isArray(index[key])) {
+                    filteredIndex[key] = index[key].filter(item => filters[key].includes(item));
+                } else {
+                    filteredIndex[key] = {};
+                    Object.keys(index[key]).forEach(subKey => {
+                        if (filters[key].includes(subKey)) {
+                            filteredIndex[key][subKey] = index[key][subKey];
+                        }
+                    });
+                }
+            }
+        });
+
+        log(filteredIndex, '[IndexManager] Filtered index');
+        return filteredIndex;
+    }
+
+    static filterFlat(filters, index) {
+        const result = [];
+
+        const { type: typeFilter, team } = filters;
+        const typeKey = typeFilter === 'defect' ? 'defects' : typeFilter;
+
+        console.log('Filters:', filters);
+        console.log('Index structure:', index);
+
+        // Get all issues from the id index
+        Object.values(index.id).forEach(issue => {
+            if (issue) {
+                let match = true;
+
+                // Check type filter
+                if (typeFilter && issue.type !== typeFilter) {
+                    match = false;
+                }
+
+                // Check team filter
+                if (team && issue.team !== team) {
+                    match = false;
+                }
+
+                if (match) {
+                    console.log(`Match found for issue:`, issue);
+                    result.push(issue);
+                }
+            }
+        });
+
+        console.log('Filtered issues:', result);
+        return result;
+    }
+
+    static getIssues(filters = {}, issues) { 
         if (!issues || !Array.isArray(issues)) {
             console.warn(`[IndexManager] getIssues requires an array of issues, instead got: ${typeof issues}`);
             return [];
         }
 
         return issues.filter(issue => {
-            for (const [field, condition] of Object.entries(filter)) {
-                // Handle date range filters
+            return Object.entries(filters).every(([field, condition]) => {
                 if (field === 'creation' || field === 'resolved') {
                     const dateField = field === 'creation' ? 'created' : 'resolved';
                     const issueDate = new Date(issue[dateField]);
@@ -291,14 +294,12 @@ class IndexManager extends Refact {
                     if (condition.endDate && new Date(condition.endDate) < issueDate) {
                         return false;
                     }
-                }
-                // Handle relative date filters (e.g., last 30 days)
-                else if (field === 'creationDate' || field === 'resolvedDate') {
+                } else if (field === 'creationDate' || field === 'resolvedDate') {
                     const dateField = field === 'creationDate' ? 'created' : 'resolved';
                     const issueDate = new Date(issue[dateField]);
                     const daysAgo = condition;
                     
-                    if (!issueDate) continue;
+                    if (!issueDate) return false;
                     
                     const compareDate = new Date();
                     compareDate.setDate(compareDate.getDate() + daysAgo);
@@ -308,9 +309,7 @@ class IndexManager extends Refact {
                     } else if (daysAgo > 0 && issueDate > compareDate) {
                         return false;
                     }
-                }
-                // Handle numeric comparisons
-                else if (typeof issue[field] === 'number') {
+                } else if (typeof issue[field] === 'number') {
                     if (typeof condition === 'string') {
                         const operator = condition.substring(0, 2);
                         const value = parseFloat(condition.substring(2));
@@ -330,17 +329,13 @@ class IndexManager extends Refact {
                     } else if (typeof condition === 'number') {
                         if (issue[field] !== condition) return false;
                     }
-                }
-                // Handle team filter
-                else if (field === 'team' && condition !== 'all') {
+                } else if (field === 'team' && condition !== 'all') {
                     if (issue.team !== condition) return false;
-                }
-                // Handle simple equality comparisons
-                else if (issue[field] !== condition) {
+                } else if (issue[field] !== condition) {
                     return false;
                 }
-            }
-            return true;
+                return true;
+            });
         });
     }
 

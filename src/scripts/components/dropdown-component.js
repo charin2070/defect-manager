@@ -27,6 +27,9 @@ class DropdownComponent extends HtmlElement {
             id: this.options.id
         });
 
+        // Add animation classes
+        this.dropdown.style.transition = 'all 0.3s ease';
+
         // Create toggle button
         this.button = this.createElement('button', {
             className: 'inline-flex items-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
@@ -236,11 +239,13 @@ class DropdownComponent extends HtmlElement {
 
     open() {
         this.content.classList.remove('hidden');
+        this.content.classList.add('animate-slide-down');
         this.isOpen = true;
     }
 
     close() {
         this.content.classList.add('hidden');
+        this.content.classList.remove('animate-slide-down');
         if (this.activeSubmenu) {
             this.activeSubmenu.classList.add('hidden');
             // Reset arrow rotation when closing

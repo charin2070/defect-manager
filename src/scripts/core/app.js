@@ -1,9 +1,7 @@
-class App extends Refact {
+class App extends Reactive {
     constructor(container) {
         super(container);
-
         this.container = container;
-
         this.initialize();
     }
 
@@ -41,6 +39,16 @@ class App extends Refact {
             console.error('[App.initialize] Error initializing App:', error);
             this.setState({ error: error }, 'App.initialize');
         }
+    }
+
+    // Called by state.process.test_function change
+    test() {
+        log('[App] Test');
+        // this.setState({ index: this.state.index }, 'App.test');
+        const statistics = StatisticManager.getStatisticsFromIndex(this.state.index, { dateRange: IndexManager.getDateFilter("all_time") });
+        log(statistics, '[App] Statistics');
+        // this.setState({ statistics: statistics }, 'App.test');
+
     }
 
 
@@ -92,14 +100,7 @@ class App extends Refact {
             this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     }
-
-      // Called by state.process.test_function change
-      test() {
-        log('[App] Test');
-        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
-    }
     
-
     setupSubscriptions() {
         // Console
         this.subscribeForConsole();

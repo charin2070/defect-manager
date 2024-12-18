@@ -1,10 +1,11 @@
 class HtmlComponent extends Reactive {
     constructor(container) {
-        super(container);
+        super();
+        this.element = null;
     }
 
     generateId() {
-        return `stat#${Math.random().toString(36).substr(2, 9)}`;
+        return `stat#${Math.random().toString(36).substring(2, 9)}`;
     }
 
     addClass(className) {
@@ -38,6 +39,7 @@ class HtmlComponent extends Reactive {
             },
             setStyles: (styles) => {
                 if (styles) {
+                    console.log('Applying styles:', styles); // Debugging line
                     Object.assign(element.style, styles);
                 }
             }
@@ -53,4 +55,21 @@ class HtmlComponent extends Reactive {
 
         return element;
     }
+
+    setElement(element) {
+        this.element = element;
+    }
+
+    getElement() {
+        return this.element;
+    }
+
+    setContainer(container) {
+        this.container = container;
+    }
+
+    getContainer() {
+        return this.container;
+    }
+
 }

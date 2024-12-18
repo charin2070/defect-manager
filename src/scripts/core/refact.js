@@ -37,21 +37,64 @@ class Refact {
         return Refact.instance;
     }
 
+    // Safe stringify for logging
+    safeStringify(obj, maxLength = 50) {
+        if (!obj || typeof obj !== 'object') {
+            return String(obj);
+        }
+
+        const seen = new WeakSet();
+        
+        const stringify = (value) => {
+            if (!value || typeof value !== 'object') {
+                return String(value);
+            }
+
+            if (seen.has(value)) {
+                return '[Circular]';
+            }
+            seen.add(value);
+
+            // Для объектов-классов возвращаем только имя конструктора
+            if (value.constructor && value.constructor.name !== 'Object' && value.constructor.name !== 'Array') {
+                return `[${value.constructor.name}]`;
+            }
+
+            if (Array.isArray(value)) {
+                const items = value.slice(0, 3).map(item => stringify(item));
+                return `[${items.join(', ')}${value.length > 3 ? '...' : ''}]`;
+            }
+
+            const pairs = Object.entries(value).slice(0, 3).map(([key, val]) => 
+                `${key}: ${stringify(val)}`
+            );
+            return `{${pairs.join(', ')}${Object.keys(value).length > 3 ? '...' : ''}}`;
+        };
+
+        const result = stringify(obj);
+        return result.length > maxLength ? result.substring(0, maxLength) + '...' : result;
+    }
+
     // Default state
     setState(newState, changedBy = 'unknown') {
         try {
             // Update state in one go to avoid multiple re-renders
-            this.state = { ...this.state, ...newState };
+            Object.assign(this.state, newState);
             
             // Once per key
             for (const key in newState) {
                 const value = newState[key];
-                this.notify(key);
+                const callbacks = this.subscribers.get(key) || [];
+                callbacks.forEach(callback => {
+                    if (typeof callback === 'function') {
+                        callback(value, changedBy);
+                    }
+                });
                 
                 // Log
                 const logValue = value === null ? 'null' : 
                                value === undefined ? 'undefined' :
-                               typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' :
+                               typeof value === 'object' ? this.safeStringify(value) :
                                String(value);
                                
                 console.log(`⚡State "${key}" => ${logValue} (by: ${changedBy})`);
@@ -61,11 +104,6 @@ class Refact {
         }
     }
     
-    setState(updates, context) {
-        Object.assign(this.state, updates);
-        this.notifySubscribers(context);
-    }
-
     subscribe(key, callback) {
         if (!this.subscribers.has(key)) {
             this.subscribers.set(key, []);

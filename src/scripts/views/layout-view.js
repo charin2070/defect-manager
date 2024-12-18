@@ -1,10 +1,19 @@
 class LayoutView extends View {
     constructor(container) {
         super(container);
+        this.container = container || document.getElementById('app');
+        if (!this.container) {
+            throw new Error('Container element not found');
+        }
         this.init();
     }
 
     createWrapper() {
+        // Очищаем контейнер перед добавлением нового wrapper
+        while (this.container.firstChild) {
+            this.container.removeChild(this.container.firstChild);
+        }
+
         this.wrapper = document.createElement('div');
         this.wrapper.className = 'min-h-screen bg-gray-100 no-cursor-select';
         this.wrapper.id = 'layout-main-container';
@@ -70,6 +79,14 @@ class LayoutView extends View {
             } else {
                 dateRangeContent.classList.add('hidden');
             }
+        });
+
+        // Add hover event to open dropdown
+        dateRangeDropdown.addEventListener('mouseenter', () => {
+          dateRangeDropdown.classList.add('open');
+        });
+        dateRangeDropdown.addEventListener('mouseleave', () => {
+          dateRangeDropdown.classList.remove('open');
         });
 
         // Close dropdown when clicking outside
@@ -163,14 +180,15 @@ class LayoutView extends View {
                         break;
                     case 'upload':
                         // this.refact.setState({ view: 'upload' });
-                        this.setState({ process: 'file_upload' }, 'LayoutView');
+                        this.setState({ process: 'file_upload' });
                         break;
                     case 'clearLocalStorageData':
-                        this.refact.setState({ process: 'cleanup_local_storage_data' }, 'LayoutView');
+                        // Используем единичный вызов setState с контекстом
+                        this.refact.setState({ process: 'cleanup_local_storage_data' }, 'LayoutView.clearLocalStorageData');
                         break;
                     case 'debug':
                         // Выводим состояние Refact
-                        this.setState({ process: 'logState' }, 'LayoutView');
+                        this.setState({ process: 'logState' });
                         break;
                     case 'settings':
                         this.refact.setState({ view: 'settings' });
@@ -179,7 +197,7 @@ class LayoutView extends View {
                         this.refact.setState({ view: 'reports' });
                         break;
                     case 'cleanupEntireLocalStorage':
-                        this.setState({ process: 'cleanup_local_storage' }, 'LayoutView.cleanupEntireLocalStorage');
+                        this.setState({ process: 'cleanup_local_storage' });
                         break;
                 }
             }

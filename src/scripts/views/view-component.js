@@ -53,14 +53,6 @@ class View extends HtmlComponent {
     }
 
     /**
-     * Sets the container element
-     * @param {HTMLElement} container - Container element to set
-     */
-    setContainer(container) {
-        this.container = container;
-    }
-
-    /**
      * Mounts the component to a target element
      * @param {HTMLElement} targetElement - Element to mount the component to
      */

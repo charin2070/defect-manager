@@ -12,12 +12,20 @@ class DataCard extends HtmlComponent {
             onClick: options.onClick || (() => {}),
             value: options.value || '0',
             description: options.description || '',
+            valueSource: options.valueSource || '',
             theme: options.theme || 'light',
             ...options
         };
 
         this.render();
         this.setupElements();
+        this.setupSubscriptions();
+    }
+
+    setupSubscriptions() {
+        this.subscribe(this.options.valueSource, (value) => {
+            this.setValue(value);
+        });
     }
 
     render() {
@@ -34,6 +42,16 @@ class DataCard extends HtmlComponent {
             </div>
         `;
         this.container.innerHTML = html;
+    }
+
+    subscribeValues(valuePath, descriptionPath) {
+        this.subscribe(valuePath, (value) => {
+            this.setValue(value);
+        });
+
+        this.subscribe(descriptionPath, (description) => {
+            this.setDescription(description);
+        });
     }
 
     setupElements() {
@@ -63,7 +81,7 @@ class DataCard extends HtmlComponent {
 
     setValue(value) {
         this.options.value = value;
-        this.elements.value.textContent = value;
+        this.elements.value.textContent = 'value';
     }
 
     setDescription(description) {
