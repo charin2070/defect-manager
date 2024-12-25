@@ -110,6 +110,75 @@ class DashboardView extends View {
     }
 
     setupSubscriptions() {
+        // Subscribe to issues changes
+        this.refact.subscribe('issues', (issues) => {
+            if (!issues) return;
+            
+            const defects = issues.filter(issue => issue.type === 'defect');
+            const openDefects = defects.filter(d => d.status === 'unresolved');
+            const criticalDefects = defects.filter(d => d.priority === 'critical');
+            
+            // Update defects card
+            if (this.defectsCard) {
+                this.defectsCard.setValue(defects.length);
+                this.defectsCard.setDescription(`${openDefects.length} открытых`);
+            }
+            
+            // Update chart if exists
+            if (this.chartContainer) {
+                // Remove old chart if exists
+                while (this.chartContainer.firstChild) {
+                    this.chartContainer.firstChild.remove();
+                }
+                
+                // Create new chart
+                const canvas = document.createElement('canvas');
+                this.chartContainer.appendChild(canvas);
+                
+                const chart = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Всего', 'Открытые', 'Критичные'],
+                        datasets: [{
+                            label: 'Дефекты',
+                            data: [defects.length, openDefects.length, criticalDefects.length],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.5)',
+                                'rgba(255, 99, 132, 0.5)',
+                                'rgba(255, 206, 86, 0.5)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(255, 206, 86, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Статистика дефектов',
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
     }
 
     update(statistics) {

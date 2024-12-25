@@ -1,15 +1,13 @@
 // Reads, parse and store data
-class DataManager extends Reactive {
-  constructor() {
-    super(document.body);
-
-    this.dataKeys = ['issues', 'index', 'statistics', 'dataUpdated'];
-    this.setupSubscriptions();
+class DataManager{
+  constructor(container) {
+    this.refact = Refact.getInstance(container);
+    this.setupSubscriptions();  
   }
 
   setupSubscriptions() {
     // Process
-    this.subscribe('process', (value) => {
+    this.refact.subscribe('process', (value) => {
       switch (value) {
         // Cleanup entire Local Storage
         case 'cleanup_local_storage':
@@ -18,7 +16,7 @@ class DataManager extends Reactive {
       }
     });
 
-    this.subscribe('uploadedFile', (file) => {
+    this.refact.subscribe('uploadedFile', (file) => {
       this.onFileUpload(file);
     });
 
@@ -30,7 +28,7 @@ class DataManager extends Reactive {
     }
     this.loadFromFile(file).then((issues) => {
       const index = IndexManager.getStructuredIndex(issues);
-      this.setState({
+      this.refact.setState({
         issues: issues,
         index: index,
         dataSource: 'file',
@@ -51,7 +49,7 @@ class DataManager extends Reactive {
 
       if (file.name.endsWith('.csv')) {
         this.loadFromCsvFile(file).then((issues) => {
-          this.setState({
+          this.refact.setState({
             issues: issues,
             dataSource: 'file',
             // dateUpdated as date in format 'dd-mm-yyyy'
@@ -96,7 +94,7 @@ class DataManager extends Reactive {
           const index = JSON.parse(localStorage.getItem('index'));
           if (!index) {
             const index = IndexManager.getStructuredIndex(issues);
-        }
+        } 
 
         const statistics = JSON.parse(localStorage.getItem('statistics'));
         if (!statistics) {
@@ -104,7 +102,7 @@ class DataManager extends Reactive {
         };
 
         this.saveToLocalStorage({ issues: issues, statistics: statistics })
-        this.setState({
+        this.refact.setState({
           index: index,
           statistics:statistics,
           dataSource: 'local_storage',
@@ -126,8 +124,8 @@ class DataManager extends Reactive {
       
 
          setEmptyState() {
-          this.setState({ issues: null, dataStatus: 'empty', index: null, statistics: null, dataSource: null, appStatus: 'initializing', error: null, toast: null, uploadedFile: null, })
-        }
+          this.refact.setState({ issues: null, dataStatus: 'empty', index: null, statistics: null, dataSource: null, appStatus: 'initializing', error: null, toast: null, uploadedFile: null, })
+        }   
 
         
   // Import SLA dates from Power BI issues
@@ -170,8 +168,8 @@ class DataManager extends Reactive {
     }
 
     // Update state with modified issues
-    this.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
-    this.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
+    this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
+    this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
     this.saveToLocalStorage({ index: index, issues: index.taskId }).then(() => {
       resolve({ issues: this.refact.state.issues, source: 'file' });
     });
@@ -213,12 +211,12 @@ class DataManager extends Reactive {
     if (isAll) {
       localStorage.clear();
       log(localStorage, '🗑️ [Data Manager] All data removed from LocalStorage');
-      this.setState({ dataStatus: 'empty' }, 'DataManager.removeFromLocalStorage');
+      this.refact.setState({ dataStatus: 'empty' }, 'DataManager.removeFromLocalStorage');
       return;
     } else {
       dataKeys.forEach(key => {
         localStorage.removeItem(key);
-        this.setState({ [key]: null }, 'DataManager.removeFromLocalStorage');
+        this.refact.setState({ [key]: null }, 'DataManager.removeFromLocalStorage');
         log(localStorage, `🗑️ [Data Manager] Removed ${key} from LocalStorage`);
       });
     }
@@ -236,11 +234,11 @@ class DataManager extends Reactive {
   }
 
   getIssues() {
-    return this.state.issues;
+    return this.refact.state.issues;
   }
 
   getIndex() {
-    return this.state.index;
+    return this.refact.state.index;
   }
 
 }

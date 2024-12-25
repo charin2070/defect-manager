@@ -1,16 +1,42 @@
-class HtmlComponent extends Reactive {
+class HtmlComponent {
     constructor(container) {
-        super(container);
+        this.state = Refact.getInstance(container).state;
+        this.container = container;       
     }
 
     generateId() {
-        return `stat#${Math.random().toString(36).substr(2, 9)}`;
+        return `stat#${Math.random().toString(36).substring(2, 9)}`;
+    }
+
+    mount(parentContainer) {
+        parentContainer.appendChild(this.container);
+    }
+
+    htmlToComponent(htmlTemplate) {
+        const template = document.createElement('template');
+        template.innerHTML = htmlTemplate;
+        return template.content.firstChild;
+    }
+
+    createContainer(className) {
+        const container = this.createElement('div',
+            {
+                id: this.generateId('container-element')
+            }
+        )
+
+        this.setContainer(container);;
     }
 
     addClass(className) {
         if (this.element && className) {
             this.element.classList.add(className);
         }
+    }
+
+    setContainer(container) {
+        this.container = container;
+        this.element = this.container;
     }
 
     createElement(tagName, options = {}) {

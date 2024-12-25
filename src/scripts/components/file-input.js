@@ -1,21 +1,21 @@
-class FileInputContainer extends Reactive {
+// Ensure View is included in the HTML or globally available
+
+class FileInputContainer extends View {
     constructor(container, options = {}) {
         super(container);
-        this.container = container;
-        this.options = this.getDefaultOptions(options);
-        
+        this.refact = Refact.getInstance(container);
+        this.options = options || FileInputContainer.options;
+
         this.initialize();
     }
 
-    getDefaultOptions(options) {
-        return {
-            type: options.type || 'default',
-            accept: options.accept || '*',
-            multiple: options.multiple || false,
-            containerId: options.containerId || 'file-input-container',
-            helperText: options.helperText || 'Поддерживаются форматы Excel и CSV',
-        };
-    }
+    static options = {
+            type: 'default',
+            accept: '*',
+            multiple: false,
+            containerId: 'file-input-container',
+            helperText: 'Поддерживаются форматы Excel и CSV',
+    };
 
     initialize() {
         this.state = {
@@ -23,34 +23,42 @@ class FileInputContainer extends Reactive {
             uploadedFile: null
         };
 
-        // this.refact = new Refact();
+        this.container = this.createContainer({
+            className: 'file-input-container',
+            id: this.options.containerId
+        });
+        
+        this.container.appendChild(this.createUploadIcon());
+        this.container.appendChild(this.createTextContent());
+        this.container.appendChild(this.createDragOverlay());
+        this.container.appendChild(this.createDropZone());
+        this.container.appendChild(this.createHiddenInput());
 
-
-
-        this.container.className = 'w-full h-full flex items-center justify-center';
+        document.body.appendChild(this.container);
         this.createWrapper();
         this.createHiddenInput();
         this.createVisualComponent();
         this.setupEventListeners();
-    }
 
-    createWrapper() {
         this.wrapper = this.createElement('div', {
             className: 'w-full h-full p-4',
             id: this.options.containerId
         });
         this.container.appendChild(this.wrapper);
-    }
+    }   
 
-    createHiddenInput() {
-        this.inputElement = this.createElement('input', {
+     
+    static createHiddenInput() {
+        const inputElement = this.createElement('input', {
             type: 'file',
             accept: this.options.accept,
             multiple: this.options.multiple,
             className: 'hidden',
             id: `${this.options.containerId}-input`
         });
-        this.wrapper.appendChild(this.inputElement);
+        this.wrapper.appendChild(inputElement);
+
+        return inputElement;
     }
 
     createVisualComponent() {
@@ -58,9 +66,11 @@ class FileInputContainer extends Reactive {
             ? this.createDropZone() 
             : this.createDefaultInput();
         this.wrapper.appendChild(component);
+
+        return component;
     }
 
-    createElement(tag, attributes = {}) {
+    static createElement(tag, attributes = {}) {
             const element = document.createElement(tag);
             Object.entries(attributes).forEach(([key, value]) => {
                 element[key] = value;
@@ -70,7 +80,7 @@ class FileInputContainer extends Reactive {
         }
 
 
-    createUploadIcon() {
+    static createUploadIcon() {
         const icon = this.createElement('div', {
             className: 'text-blue-500 group-hover:text-blue-600 transition-colors duration-300'
         });
@@ -199,7 +209,7 @@ class FileInputContainer extends Reactive {
             this.setupDropZoneListeners();
         }
 
-        this.subscribe('process', (value) => {
+        this.refact.subscribe('process', (value) => {
             switch (value) {
                 case 'file_upload':
                     this.inputElement.click();

@@ -1,6 +1,7 @@
 class ViewController extends View {
     constructor(container) {
         super(container);
+        this.refact =    Refact.getInstance(container);
         this.init();
     }
     
@@ -9,7 +10,6 @@ class ViewController extends View {
         this.loaderView = new LoaderView();
         
         // Layout
-        this.layoutView = new LayoutView();
         this.layoutView.getWrapper().id = 'layout-view-container';
         this.container.appendChild(this.layoutView.getWrapper());
         
@@ -33,7 +33,7 @@ class ViewController extends View {
 
     setupSubscriptions(){
         // Data Status
-        this.subscribe('dataStatus', (dataStatus) => {
+        this.refact.subscribe('dataStatus', (dataStatus) => {
             switch (dataStatus) {
                 case 'loaded':
                     this.showView('dashboard');

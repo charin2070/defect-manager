@@ -1,10 +1,7 @@
 class View extends HtmlComponent {
-    static #idCounter = 0;
-    #element = null;
-    
-    constructor(container) {
-        super(container);
-        this.container = container;
+    constructor(parentContainer) {
+        super(parentContainer);
+        this.container = this.createContainer('view-container').parentContainer = parentContainer; 
     }
 
     /**
@@ -14,7 +11,11 @@ class View extends HtmlComponent {
      */
     generateId(prefix = '') {
         const componentName = this.constructor.name.toLowerCase();
-        return `${componentName}-${prefix ? prefix + '-' : ''}${++View.#idCounter}`;
+        return `${componentName}-${prefix}${this.idCounter++}`;
+    }
+
+    mount(parentContainer) {
+        parentContainer.appendChild(this.container);
     }
 
     createContainer(options = {}) {
@@ -38,7 +39,7 @@ class View extends HtmlComponent {
      * @returns {HTMLElement}
      */
     getElement() {
-        return this.#element;
+        return this.element;
     }
 
     /**
@@ -46,7 +47,7 @@ class View extends HtmlComponent {
      * @param {HTMLElement} element - Element to set
      */
     setElement(element) {
-        this.#element = element;
+        this.element = element;
     }
 
     /**

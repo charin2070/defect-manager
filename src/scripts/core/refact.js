@@ -20,6 +20,7 @@ class Refact {
 
     constructor(rootElement) {
         if (Refact.instance) {
+            console.warn('Refact is a singleton and can only be initialized once.');
             return Refact.instance;
         }
 
@@ -34,26 +35,26 @@ class Refact {
         if (!Refact.instance) {
             Refact.instance = new Refact(rootElement);
         }
+        
         return Refact.instance;
     }
 
-    // Default state
     setState(newState, changedBy = 'unknown') {
         try {
-            // Update state in one go to avoid multiple re-renders
             this.state = { ...this.state, ...newState };
-            
-            // Once per key
             for (const key in newState) {
-                const value = newState[key];
                 this.notify(key);
                 
-                // Log
+                // Handle issues state change
+                if (key === 'issues') {
+                    this.handleIssuesStateChange(newState[key]);
+                }
+                
+                const value = newState[key];
                 const logValue = value === null ? 'null' : 
                                value === undefined ? 'undefined' :
                                typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' :
                                String(value);
-                               
                 console.log(`⚡State "${key}" => ${logValue} (by: ${changedBy})`);
             }
         } catch (error) {
@@ -135,5 +136,34 @@ class Refact {
         this.setState({ components: updatedComponents }, 'addComponent');
         
         console.log(`Component "${componentName}" registered successfully`);
+    }
+
+    handleIssuesStateChange(issues) {
+        const defects = issues.filter(issue => issue.type === 'defect');
+        if (defects.length > 0) {
+            // Create dashboard container if not exists
+            let dashboardContainer = document.querySelector('.dashboard-container');
+            if (!dashboardContainer) {
+                dashboardContainer = document.createElement('div');
+                dashboardContainer.className = 'dashboard-container';
+                this.rootElement.appendChild(dashboardContainer);
+            }
+
+            // Create and render chart card
+            const chartCard = new ChartCard(dashboardContainer);
+            chartCard.setTitle('Defects Overview');
+            
+            // Calculate statistics
+            const totalDefects = defects.length;
+            const openDefects = defects.filter(d => d.status === 'open').length;
+            const criticalDefects = defects.filter(d => d.priority === 'critical').length;
+            
+            // Update chart data
+            const chartData = {
+                labels: ['Total', 'Open', 'Critical'],
+                data: [totalDefects, openDefects, criticalDefects]
+            };
+            chartCard.updateChartData(chartData);
+        }
     }
 }

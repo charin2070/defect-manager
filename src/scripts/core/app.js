@@ -1,7 +1,7 @@
-class App extends Refact {
+class App {
     constructor(container) {
-        super(container);
-
+        this.state = Refact.getInstance(container).state;
+        this.refact = Refact.getInstance(container);
         this.container = container;
 
         this.initialize();
@@ -28,20 +28,20 @@ class App extends Refact {
 
     initialize() {
         log('[App.initialize] Start App...');
-        this.setState({ appStatus: 'initializing' }, 'App.initialize');
+        this.refact.setState({ appStatus: 'loading' }, 'App.initialize');
 
         try {
-            this.setupDefaults();
-            this.setupSubscriptions();
-            this.setupManagers();
             this.setupKeyBindings();
+            this.setupManagers();
+            this.setupSubscriptions();
+            this.setupDefaults();
 
             // Loading data from Local Storage
             this.managers.dataManager.loadFromLocalStorage(['issues', 'index', 'statistics', 'dateUpdated']);
             
-    }        catch (error) {
+        } catch (error) {
             console.error('[App.initialize] Error initializing App:', error);
-            this.setState({ error: error }, 'App.initialize');
+            this.refact.setState({ error: error }, 'App.initialize');
         }
     }
 
@@ -54,7 +54,7 @@ class App extends Refact {
             }
 
             if (event.shiftKey && ['C', 'c', 'C', 'c'].includes(event.key)) {
-                this.setState({ process: 'cleanup_local_storage' }, 'App.setupKeyBindings');
+                this.refact.setState({ process: 'cleanup_local_storage' }, 'App.setupKeyBindings');
                 return;
             }   
         });
@@ -80,18 +80,18 @@ class App extends Refact {
                 }
                 
                 const type = method === 'error' ? 'error' : 'warning';
-                this.setState({ toast: { message, type, duration: 5000 } }, `App.subscribeForConsole:${method}`);
+                this.refact.setState({ toast: { message, type, duration: 5000 } }, `App.subscribeForConsole:${method}`);
             };
         });
     
         window.addEventListener('error', event => {
             const message = `Ошибка: ${event.message}`;
-            this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+            this.refact.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     
         window.addEventListener('unhandledrejection', event => {
             const message = `Необработанная ошибка: ${event.reason}`;
-            this.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
+            this.refact.setState({ toast: { message, type: 'error', duration: 5000 } }, 'App.subscribeForConsole');
         });
     }
 
@@ -129,22 +129,21 @@ class App extends Refact {
     // Called by state.process.test_function change
     test() {
         log('[App] Test');
-        this.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+        this.refact.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
     }
     
 
     setupDefaults() {
         log('[App] Setting up defaults...');
-        this.setState({
-            issues: null,
-            index: null,
-            statistics: null,
-            dataSource: null,
-            appStatus: 'initializing',
-            error: null,
-            toast: null,
-            uploadedFile: null,
-        }, 'App.setDefaultStates');
+        this.refact.setState({
+            ...this.defaultConfig,
+            currentView: 'dashboard',
+            issues: [],  // Initialize empty issues array
+            dataStatus: 'empty'
+        }, 'App.setupDefaults');
+        
+        // Initialize view controller
+        this.viewController = new ViewController(this.container);
     }
 
     getContainer() {
@@ -158,43 +157,28 @@ class App extends Refact {
             this.managers = {};  // Initialize empty object first
             
             // Initialize managers one by one
-            log('Stting up ConfigManager...');
-                this.managers.config = new ConfigManager(this.defaultConfig, container);
-            log('Stting up DataManager...');
-                this.managers.dataManager = new DataManager(container);
-            log('Stting up ViewController...');
-                this.managers.viewController = new ViewController(container);
-            log('Stting up StatisticManager...');
-                this.managers.statisticManager = new StatisticManager(container);
-            log('Stting up ReportManager...');
-                this.managers.reportManager = new ReportManager(container);
+            log('Setting up ConfigManager...');
+            this.managers.config = new ConfigManager(this.defaultConfig, container);
+            log('Setting up DataManager...');
+            this.managers.dataManager = new DataManager(container);
+            log('Setting up ViewController...');
+            this.managers.viewController = new ViewController(container);
+            log('Setting up StatisticManager...');
+            this.managers.statisticManager = new StatisticManager(container);
+            log('Setting up ReportManager...');
+            this.managers.reportManager = new ReportManager(container);
                 
             log('Managers setup complete');
         } catch (error) {
             console.error('[App.setupManagers] Error:', error);
-            this.setState({ 
+            this.refact.setState({ 
                 dataStatus: 'error',
                 appStatus: 'error',
                 error: error.message
             }, 'App.setupManagers');
             throw error;  // Re-throw to prevent continuation
-        }                
-                this.managers.dataManager = new DataManager();
-                this.managers.viewController = new ViewController(this.getContainer());
-                this.managers.statisticManager = new StatisticManager(this.getContainer());
-                this.managers.reportManager = new ReportManager(this.getContainer());
-                
-                log('Managers setup complete');
-            } catch (error) {
-                console.error('[App.setupManagers] Error:', error);
-                this.setState({ 
-                    dataStatus: 'error',
-                    appStatus: 'error',
-                    error: error.message
-                }, 'App.setupManagers');
-                throw error;  // Re-throw to prevent continuation
-            }
-        
+        }
+    }
 
     logStates(){
         log(this, '[App] App');
