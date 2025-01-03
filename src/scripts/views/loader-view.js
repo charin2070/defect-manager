@@ -1,4 +1,4 @@
-class LoaderView extends View {
+class LoaderView extends ViewComponent {
     static instance = null;
     #initialized = false;
 

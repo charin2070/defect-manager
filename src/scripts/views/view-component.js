@@ -1,7 +1,7 @@
-class View extends HtmlComponent {
-    constructor(parentContainer) {
-        super(parentContainer);
-        this.container = this.createContainer('view-container').parentContainer = parentContainer; 
+class ViewComponent extends HtmlComponent {
+    constructor(container) {
+        super(container);
+        this.container = this.createContainer('view-container').parentContainer = container; 
     }
 
     /**
@@ -35,6 +35,14 @@ class View extends HtmlComponent {
     }
 
     /**
+     * Gets the container element of the component
+     * @returns {HTMLElement}
+     */
+    getContainer() {
+        return this.container;
+    }
+
+    /**
      * Gets the main element of the component
      * @returns {HTMLElement}
      */
@@ -48,14 +56,6 @@ class View extends HtmlComponent {
      */
     setElement(element) {
         this.element = element;
-    }
-
-    /**
-     * Gets the container element
-     * @returns {HTMLElement}
-     */
-    getContainer() {
-        return this.container;
     }
 
     /**

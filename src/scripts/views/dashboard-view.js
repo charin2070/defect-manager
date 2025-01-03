@@ -1,48 +1,153 @@
-class DashboardView extends View {
+class DashboardView extends HtmlComponent {
     constructor() {
         super();
         this.refact = Refact.getInstance();
-        this.createView();
         this.setupSubscriptions();
-        this.slidePanel = SlidePanel.getInstance();
+    }
+
+    getContainer() {
+        if (!this.container) {
+            this.container = this.createView();
+        }
+        return this.container;
     }
 
     createView() {
-        // Container
+        // Main container
         const container = this.createElement('div', {
             id: 'dashboard-view',
-            className: 'w-full max-w-7xl mx-auto no-cursor-select'
+            className: 'container-fluid p-0'
         });
-        this.setContainer(container);
-        this.createCards(container);
 
-        // Chart container
-        this.chartContainer = this.createElement('div', { 
-            id: 'defects-chart-container',
-            className: 'mb-8 p-6 rounded-lg w-full bg-white shadow-sm no-cursor-select'
+        // Title row
+        const titleRow = this.createElement('div', {
+            className: 'row mb-4'
         });
-        container.appendChild(this.chartContainer);
+        container.appendChild(titleRow);
 
-    }
+        const titleCol = this.createElement('div', {
+            className: 'col-12'
+        });
+        titleRow.appendChild(titleCol);
 
-    createCards(container) {
+        const title = this.createElement('h1', {
+            className: 'h3 mb-3',
+            innerHTML: '<strong>Defect Manager</strong> Dashboard'
+        });
+        titleCol.appendChild(title);
+
+        // Charts row
+        const chartsRow = this.createElement('div', {
+            className: 'row'
+        });
+        container.appendChild(chartsRow);
+
+        // Chart column
+        const chartCol = this.createElement('div', {
+            className: 'col-12 col-xl-6'
+        });
+        chartsRow.appendChild(chartCol);
+
+        // Create chart card
+        const chartCard = this.createElement('div', {
+            className: 'card flex-fill w-100'
+        });
+        chartCol.appendChild(chartCard);
+
+        // Chart header
+        const chartHeader = this.createElement('div', {
+            className: 'card-header'
+        });
+        chartCard.appendChild(chartHeader);
+
+        const chartTitle = this.createElement('h5', {
+            className: 'card-title mb-0',
+            textContent: 'Defect Statistics'
+        });
+        chartHeader.appendChild(chartTitle);
+
+        // Chart body
+        const chartBody = this.createElement('div', {
+            className: 'card-body'
+        });
+        chartCard.appendChild(chartBody);
+
+        const chartCanvas = this.createElement('canvas', {
+            style: { height: '300px' }
+        });
+        chartBody.appendChild(chartCanvas);
+
+        // Initialize chart
+        this.chart = new Chart(chartCanvas, {
+            type: 'bar',
+            data: {
+                labels: ['Total', 'Unresolved', 'Top Issues'],
+                datasets: [{
+                    label: 'Defects',
+                    data: [0, 0, 0],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(255, 159, 64, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            maxTicksLimit: 10,
+                            callback: function(value) {
+                                return Math.floor(value);
+                            }
+                        },
+                        max: function(context) {
+                            const values = context.chart.data.datasets[0].data;
+                            const maxValue = Math.max(...values, 1);
+                            return Math.ceil(maxValue * 1.1);
+                        }
+                    }
+                }
+            }
+        });
+
         // Cards row
-        this.topCardsRow = this.createElement('div', {
-            id : 'top-cards-row',
-            className: 'flex flex-row flex-wrap justify-start gap-8 my-8 p-4 w-full no-cursor-select'
+        const cardsRow = this.createElement('div', {
+            className: 'row'
         });
-        container.appendChild(this.topCardsRow);
+        container.appendChild(cardsRow);
 
-        // Initialize DataCards
+        // Card column
+        const cardCol = this.createElement('div', {
+            className: 'col-12 col-md-6 col-xl-3'
+        });
+        cardsRow.appendChild(cardCol);
+
+        // Initialize DataCard
         this.defectsCard = new DataCard(
-            this.topCardsRow,
+            cardCol,
             {
                 id: 'defects-card',
                 valueSource: 'statistics.defects.total.unresolved',
-                title: 'Дефекты',
+                title: 'Defects',
                 icon: 'src/image/jira-defect.svg',
-                value: 0,  
-                description: '0 в этом месяце',
+                value: 0,
+                description: '0 unresolved',
                 theme: 'light',
                 attributes: {
                     'data-card-type': 'defect'
@@ -51,144 +156,153 @@ class DashboardView extends View {
             }
         );
 
-        this.requestsCard = new DataCard(
-            this.topCardsRow,    
-            {
-                id: 'requests-card',
-                title: 'Доработки',
-                icon: 'src/image/jira-request.svg',
-                value: '0',
-                description: '0 в этом месяце',
-                theme: 'light',
-                attributes: {
-                    'data-card-type': 'request'
-                },
-                onClick: () => this.handleCardClick('requests-card'),
-            }
-        );
+        return container;
+    }
+
+    updateDashboard(issues) {
+        if (!issues || !Array.isArray(issues)) {
+            console.warn('No valid issues data:', issues);
+            return;
+        }
+
+        console.log('Updating dashboard with issues:', issues);
+
+        const defects = issues.filter(issue => issue.type === 'defect');
+        const openDefects = defects.filter(d => d.status === 'unresolved');
+        
+        // Get top reported defects
+        const topReportedDefects = defects
+            .filter(d => d.status === 'unresolved')
+            .sort((a, b) => (b.reports?.length || 0) - (a.reports?.length || 0))
+            .slice(0, 5);
+        
+        // Update defects card
+        if (this.defectsCard) {
+            this.defectsCard.setValue(defects.length);
+            this.defectsCard.setDescription(`${openDefects.length} unresolved`);
+        }
+
+        // Update chart
+        if (this.chart) {
+            const data = [
+                defects.length,
+                openDefects.length,
+                topReportedDefects.length
+            ];
+            
+            const maxValue = Math.max(...data, 1);
+            this.chart.options.scales.y.ticks.stepSize = Math.max(1, Math.ceil(maxValue / 10));
+            
+            this.chart.data.datasets[0].data = data;
+            this.chart.update('none'); // Use 'none' mode for better performance
+        }
     }
 
     handleCardClick(cardId) {
         const slidePanel = SlidePanel.getInstance();
-        const statistics = this.refact.state.statistics;
-
-        if (!statistics || !statistics.defects || !statistics.requests) {
-            console.warn('[DashboardView] Statistics object is incomplete', statistics);
+        const issues = this.refact.state.issues;
+        
+        if (!issues || !Array.isArray(issues)) {
+            console.warn('No valid issues data for card click');
             return;
         }
 
-        let issues = [];
-        switch (cardId) {
-            case 'defects-card':
-                this.slidePanel.setLogo('src/image/jira-defect.svg');
-                this.slidePanel.setTitle('Дефекты');
-                issues = statistics.defects.total.unresolved;
-                if (issues.length > 0) {
-                    const issueTable = new IssueTable(['taskId', 'status', 'description', 'created']);
-                    issueTable.render(issues);
-                    slidePanel.open(issueTable.container, 'Открытые дефекты');
+        const defects = issues
+            .filter(issue => issue.type === 'defect' && issue.status === 'unresolved')
+            .sort((a, b) => (b.reports?.length || 0) - (a.reports?.length || 0));
+
+        if (defects.length > 0) {
+            // Create container for chart and table
+            const container = this.createElement('div', {
+                className: 'slide-panel-content'
+            });
+
+            // Create and setup chart card
+            const chartCard = this.createElement('div', {
+                className: 'card flex-fill w-100 mb-4'
+            });
+            container.appendChild(chartCard);
+
+            const chartHeader = this.createElement('div', {
+                className: 'card-header'
+            });
+            chartCard.appendChild(chartHeader);
+
+            const chartTitle = this.createElement('h5', {
+                className: 'card-title mb-0',
+                textContent: 'Defect Statistics'
+            });
+            chartHeader.appendChild(chartTitle);
+
+            const chartBody = this.createElement('div', {
+                className: 'card-body'
+            });
+            chartCard.appendChild(chartBody);
+
+            const chartCanvas = this.createElement('canvas', {
+                style: { height: '300px' }
+            });
+            chartBody.appendChild(chartCanvas);
+
+            // Initialize chart
+            const chart = new Chart(chartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Total', 'Unresolved', 'Top Issues'],
+                    datasets: [{
+                        label: 'Defects',
+                        data: [
+                            defects.length,
+                            defects.filter(d => d.status === 'unresolved').length,
+                            defects.filter(d => d.reports && d.reports.length > 0).length
+                        ],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(255, 159, 64, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
                 }
-                break;
-            case 'requests-card':
-                this.slidePanel.setLogo('src/image/jira-request.svg');
-                this.slidePanel.setTitle('Доработки');
-                issues = statistics.requests.total.unresolved;
-                if (issues.length > 0) {
-                    const issueTable = new IssueTable(['taskId', 'status', 'description', 'created']);
-                    issueTable.render(issues);
-                    slidePanel.open(issueTable.container, 'Открытые доработки');
-                }
-                break;
-            default:
-                console.warn('[DashboardView] Unknown cardId', cardId);
-                return;
+            });
+
+            // Create and setup issue table
+            const issueTable = new IssueTable(['taskId', 'status', 'description', 'created', 'reports']);
+            issueTable.render(defects);
+            container.appendChild(issueTable.container);
+
+            // Open slide panel
+            slidePanel.setLogo('src/image/jira-defect.svg');
+            slidePanel.setTitle('Defects');
+            slidePanel.open(container, 'Unresolved Defects');
         }
     }
 
-    showCards() {
-        this.topCardsRow.style.display = 'flex';
-    }
-
     setupSubscriptions() {
-        // Subscribe to issues changes
         this.refact.subscribe('issues', (issues) => {
+            console.log('Issues state changed:', issues);
             if (!issues) return;
-            
-            const defects = issues.filter(issue => issue.type === 'defect');
-            const openDefects = defects.filter(d => d.status === 'unresolved');
-            const criticalDefects = defects.filter(d => d.priority === 'critical');
-            
-            // Update defects card
-            if (this.defectsCard) {
-                this.defectsCard.setValue(defects.length);
-                this.defectsCard.setDescription(`${openDefects.length} открытых`);
-            }
-            
-            // Update chart if exists
-            if (this.chartContainer) {
-                // Remove old chart if exists
-                while (this.chartContainer.firstChild) {
-                    this.chartContainer.firstChild.remove();
-                }
-                
-                // Create new chart
-                const canvas = document.createElement('canvas');
-                this.chartContainer.appendChild(canvas);
-                
-                const chart = new Chart(canvas, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Всего', 'Открытые', 'Критичные'],
-                        datasets: [{
-                            label: 'Дефекты',
-                            data: [defects.length, openDefects.length, criticalDefects.length],
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.5)',
-                                'rgba(255, 99, 132, 0.5)',
-                                'rgba(255, 206, 86, 0.5)'
-                            ],
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(255, 206, 86, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Статистика дефектов',
-                                font: {
-                                    size: 16
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+            this.updateDashboard(issues);
         });
-    }
-
-    update(statistics) {
-        console.log(statistics, '[DashboardView.update] Updating statistics...');
-        const { defects, requests } = statistics.total;
-        
-        // Подсчет нерешенных дефектов
-        const unresolvedDefects = (defects.unresolved.count);
-        
-        this.defectsCard.setValue(unresolvedDefects);
-        this.defectsCard.setDescription(`${unresolvedDefects} всего задач`);
     }
 }

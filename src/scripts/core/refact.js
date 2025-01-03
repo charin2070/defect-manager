@@ -20,13 +20,14 @@ class Refact {
 
     constructor(rootElement) {
         if (Refact.instance) {
-            console.warn('Refact is a singleton and can only be initialized once.');
             return Refact.instance;
         }
 
         this.rootElement = rootElement;
         this.state = {};
         this.subscribers = new Map();
+        this.updateQueue = [];
+        this.isProcessing = false;
         
         Refact.instance = this;
     }
@@ -35,58 +36,126 @@ class Refact {
         if (!Refact.instance) {
             Refact.instance = new Refact(rootElement);
         }
-        
         return Refact.instance;
     }
 
-    setState(newState, changedBy = 'unknown') {
-        try {
-            this.state = { ...this.state, ...newState };
-            for (const key in newState) {
-                this.notify(key);
-                
-                // Handle issues state change
-                if (key === 'issues') {
-                    this.handleIssuesStateChange(newState[key]);
-                }
-                
-                const value = newState[key];
-                const logValue = value === null ? 'null' : 
-                               value === undefined ? 'undefined' :
-                               typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' :
-                               String(value);
-                console.log(`⚡State "${key}" => ${logValue} (by: ${changedBy})`);
-            }
-        } catch (error) {
-            console.error('[Refact.setState] Error setting state:', error);
+    setState(updates, context = 'unknown') {
+        // Queue the update
+        this.updateQueue.push({ updates, context });
+        
+        // Process queue if not already processing
+        if (!this.isProcessing) {
+            this.processUpdateQueue();
         }
     }
-    
-    setState(updates, context) {
-        Object.assign(this.state, updates);
-        this.notifySubscribers(context);
+
+    processUpdateQueue() {
+        if (this.isProcessing || this.updateQueue.length === 0) {
+            return;
+        }
+
+        this.isProcessing = true;
+        const { updates, context } = this.updateQueue.shift();
+
+        try {
+            // Check if anything actually changed
+            let hasChanges = false;
+            const changedKeys = new Set();
+            
+            for (const key in updates) {
+                const currentValue = this.state[key];
+                const newValue = updates[key];
+                
+                if (this.hasValueChanged(currentValue, newValue)) {
+                    hasChanges = true;
+                    changedKeys.add(key);
+                    
+                    const logValue = this.getLogValue(newValue);
+                    console.log(`⚡State "${key}" => ${logValue} (by: ${context})`);
+                }
+            }
+
+            if (hasChanges) {
+                // Update state
+                this.state = { ...this.state, ...updates };
+                
+                // Notify subscribers for changed keys only
+                changedKeys.forEach(key => {
+                    const callbacks = this.subscribers.get(key);
+                    if (callbacks) {
+                        callbacks.forEach(callback => {
+                            try {
+                                callback(this.state[key], context);
+                            } catch (error) {
+                                console.error(`Error in subscriber for ${key}:`, error);
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error processing state update:', error);
+        } finally {
+            this.isProcessing = false;
+            
+            // Process next update if any
+            if (this.updateQueue.length > 0) {
+                setTimeout(() => this.processUpdateQueue(), 0);
+            }
+        }
+    }
+
+    hasValueChanged(currentValue, newValue) {
+        if (currentValue === newValue) return false;
+        
+        // Handle null/undefined
+        if (!currentValue && !newValue) return false;
+        if (!currentValue || !newValue) return true;
+        
+        // Deep compare objects
+        if (typeof currentValue === 'object' && typeof newValue === 'object') {
+            return JSON.stringify(currentValue) !== JSON.stringify(newValue);
+        }
+        
+        return true;
+    }
+
+    getLogValue(value) {
+        if (value === null) return 'null';
+        if (value === undefined) return 'undefined';
+        if (typeof value === 'object') {
+            return JSON.stringify(value).substring(0, 50) + '...';
+        }
+        return String(value);
     }
 
     subscribe(key, callback) {
         if (!this.subscribers.has(key)) {
-            this.subscribers.set(key, []);
+            this.subscribers.set(key, new Set());
         }
-        this.subscribers.get(key).push(callback);
+        this.subscribers.get(key).add(callback);
+
+        // Return unsubscribe function
+        return () => {
+            const callbacks = this.subscribers.get(key);
+            if (callbacks) {
+                callbacks.delete(callback);
+            }
+        };
     }
 
-    notify(key) {
-        const callbacks = this.subscribers.get(key) || [];
-        callbacks.forEach(callback => callback(this.state[key]));
-    }
-
-    notifySubscribers(context) {
-        this.subscribers.forEach((callbacks, key) => {
-            callbacks.forEach(callback => {
-                if (typeof callback === 'function') {
-                    callback(this.state[key], context);
+    notifySubscribers(updates, context) {
+        for (const [key, callbacks] of this.subscribers.entries()) {
+            if (key in updates) {
+                for (const callback of callbacks) {
+                    try {
+                        callback(this.state[key], context);
+                    } catch (error) {
+                        console.error(`Error in subscriber for ${key}:`, error);
+                    }
                 }
-            });
-        });
+            }
+        }
     }
 
     // Bind element to state

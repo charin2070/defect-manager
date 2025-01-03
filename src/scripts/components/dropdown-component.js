@@ -1,4 +1,4 @@
-class DropdownComponent extends HtmlElement {
+class DropdownComponent extends HtmlComponent {
     constructor(container, options = {}) {
         super(container);
         

@@ -1,4 +1,4 @@
-class SettingsView extends View {
+class SettingsView extends ViewComponent {
     constructor() {
         super();
         this.fieldMappings = this.#getDefaultFieldMappings();
@@ -20,7 +20,7 @@ class SettingsView extends View {
 
     #renderContent() {
         if (!this.getContainer()) return;
-        
+    
         this.getContainer().innerHTML = `
             <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-lg p-8">
                 <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
@@ -30,82 +30,29 @@ class SettingsView extends View {
                     </svg>
                     Настройки
                 </h2>
-                
-                <!-- Field Mapping Section -->
-                <div class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-100">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                        </svg>
-                        Маппинг полей CSV
-                    </h3>
-                    <div class="field-mappings space-y-4 divide-y divide-gray-100">
-                        ${this.#createFieldMappingInputs()}
-                    </div>
-                </div>
-
-                <!-- Dashboard Layout Section -->
+    
+                <!-- Data Management Section -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-100">
                     <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
                         <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                         </svg>
-                        Расположение панелей
+                        Управление данными
                     </h3>
-                    <div class="dashboard-layout grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${this.#createDashboardLayoutControls()}
+                    <div class="data-management-options">
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded" data-action="loadData">Загрузить данные</button>
+                        <button class="bg-red-500 text-white px-4 py-2 rounded" data-action="clearLocalStorageData">Очистить локальные данные</button>
                     </div>
                 </div>
-
-                <!-- Save Button -->
-                <div class="flex justify-end">
-                    <button id="saveSettings" 
-                            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all duration-200 hover:scale-105 active:scale-95 shadow-md">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    
+                <!-- Dashboard Layout Section -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-100">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
                         </svg>
-                        Сохранить настройки
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    #createFieldMappingInputs() {
-        const fields = [
-            { id: 'Issue key', label: 'Ключ задачи' },
-            { id: 'summary', label: 'Название' },
-            { id: 'description', label: 'Описание' },
-            { id: 'status', label: 'Статус' },
-            { id: 'priority', label: 'Приоритет' },
-            { id: 'assignee', label: 'Исполнитель' },
-            { id: 'reporter', label: 'Автор' },
-            { id: 'created', label: 'Дата создания' },
-            { id: 'updated', label: 'Дата обновления' },
-            { id: 'labels', label: 'Метки' },
-            { id: 'issueType', label: 'Тип задачи' },
-            { id: 'resolved', label: 'Дата закрытия' },
-            { id: 'slaDate', label: 'SLA дата' },
-            { id: 'customDescription', label: 'Дополнительное описание' },
-            { id: 'reportsCount', label: 'Количество обращений' },
-            { id: 'team', label: 'Команда' },
-            { id: 'businessSummary', label: 'Бизнес-резюме' },
-            { id: 'component', label: 'Компонент' }
-        ];
-
-        return fields.map(field => `
-            <div class="field-mapping-row pt-4 first:pt-0">
-                <div class="flex items-center space-x-4 hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
-                    <label class="w-1/3 text-sm font-medium text-gray-700">${field.label}:</label>
-                    <input type="text" 
-                           id="mapping_${field.id}"
-                           class="w-2/3 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                           value="${this.fieldMappings[field.id]}"
-                           placeholder="Название поля в CSV">
-                </div>
-            </div>
-        `).join('');
-    }
+                        Настройка панели инструментов
+                    </h3,`;}
 
     #createDashboardLayoutControls() {
         const panels = [

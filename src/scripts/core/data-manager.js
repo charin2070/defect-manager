@@ -26,41 +26,49 @@ class DataManager{
     if (!file) {
       return;
     }
-    this.loadFromFile(file).then((issues) => {
+    this.loadFromFile(file).then(({ issues }) => {
       const index = IndexManager.getStructuredIndex(issues);
-      this.refact.setState({
-        issues: issues,
-        index: index,
-        dataSource: 'file',
-        // dateUpdated as date in format 'dd-mm-yyyy'
-        dataUpdated: new Date(file.lastModified).toLocaleDateString('en-GB')
-      }, '[DataManager] onFileUpload');
+      const statistics = StatisticManager.updateStatistics({ index, issues });
+      
+      // Save to localStorage first
+      this.saveToLocalStorage({ issues, index, statistics })
+        .then(() => {
+          // Then update state
+          this.refact.setState({
+            issues,
+            index,
+            statistics,
+            dataSource: 'file',
+            dataStatus: 'loaded',
+            appStatus: 'ready',
+            currentView: 'dashboard',
+            dataUpdated: new Date(file.lastModified).toLocaleDateString('en-GB')
+          }, '[DataManager] onFileUpload');
+          
+          log(`✅ [DataManager] ${issues.length} issues loaded and saved to localStorage`);
+        })
+        .catch(error => {
+          console.error('[DataManager] Error saving to localStorage:', error);
+        });
     });
   }
   
   // Load issues from file
   loadFromFile(file) {
-    log(file, '🚀 [DataManager] Loading from file');
+    log('🚀 [DataManager] Loading from file:', file.name);
     return new Promise((resolve, reject) => {
       if (!file) {
-        reject(new Error('Файл недоступен'));
+        reject(new Error('File not available'));
         return;
       }
 
       if (file.name.endsWith('.csv')) {
         this.loadFromCsvFile(file).then((issues) => {
-          this.refact.setState({
-            issues: issues,
-            dataSource: 'file',
-            // dateUpdated as date in format 'dd-mm-yyyy'
-            dataUpdated: new Date().toLocaleDateString('en-GB'),
-          }, '[DataManager] loadFromFile');
-
-          log(issues, `✅ [DataManager] ${issues.length} задач загруженно из CSV-файла`);
-          resolve(issues);
-        });
+          log(`✅ [DataManager] ${issues.length} issues loaded from CSV file`);
+          resolve({ issues, source: 'file' });
+        }).catch(reject);
       } else {
-        reject(new Error('[Data Manager] Неподдерживаемый формат файла'));
+        reject(new Error('[DataManager] Unsupported file format'));
       }
     });
   }
@@ -89,55 +97,116 @@ class DataManager{
     log('🔃 [DataManager] Loading data from Local Storage...');
     return new Promise((resolve, reject) => {
       try {
-        const issues = JSON.parse(localStorage.getItem('issues'));
-        if (issues) {
-          const index = JSON.parse(localStorage.getItem('index'));
-          if (!index) {
-            const index = IndexManager.getStructuredIndex(issues);
-        } 
+        // Load and validate issues
+        let issues = JSON.parse(localStorage.getItem('issues'));
+        if (!issues || !Array.isArray(issues)) {
+          issues = [];
+        }
 
-        const statistics = JSON.parse(localStorage.getItem('statistics'));
+        // Always create index and statistics
+        let index = JSON.parse(localStorage.getItem('index'));
+        if (!index) {
+          index = IndexManager.getStructuredIndex(issues);
+        }
+
+        let statistics = JSON.parse(localStorage.getItem('statistics'));
         if (!statistics) {
-            statistics = StatisticManager.updateStatistics(index);
-        };
+          statistics = StatisticManager.updateStatistics({ index, issues });
+        }
 
-        this.saveToLocalStorage({ issues: issues, statistics: statistics })
-        this.refact.setState({
-          index: index,
-          statistics:statistics,
-          dataSource: 'local_storage',
-        }, '[DataManager] loadFromLocalStorage');
-        log(issues, `✅ [DataManager] ${issues.length} задач загруженно из LocalStorage`);
-        resolve({ issues: issues, source: 'local_storage' });
+        // Save all data
+        this.saveToLocalStorage({ issues, index, statistics });
+
+        // Set appropriate state based on data
+        if (issues.length > 0) {
+          this.refact.setState({
+            issues,
+            index,
+            statistics,
+            dataSource: 'local_storage',
+            dataStatus: 'loaded',
+            appStatus: 'ready',
+            currentView: 'dashboard'
+          }, '[DataManager] loadFromLocalStorage');
+          log(`✅ [DataManager] ${issues.length} задач загруженно из LocalStorage`);
         } else {
-          this.setEmptyState();
-          resolve(null);
+          this.refact.setState({
+            issues: [],
+            index,
+            statistics,
+            dataSource: 'local_storage',
+            dataStatus: 'empty',
+            appStatus: 'ready',
+            currentView: 'upload'
+          }, '[DataManager] loadFromLocalStorage');
+          log('⚠️ [DataManager] No issues in LocalStorage');
         }
-  }
-  catch (error) {   
-          this.setEmptyState();
-          reject(error);
-          console.error('[DataManager.loadFromLocalStorage] Error:', error);
-        }
-      });
-    }
-      
 
-         setEmptyState() {
-          this.refact.setState({ issues: null, dataStatus: 'empty', index: null, statistics: null, dataSource: null, appStatus: 'initializing', error: null, toast: null, uploadedFile: null, })
-        }   
+        resolve({ issues, source: 'local_storage' });
+      } catch (error) {   
+        console.error('[DataManager.loadFromLocalStorage] Error:', error);
+        log('❌ [DataManager] Error loading from LocalStorage');
+        this.setEmptyState();
+        reject(error);
+      }
+    });
+  }
+
+  saveToLocalStorage(dataObject) {
+    log('🚀 [DataManager] Saving to LocalStorage');
+
+    return new Promise((resolve, reject) => {
+      try {
+        if (!dataObject || typeof dataObject !== 'object') {
+          throw new Error('Invalid data object');
+        }
+
+        // Save each data type separately
+        if (dataObject.issues) {
+          localStorage.setItem('issues', JSON.stringify(dataObject.issues));
+        }
+        if (dataObject.index) {
+          localStorage.setItem('index', JSON.stringify(dataObject.index));
+        }
+        if (dataObject.statistics) {
+          localStorage.setItem('statistics', JSON.stringify(dataObject.statistics));
+        }
+
+        log('✅ [DataManager] Data saved to LocalStorage');
+        resolve(true);
+      } catch (error) {
+        console.error('[DataManager.saveToLocalStorage] Error:', error);
+        reject(error);
+      }
+    });
+  }
+
+  setEmptyState() {
+    this.refact.setState({ 
+      issues: [], 
+      dataStatus: 'empty', 
+      index: null, 
+      statistics: null, 
+      dataSource: null, 
+      appStatus: 'ready',
+      currentView: 'upload',
+      error: null, 
+      toast: null, 
+      uploadedFile: null
+    }, '[DataManager] setEmptyState');
+  }   
 
         
   // Import SLA dates from Power BI issues
   updateSlaDates(loadedData) {
     // Convert loaded data to Issue objects if they aren't already
-    const loadedIssues = loadedData.map(data => data instanceof Issue ? data : new Issue(data));
+    let loadedIssues = loadedData.map(data => data instanceof Issue ? data : new Issue(data));
 
     // Update SLA dates in existing issues
     let updatedCount = 0;
     loadedIssues.forEach(loadedIssue => {
-      const taskId = loadedIssue.id;
-      const existingIssue = this.refact.state.issues.find(issue => issue.id === taskId);
+      let taskId = loadedIssue.id;
+      let existingIssue = this.refact.state.issues.find(issue => issue.id === taskId);
       if (existingIssue) {
         updatedCount++;
         existingIssue.slaDate = loadedIssue.slaDate;
@@ -153,7 +222,7 @@ class DataManager{
         () => {
           this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
           this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-          this.saveToLocalStorage({ index: index, issues: index.taskId }).then(() => {
+          this.saveToLocalStorage({ index: this.refact.state.index, issues: this.refact.state.issues }).then(() => {
             resolve({ issues: this.refact.state.issues, source: 'file' });
           });
         }
@@ -170,41 +239,10 @@ class DataManager{
     // Update state with modified issues
     this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
     this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-    this.saveToLocalStorage({ index: index, issues: index.taskId }).then(() => {
+    this.saveToLocalStorage({ index: this.refact.state.index, issues: this.refact.state.issues }).then(() => {
       resolve({ issues: this.refact.state.issues, source: 'file' });
     });
     return { issues: this.refact.state.issues, source: 'file' };
-  }
-
-  saveToLocalStorage(dataObject) {
-    log(dataObject, '🚀 [DataManager] Saving to LocalStorage');
-
-    return new Promise((resolve, reject) => {
-      try {
-        if (!dataObject || typeof dataObject !== 'object') {
-          console.error('[DataManager] saveToLocalStorage: Invalid data object provided');
-          reject(new Error('Invalid data object'));
-          return;
-        }
-
-        // Ensure we're not saving undefined or null values
-        Object.entries(dataObject).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            try {
-              localStorage.setItem(key, JSON.stringify(value));
-              log(`Saved ${key} to localStorage`, '✅ [DataManager]');
-            } catch (error) {
-              console.error(`[DataManager] Error saving ${key} to localStorage:`, error);
-            }
-          }
-        });
-
-        resolve(true);
-      } catch (error) {
-        console.error('[DataManager] saveToLocalStorage error:', error);
-        reject(error);
-      }
-    });
   }
 
   cleanupLocalStorage(isAll = false, dataKeys = this.dataKeys) {

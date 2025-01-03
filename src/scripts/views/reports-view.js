@@ -1,4 +1,4 @@
-class ReportsView extends View {
+class ReportsView extends ViewComponent {
     constructor() {
         super();
         this.container = document.createElement('div');
