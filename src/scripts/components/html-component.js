@@ -1,4 +1,3 @@
-
 class HtmlComponent {
     constructor(container) {
         this.state = Refact.getInstance(container).state;
@@ -9,8 +8,12 @@ class HtmlComponent {
         return `stat#${Math.random().toString(36).substring(2, 9)}`;
     }
 
-    mount(parentContainer) {
-        parentContainer.appendChild(this.container);
+    appendChild(htmlElement) {
+        if (!(htmlElement instanceof Node)) {
+            console.error('Invalid element passed to appendChild:', htmlElement);
+            return; // Exit if the element is not a valid DOM node
+        }
+        this.container.appendChild(htmlElement);
     }
 
     htmlToComponent(htmlTemplate) {

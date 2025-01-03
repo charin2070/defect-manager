@@ -1,13 +1,10 @@
 class NavbarComponent extends HtmlComponent {
-    static #instance = null;
     #element = null;
     #theme = 'light';
     #mode = 'normal';
 
     constructor(config = {}) {
         super();
-        if (NavbarComponent.#instance) return NavbarComponent.#instance;
-        NavbarComponent.#instance = this;
 
         const defaultConfig = {
             theme: 'light',

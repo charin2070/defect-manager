@@ -1,18 +1,17 @@
-class UiManager extends View {
-    constructor(container) {
-        super(container);
-        this.refact = Refact.getInstance(container);
-        this.appContainer = container;
+class UiManager extends ViewComponent {
+    constructor(appContainer) {
+        super(appContainer);
+        this.refact = Refact.getInstance(appContainer);
+        this.appContainer = appContainer;
         this.init();
     }
     
     init() {
         this.views = {};
-        this.currentView = null;
-        this.currentViewName = null;
         
-        // Initialize layout first
         this.layoutComponent = new LayoutComponent(this.appContainer);
+        this.navbarComponent = this.createNavbar(this.navbarConfig);
+        this.layoutComponent.appendChild(this.navbarComponent.getContainer());
 
         // Create views
         this.initializeViews();
@@ -20,15 +19,22 @@ class UiManager extends View {
         // Setup event listeners
         this.setupEventListeners();
         this.setupSubscriptions();
-
-        // Show initial view based on data status
-        const dataStatus = this.refact.state.dataStatus;
-        if (dataStatus === 'empty') {
-            this.showView('upload', 'init');
-        } else {
-            this.showView('dashboard', 'init');
-        }
     }
+
+    createNavbar(navbarConfig) {
+        const navbar = NavbarComponent.create(navbarConfig);
+        navbar.addButton('Обновить из файла', null, () => alert('About clicked'));
+        navbar.addButton('Настройки', null, () => alert('Home clicked'));
+
+        return navbar;
+    }
+
+    navbarConfig = {
+        theme: 'light',
+        mode: 'normal',
+        title: 'Refact',
+        animate: true
+    };
 
     initializeViews() {
         // Create views

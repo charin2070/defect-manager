@@ -19,29 +19,12 @@ class DashboardView extends HtmlComponent {
             className: 'container-fluid p-0'
         });
 
-        // Title row
-        const titleRow = this.createElement('div', {
-            className: 'row mb-4'
-        });
-        container.appendChild(titleRow);
-
-        const titleCol = this.createElement('div', {
-            className: 'col-12'
-        });
-        titleRow.appendChild(titleCol);
-
-        const title = this.createElement('h1', {
-            className: 'h3 mb-3',
-            innerHTML: '<strong>Defect Manager</strong> Dashboard'
-        });
-        titleCol.appendChild(title);
-
         // Charts row
         const chartsRow = this.createElement('div', {
             className: 'row'
         });
-        container.appendChild(chartsRow);
-
+        container.appendChild(chartsRow);   
+        
         // Chart column
         const chartCol = this.createElement('div', {
             className: 'col-12 col-xl-6'
@@ -52,91 +35,33 @@ class DashboardView extends HtmlComponent {
         const chartCard = this.createElement('div', {
             className: 'card flex-fill w-100'
         });
-        chartCol.appendChild(chartCard);
+        chartsRow.appendChild(chartCard);
 
-        // Chart header
-        const chartHeader = this.createElement('div', {
-            className: 'card-header'
-        });
-        chartCard.appendChild(chartHeader);
-
-        const chartTitle = this.createElement('h5', {
-            className: 'card-title mb-0',
-            textContent: 'Defect Statistics'
-        });
-        chartHeader.appendChild(chartTitle);
-
-        // Chart body
-        const chartBody = this.createElement('div', {
-            className: 'card-body'
-        });
-        chartCard.appendChild(chartBody);
-
-        const chartCanvas = this.createElement('canvas', {
-            style: { height: '300px' }
-        });
-        chartBody.appendChild(chartCanvas);
-
-        // Initialize chart
-        this.chart = new Chart(chartCanvas, {
-            type: 'bar',
-            data: {
-                labels: ['Total', 'Unresolved', 'Top Issues'],
-                datasets: [{
-                    label: 'Defects',
-                    data: [0, 0, 0],
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(255, 159, 64, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            maxTicksLimit: 10,
-                            callback: function(value) {
-                                return Math.floor(value);
-                            }
-                        },
-                        max: function(context) {
-                            const values = context.chart.data.datasets[0].data;
-                            const maxValue = Math.max(...values, 1);
-                            return Math.ceil(maxValue * 1.1);
-                        }
-                    }
-                }
-            }
-        });
+        container.appendChild(this.createElement('div', {
+                className: 'row'
+            }));
 
         // Cards row
         const cardsRow = this.createElement('div', {
             className: 'row'
         });
-        container.appendChild(cardsRow);
+        container.appendChild(this.createElement('div', {
+                className: 'row'
+            }));
 
+
+            const defectsCard = new ChartCard(cardsRow);
+            defectsCard.setTitle('Дефекты');
+            defectsCard.setValue(0);
+            defectsCard.setTrend(0);
+            defectsCard.drawDateLine([3, 9, 6, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
         // Card column
         const cardCol = this.createElement('div', {
             className: 'col-12 col-md-6 col-xl-3'
         });
-        cardsRow.appendChild(cardCol);
+        (this.createElement('div', {
+            className: 'row'
+        })).appendChild(cardCol);
 
         // Initialize DataCard
         this.defectsCard = new DataCard(

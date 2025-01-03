@@ -1,0 +1,55 @@
+/* change-dropdown.css */
+
+/* Dropdown container styles */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* Dropdown button */
+  .dropdown-button {
+    background-color: #ffffff;
+    color: #333333;
+    padding: 10px 16px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* Dropdown button hover effect */
+  .dropdown-button:hover {
+    background-color: #f2f2f2;
+  }
+  
+  /* Dropdown menu styles */
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 160px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  /* Show the menu when active */
+  .dropdown-container.active .dropdown-menu {
+    display: block;
+  }
+  
+  /* Dropdown menu items */
+  .dropdown-menu a {
+    color: #333333;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+  }
+  
+  /* Hover effect for menu items */
+  .dropdown-menu a:hover {
+    background-color: #f9f9f9;
+    color: #000000;
+  }
+  
