@@ -43,6 +43,7 @@ class UiManager extends ViewComponent {
         this.reportsView = new ReportsView();
         this.settingsView = new SettingsView();
         this.toast = new ToastComponent();
+        this.chartCard = new ChartCard();
 
         // Set view IDs
         this.dashboardView.getContainer().id = 'dashboard-view';
@@ -55,6 +56,13 @@ class UiManager extends ViewComponent {
         this.registerView('upload', this.uploadView);
         this.registerView('reports', this.reportsView);
         this.registerView('settings', this.settingsView);
+
+        const viewContainer = this.layoutComponent.getViewContainer();
+        if (viewContainer) {
+            viewContainer.appendChild(this.chartCard.getContainer());
+        } else {
+            console.error('View container not found');
+        }
     }
 
     setupEventListeners() {

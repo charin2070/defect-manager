@@ -63,6 +63,10 @@ class NavbarComponent extends HtmlComponent {
         return this.#element;
     }
 
+    getContainer() {
+        return this.#element;
+    }
+
     setTheme(theme) {
         if (theme !== 'light' && theme !== 'dark') return;
         this.#theme = theme;

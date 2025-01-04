@@ -9,12 +9,27 @@ class HtmlComponent {
     }
 
     appendChild(htmlElement) {
-        if (!(htmlElement instanceof Node)) {
+        if (htmlElement) {
+            if (typeof htmlElement === 'string') {
+                htmlElement = this.htmlToComponent(htmlElement);
+                return;
+            }
+
+            if (htmlElement instanceof Node) {
+                this.container.appendChild(htmlElement);
+                return;
+            }
+
+            if (htmlElement instanceof HtmlElement) {
+                this.container.appendChild(htmlElement.getContainer());
+                return;
+            }
+        }
+       
+
             console.error('Invalid element passed to appendChild:', htmlElement);
             return; // Exit if the element is not a valid DOM node
         }
-        this.container.appendChild(htmlElement);
-    }
 
     htmlToComponent(htmlTemplate) {
         const template = document.createElement('template');
