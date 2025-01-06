@@ -1,0 +1,16 @@
+:root  {
+    --console-important-log-bg: #008568d5;
+    --console-important-log-color: white;
+    --console-important-log-padding: 8px;
+    --console-important-log-border: 1px solid #ccc;
+    --console-important-log-border-radius: 8px;
+    --console-important-log-margin: 8px 0;
+}
+.console-important-log {
+    background-color: #008568d5;
+    color: white;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin: 8px 0;
+}

@@ -1,100 +1,137 @@
-class FileInputContainer {
-    constructor(container) {
+class FileInputContainer extends ViewComponent {
+    constructor(container, options = {}) {
+        super();
+        this.refact = Refact.getInstance();
+        this.options = { ...FileInputContainer.options, ...options };
         this.parentContainer = container;
-        this.refact = Refact.getInstance(container);
         this.state = {
-            uploadedFile: null,
-            supportedFormats: ['CSV']
+            isDragging: false,
+            uploadedFile: null
         };
-        this.refact.setState(this.state);
+        this.render();
+    }
 
-        this.createView();
-        this.setupReactivity();
-        this.setupFileInput();
+    static options = {
+        type: 'default',
+        accept: '*',
+        multiple: false,
+        containerId: 'file-input-container',
+        helperText: 'Supported formats: Excel and CSV',
+    };
+
+    render() {
+        // Create main container
+        this.container = this.createElement('div', {
+            className: 'w-full h-64 relative',
+            id: this.options.containerId
+        });
+
+        // Create hidden input
+        this.inputElement = this.createHiddenInput();
+        this.container.appendChild(this.inputElement);
+
+        // Create dropzone
+        const dropzone = this.createElement('div', {
+            className: this.getClassNames()
+        });
+
+        // Create upload icon
+        const icon = this.createElement('div', {
+            className: 'text-4xl mb-4 text-gray-400'
+        });
+        icon.innerHTML = '📁';
+        dropzone.appendChild(icon);
+
+        // Create text content
+        const textContent = this.createElement('div', {
+            className: 'text-center'
+        });
         
+        const title = this.createElement('p', {
+            className: 'text-lg font-medium text-gray-900 mb-1'
+        });
+        title.innerHTML = 'Drop your file here or <span class="text-blue-500 hover:text-blue-600 cursor-pointer">browse</span>';
+        
+        const helperText = this.createElement('p', {
+            className: 'text-sm text-gray-500'
+        });
+        helperText.textContent = this.options.helperText;
+
+        textContent.appendChild(title);
+        textContent.appendChild(helperText);
+        dropzone.appendChild(textContent);
+
+        // Add click handler to browse text
+        const browseText = title.querySelector('span');
+        browseText.addEventListener('click', () => this.inputElement.click());
+
+        this.container.appendChild(dropzone);
+
+        // Setup drag and drop events
+        this.setupDragAndDrop(dropzone);
+
+        // Append to parent container
         this.parentContainer.appendChild(this.container);
     }
 
-    createView() {
-        this.container = document.createElement('div');
-        this.container.className = 'file-input-container';
-
-        this.title = document.createElement('h2');
-        this.title.className = 'file-input-title';
-        this.title.textContent = 'Загрузите данные из Jira';
-
-        this.dragDropText = document.createElement('p');
-         this.dragDropText.className = 'file-input-drag-text';
-        this.dragDropText.textContent = 'Перетащите файл или нажмите';
-
-        this.uploadButton = document.createElement('button');
-        this.uploadButton.className = 'file-input-upload-button';
-        this.uploadButton.textContent = 'Выбрать файл';
-        this.uploadButton.type = 'button';
-
-        this.hint = document.createElement('p');
-        this.hint.className = 'file-input-hint';
-        this.hint.textContent = 'Excel или CSV';
-
-        this.inputElement = document.createElement('input');
-        this.inputElement.type = 'file';
-        this.inputElement.accept = '.csv';
-        this.inputElement.style.display = 'none';
-
-        this.container.appendChild(this.title);
-        this.container.appendChild(this.dragDropText);
-        this.container.appendChild(this.uploadButton);
-        this.container.appendChild(this.hint);
-        this.container.appendChild(this.inputElement);
+    getClassNames() {
+        const baseClasses = 'w-full h-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-6 transition-colors duration-200 ease-in-out';
+        if (this.state.isDragging) {
+            return `${baseClasses} border-blue-500 bg-blue-50`;
+        } else {
+            return `${baseClasses} border-gray-300 hover:border-gray-400`;
+        }
     }
 
-    setupFileInput() {
-        this.uploadButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Reset input value before opening file dialog
-            this.inputElement.value = '';
-            this.inputElement.click();
+    createHiddenInput() {
+        const input = this.createElement('input', {
+            type: 'file',
+            className: 'hidden',
+            accept: this.options.accept,
+            multiple: this.options.multiple
         });
 
-        this.inputElement.addEventListener('change', (event) => {
-            if (event.target.files && event.target.files.length > 0) {
-                const file = event.target.files[0];
-                console.log('File selected:', file.name); 
-                this.refact.setState({ uploadedFile: file });
-            }
-        });
+        input.addEventListener('change', (e) => this.handleFileSelect(e));
+        return input;
+    }
 
-        // Handle drag and drop
-        this.container.addEventListener('dragover', (e) => {
+    setupDragAndDrop(dropzone) {
+        const preventDefault = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.container.classList.add('dragover');
+        };
+
+        dropzone.addEventListener('dragenter', (e) => {
+            preventDefault(e);
+            this.state.isDragging = true;
+            this.render();
         });
 
-        this.container.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.container.classList.remove('dragover');
+        dropzone.addEventListener('dragover', preventDefault);
+
+        dropzone.addEventListener('dragleave', (e) => {
+            preventDefault(e);
+            this.state.isDragging = false;
+            this.render();
         });
 
-        this.container.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.container.classList.remove('dragover');
-            
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0];
-                console.log('File dropped:', file.name);
-                this.refact.setState({ uploadedFile: file });
-            }
+        dropzone.addEventListener('drop', (e) => {
+            preventDefault(e);
+            this.state.isDragging = false;
+            this.handleFileSelect(e);
         });
     }
 
-    setupReactivity() {
-        this.refact.subscribe('uploadedFile', (file) => {
-            console.log('File updated:', file);
-        });
+    handleFileSelect(e) {
+        const files = e.dataTransfer?.files || e.target.files;
+        if (!files || files.length === 0) return;
+
+        const file = files[0];
+        this.state.uploadedFile = file;
+        this.refact.setState({ 
+            uploadedFile: file,
+            dataSource: 'file'
+        }, 'FileInputContainer.handleFileSelect');
     }
 
     getContainer() {

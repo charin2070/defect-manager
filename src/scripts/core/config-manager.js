@@ -1,74 +1,68 @@
-
-// Store and manage application configuration
+// Get/set/store config data
 class ConfigManager {
-    static instance = null;
-
-    static getInstance(defaultConfig = {}) {
-        if (!ConfigManager.instance) {
-            ConfigManager.instance = new ConfigManager(defaultConfig);
-        }
-        return ConfigManager.instance;
-    }
-
-    constructor(defaultConfig = {}) {
-        if (ConfigManager.instance) {
-            return ConfigManager.instance;
-        }
-
-        log('ConfigManager: Initializing with defaultConfig: ', defaultConfig);
+    constructor(defaultConfig, config) {
         this.defaultConfig = defaultConfig;
-        this.config = defaultConfig;
-        this.refact = new Refact(document.body);
+        this.refact = Refact.getInstance();
 
-        // Load config from LocalStorage or use default
-        const loadedConfig = this.loadConfigFromLocalStorage();
-        if(loadedConfig === false) {
-            console.log('ConfigManager: Using default config');
-            this.setConfig(this.defaultConfig);
-            this.saveConfigToLocalStorage();
-        } else {
-            console.log('ConfigManager: Using loaded config');
-            this.setConfig(loadedConfig);
+        this.init();
+
+        if (config) {
+            this.load(config);
+            return;
         }
 
-        ConfigManager.instance = this;
+        this.loadFromLocalStorage();
     }
 
-    setConfig(newConfig) {
-        if (!newConfig) return;
+    init() {
+    
+    }
+
+    loadFromLocalStorage() {
+        log('[ConfigManager.loadFromLocalStorage] Loading config from LocalStorage...');
+            try {
+                const storedConfig = localStorage.getItem('config');
+                let config;
+
+                if (storedConfig) {
+                    config = JSON.parse(storedConfig);
+                    log('✅ [ConfigManager.loadFromLocalStorage] Config loaded from LocalStorage:', config);
+                } else {
+                    config = this.defaultConfig;
+                    log('🟢 [ConfigManager.loadFromLocalStorage] Using default config');
+                }
+
+                // Ensure we have all required fields
+                config = { ...this.defaultConfig, ...config };
+                
+                this.setConfig(config);
+            } catch (error) {
+                console.error('[ConfigManager.loadFromLocalStorage] Error:', error);
+                this.setConfig(this.defaultConfig);
+            }
+    }
+
+    setConfig(config) {
+        log('[ConfigManager] Setting config:', config);
         
-        console.log('ConfigManager: Setting new config =', newConfig);
-        Object.keys(newConfig).forEach(key => {
-            this.refact.setState({ [key]: newConfig[key] }, 'ConfigManager.setConfig');
-        });
-        this.config = newConfig;
+        this.refact.setState({ config }, 'ConfigManager.setConfig');
     }
 
-    saveConfigToLocalStorage() {
+    saveToLocalStorage(config) {
+        log('[ConfigManager.saveToLocalStorage] Saving config...');
         try {
-            localStorage.setItem('config', JSON.stringify(this.config));
-            console.log('ConfigManager: Saved config to localStorage');
+            localStorage.setItem('config', JSON.stringify(config));
+            log('✅ [ConfigManager.saveToLocalStorage] Config saved successfully');
         } catch (error) {
-            console.error('ConfigManager: Error saving config to localStorage:', error);
+            console.error('[ConfigManager.saveToLocalStorage] Error:', error);
         }
     }
 
-    loadConfigFromLocalStorage() {
-        try {
-            const storedConfig = localStorage.getItem('config');
-            if (!storedConfig) return false;
-            
-            const parsedConfig = JSON.parse(storedConfig);
-            log('ConfigManager: Loaded config from localStorage:', parsedConfig);
-            return parsedConfig;
-        } catch (error) {
-            console.error('ConfigManager: Error loading config from localStorage:', error);
-            return false;
-        }
+    getValue(key) {
+        return this.refact.state.config[key];
     }
 
-    resetToDefaultConfig() {
+    resetToDefault() {
         this.setConfig(this.defaultConfig);
-        this.saveConfigToLocalStorage();
     }
 }

@@ -1,82 +1,93 @@
-class View {
-    static #idCounter = 0;
-    #element = null;
-    
+class ViewComponent extends HtmlComponent {
+    static idCounter = 0;
+
     constructor() {
-        this.refact = Refact.getInstance();
+        super();
+        this.state = Refact.getInstance();
+        this.componentName = this.constructor.name;
+        this.container = this.createContainer();
+        this.container.style.display = 'none';
+        this.container.style.backgroundColor = 'transparent';
     }
 
-    /**
-     * Generates a unique element ID based on the component name and a counter
-     * @param {string} prefix - Optional prefix for the ID
-     * @returns {string} Unique ID
-     */
     generateId(prefix = '') {
-        const componentName = this.constructor.name.toLowerCase();
-        const uniqueId = `${componentName}-${prefix ? prefix + '-' : ''}${++View.#idCounter}`;
-        return uniqueId;
+        const componentName = this.componentName.toLowerCase();
+        return `${componentName}-${prefix}${this.constructor.idCounter++}`;
     }
 
     createContainer(options = {}) {
-        const container = this.createElement('div', options);
-        for (const [key, value] of Object.entries(options)) {
-            container.setAttribute(key, value);
-        }
-        this.setContainer(container);
-        return container;
-    }
-
-    /**
-     * Creates an HTML element with a unique ID
-     * @param {string} tagName - HTML tag name
-     * @param {Object} options - Element options (className, id prefix, etc.)
-     * @returns {HTMLElement} Created element with unique ID
-     */
-    createElement(tagName, options = {}) {
-        const element = document.createElement(tagName);
-        
-        if (options.className) {
-            element.className = options.className;
-        }
-
-        const idPrefix = options.idPrefix || '';
-        element.id = this.generateId(idPrefix);
-
-        return element;
-    }
-
-    /**
-     * Gets the main element of the component
-     * @returns {HTMLElement}
-     */
-    getElement() {
-        return this.#element;
+        this.container = this.createElement('div', {
+            className: 'view-container',
+            id: options.id || this.generateId('container')
+        });
+        return this.container;
     }
 
     getContainer() {
-        return this.#element;
+        return this.container;
     }
 
     setContainer(container) {
-        this.#element = container;
+        this.container = container;
     }
 
-    /**
-     * Sets the main element of the component
-     * @param {HTMLElement} element 
-     */
-    setElement(element) {
-        if (!(element instanceof HTMLElement)) {
-            throw new Error('Element must be an instance of HTMLElement');
+
+    mount(targetElement) {
+        if (targetElement && this.getElement()) {
+            targetElement.appendChild(this.getElement());
         }
-        this.#element = element;
     }
 
-    /**
-     * Renders the component
-     * Must be implemented by child classes
-     */
-    render() {
-        throw new Error('render() method must be implemented by child class');
+    unmount() {
+        const element = this.getElement();
+        if (element && element.parentNode) {
+            element.parentNode.removeChild(element);
+        }
+    }
+
+    hideAnimation() {
+        const container = this.getContainer();
+        if (container) {
+            container.classList.add('zoom-out');
+            container.addEventListener('transitionend', () => {
+                container.classList.remove('zoom-out');
+                container.style.display = 'none';
+            }, { once: true });
+        }
+    }
+
+
+setContainerId(id) {
+    this.container.id = id;
+}
+    
+    showAnimation() {
+        const container = this.getContainer();
+        if (container) {
+            container.style.display = 'flex';
+            container.classList.add('zoom-in');
+            container.addEventListener('transitionend', () => {
+                container.classList.remove('zoom-in');
+            }, { once: true });
+        }
+    }
+
+    hide() {
+        log(this.container, 
+            'CONTAINER',
+        )
+        this.container.style.display = 'none';
+    }
+
+    show() {
+        const container = this.getContainer();
+        if (container) {
+            
+            container.style.display = 'flex';
+            container.className = 'view-container visible'
+            log(container, 
+                'CONTAINER',
+            )
+        }
     }
 }

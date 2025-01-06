@@ -17,5 +17,8 @@
         "**/*.scss",
         "**/*.sass",
         "**/*.ts"
-    ]
+    ],
+    "windsurf.cascadeOpenOnReload": true,
+    "liveServer.settings.multiRootWorkspaceName": "defect-wind",
+    "svg.preview.background": "black"
 }

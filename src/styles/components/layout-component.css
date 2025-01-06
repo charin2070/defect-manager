@@ -1,0 +1,97 @@
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: rgb(210, 210, 210);
+}
+
+.content-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: 5em;
+    background-color: rgba(232, 232, 232, 0.865);
+    border-radius: 10px;
+    height: 100vh;
+    width: 100vw;
+    flex-wrap: nowrap;
+    align-content: flex-start;
+
+}
+
+.layout-sidebar {
+    flex: 0 0 250px;
+    background-color: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.card-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: 5em;
+    background-color: rgba(232, 232, 232, 0.865);
+    border-radius: 10px;
+    height: 30%;
+    width: 100vw;
+    flex-wrap: nowrap;
+    align-content: flex-start;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: 5em;
+    background-color: rgba(232, 232, 232, 0.865);
+    border-radius: 10px;
+    height: 100vh;
+    width: 30%;
+    flex-wrap: nowrap;
+    align-content: flex-start;
+}
+
+.view-container {
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff00;    margin: 1em;
+    transition: transform 1.5s ease, opacity 1.5s ease; /* Ensure this is applied correctly */
+    transform-style: preserve-3d;
+}
+
+.view-container.zoom-in {
+    transform: scale(1.05) rotateY(0deg);
+    transition: transform 1.5s ease, opacity 1.5s ease; /* Ensure this is applied correctly */
+    opacity: 1;
+}
+
+.view-container.zoom-out {
+    transform: scale(0.95) rotateY(-10deg) !important;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+
+.view-container .hidden {
+    display: none;
+    opacity: 0;
+    z-index: -1;
+
+}
+
+.view-container .visible {
+    display: flex; /* Или другой стиль */
+    opacity: 1;
+    z-index: 800;
+    background-color: #559983;
+}

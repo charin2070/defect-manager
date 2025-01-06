@@ -4,7 +4,7 @@ class ReportManager {
     this.refact.subscribe('reportType', (type) => {
       this.generateReport(type);
     });
-  }    
+  }
 
 
   months = [

@@ -1,18 +1,31 @@
 .navbar {
-    display: flex;
     position: fixed;
-    left: 0;
     top: 0;
-    align-items: center;
-    justify-content: space-between;
+    left: 0;
+    z-index: 1000;
+    width: 100%;
     padding: var(--navbar-padding);
     background: var(--navbar-bg);
-    border-bottom: 1px solid var(--navbar-border);
-    color: var(--navbar-color);
-    box-shadow: var(--navbar-shadow);
-    transition: all 0.3s ease;
-    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(255, 255, 255, .2);
 }
+
+.navbar-search {
+    border: none; /* Remove the border */
+    outline: none; /* Remove the outline */
+    padding: 10px; /* Add padding for better appearance */
+    border-radius: 20px; /* Optional: make it rounded */
+    background-color: rgba(255, 255, 255, 0.8); /* Light background */
+    transition: border-color 0.3s; /* Smooth transition for focus */
+}
+
+.navbar-search:focus {
+    border-color: transparent; /* Ensure no border on focus */
+}
+
 
 .navbar.compact {
     --navbar-padding: 4px 12px;
@@ -21,16 +34,16 @@
 }
 
 .navbar.normal {
-    --navbar-padding: 8px 16px;
+    --navbar-padding: 8px 0.3em;
 }
 
 /* Themes */
 .navbar.light {
-    --navbar-bg: #ffffff;
-    --navbar-color: #333;
+    --navbar-bg: #ffffffb9;
+    --navbar-color: #070707;
     --navbar-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --navbar-hover: #e5e5e5;
-    --navbar-border: #ddd;
+    --navbar-hover: #e5e5e5db;
+    --navbar-border: #ffffffef;
 }
 
 .navbar.dark {
@@ -62,16 +75,27 @@
     display: flex;
     align-items: center;
     margin-left: auto;
-    gap: 1rem;
+    /* gap: 1rem; */
 }
 
 .navbar-brand {
     font-size: 1.2em;
     font-weight: 600;
-    margin-right: 2rem;
+    margin-right: 1rem;
+  
     opacity: 0;
     transform: translateX(-20px);
     animation: slideIn 0.3s ease forwards 0.1s;
+}
+
+.navbar-left {
+    opacity: 0;
+    font-weight: 600;
+    transform: translateX(-20px);
+    animation: slideIn 0.3s ease forwards 0.1s;
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
 }
 
 @keyframes slideIn {
@@ -86,7 +110,7 @@
     color: var(--navbar-color);
     text-decoration: none;
     font-size: 1.1em;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.4s ease;
 }
 
 .navbar .title:hover,
@@ -97,16 +121,50 @@
 .navbar button {
     display: flex;
     align-items: center;
-    background: transparent;
-    border: none;
-    color: var(--navbar-color);
+    background: hsla(0, 0%, 100%, 0.268);
+    border: 1px solid rgba(255, 255, 255, 0.261);
+    color: #000000;
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
 }
 
-.navbar button:hover {
-    background: var(--navbar-hover);
+.navbar-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1em; /* Adjusted font size for balance */
+    border-radius: 4px; /* Rounded corners */
+    animation: fade-in 0.3s ease; /* Apply fade-in animation */
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px); /* Slide in from below */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.navbar-item:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle background change */
+    transform: scale(1.02); /* Slightly scale up for emphasis */
+}
+
+.navbar-icon {
+    width: 20px; /* Adjusted width for a more professional look */
+    height: 20px; /* Adjusted height */
+    margin-right: 8px; /* Space between icon and title */
+    transition: transform 0.2s ease; /* Smooth transition for icon */
+}
+
+.navbar-item:hover .navbar-icon {
+    transform: rotate(0deg); /* No rotation on hover for a cleaner look */
 }
 
 .navbar-icon-button {

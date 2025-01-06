@@ -1,70 +1,58 @@
 function logStyled(data, style) {
+  // Check is data not contains special characters
+  if (!/[^a-zA-Z0-9\s]/.test(data)) {
+    console.log(`%c${data}`, style);
+    return;
+  }
+
   console.log(`%c${data}`, style);
 }
 
-// Логирование с описанием и вызовом из конкретной функции
+function isSafeString(data) {
+  return typeof data === 'string' && !/[^a-zA-Z0-9\s]/.test(data);
+}
+
 function log(data, description) {
   const dataType = typeof data;
   const functionName = getCallingFunction();
 
-  // Логирование метаданных
-  logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
-
-  // Логирование описания
-  if (description) {
-    logStyled(`${description}:`, 'font-weight: bold; font-size: 1em; color: lightgreen');
+  // Log metadata
+  if (isSafeString(data)) { 
+    logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
+  } else {
+    console.log(data);
   }
 
-  // Логирование данных
+  // Log description
+  if (description) {
+    const cssStyles = getComputedStyle(document.body).getPropertyValue('--console-important-log');
+    logStyled(`${description}:`, cssStyles);
+  }
+
+  // Log data
   if (dataType === "string") {
     logStyled(data, 'color: orange; font-weight: 800; font-size: 1em');
   } else {
     console.log(data);
   }
 
-  // Получение имени вызывающей функции
+}
+  // Get calling function name
   function getCallingFunction() {
     let error = new Error();
     let stack = error.stack.split("\n");
     return stack[3]?.split("at ")[1]?.split(" ")[0] || "Unknown";
   }
-}
 
-// Перенаправление лога в HTML-элемент
-function outputConsoleToDiv(cardId) {
-  const debugOutput = document.getElementById(cardId);
-  const originalConsoleLog = console.log;
 
-  let inCustomLog = false;
 
-  console.log = function (...args) {
-    if (inCustomLog) {
-      originalConsoleLog.apply(console, args);
-      return;
-    }
-
-    inCustomLog = true;
-
-    args.forEach((arg, index) => {
-      if (typeof arg === 'string' && arg.includes('%c')) {
-        const parts = arg.split('%c');
-        parts.forEach((part, i) => {
-          if (i % 2 === 0) {
-            const textSpan = document.createElement('span');
-            textSpan.textContent = part;
-            textSpan.style = args[index + i + 1] || '';
-            debugOutput.appendChild(textSpan);
-          }
-        });
-      } else {
-        const logDiv = document.createElement('div');
-        logDiv.textContent = typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
-        debugOutput.appendChild(logDiv);
-      }
-    });
-
-    debugOutput.scrollTop = debugOutput.scrollHeight;
-    originalConsoleLog.apply(console, args);
-    inCustomLog = false;
-  };
+class ConsoleToast extends HtmlComponent {
+  constructor() {
+    super();
+    this.setupContainer();
+    this.errorToast = new ErrorToast(this);
+    this.logToast = new LogToast(this);
+    this.toastContainer.append(this.errorToast.element, this.logToast.element);
+    this.overrideConsoleMethods();
+  }
 }

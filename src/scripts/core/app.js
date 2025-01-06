@@ -1,124 +1,162 @@
 class App {
-    constructor(container) {
-        this.container = container;
-        this.refact = new Refact(container);
-        this.init();
-    }
-
-    // Default config
-    defaultConfig = {
-        mode: "prod",
-        dataPrefix: "defect-manager",
+    static defaultConfig = {
+        mode: "dev",
+        dataKey: "defect-manager",
         theme: "light",
-        filters : {
-            dateStart: new Date('2021-01-01').toISOString(),
-            dateEnd: new Date().toISOString(),
-            team: 'all'
-        }
+        dataKeys: ["issues", "index", "statistics", "dataUpdated"],
+        dataStatus: 'empty',
+        uploadedFile: null,
+        dataSource: null,
+        appStatus: null,
+        error: null,
+        process: null,
+        filters: {
+            dateStart: new Date('2021-01-01'),
+            dateEnd: new Date(),
+            team: 'all',
+        },
+        view: 'none'
     };
 
-    init() {
+    constructor(appContainer) {
+        if (!appContainer) {
+            throw new Error('App container is required');
+        }
+
+        this.appContainer = appContainer;
+        this.state = new Refact(appContainer).bind(this);
+        this.managersInitialized = false;
+        this.initialize();
+    }
+
+
+    test() {
+        log('[App] Test');
+        this.state.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+    }
+
+
+    async initialize() {
+        log('[App] Initializing...');
+
+        const startTime = performance.now();
+        this.state.setState({ appStatus: 'initializing' }, 'App. initialize');
+
         try {
-            if (!this.container)
-                throw new Error(`App: Parent container not found.`);
-
-            this.config = new ConfigManager(this.defaultConfig);
-            this.config.loadConfigFromLocalStorage();
-
-            this.setupStates();
+            this.setupKeyBindings();
             this.setupManagers();
-            this.setupEventListeners();
+      
 
-            this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
+            // Data loading
+            await this.managers.dataManager.loadFromLocalStorage();
 
-            this.refact.setState({ appStatus: 'initialized' });
-            console.log('[App] Initialized');
-        } catch (error) {
-            console.error('Error initializing app:', error);
-        }
-    }
-
-    setupStates() {            
-        this.refact.setState({
-            config: this.config.config,
-            filters: this.config.config.filters,
-            view: null,
-            statistics: null,
-            appStatus: 'initializing',
-        });
-    }
-
-    setupManagers() {
-        this.viewController = new ViewController(this.container);
-        this.dataManager = new DataManager(this.config.config.dataPrefix);
-        this.statisticManager = new StatisticManager();
-        this.reportsManager = new ReportManager();
-        this.dataTransformer = new DataTransformer();
-    }
-
-    setupEventListeners() {
-        // Issues
-        this.refact.subscribe('dataStatus', (status) => {
-            if (status === 'error') {
-                MessageView.showMessage('Ошибка', this.dataManager.lastError || 'Произошла ошибка при загрузке данных', 'OK', () => {
-                    this.viewController.showView('dashboard');
-                });
-                return;
-            }
-
-            if (status === 'empty') {
-                this.viewController.showView('empty');
-                return;
-            }
-
-            if (status === 'loaded') {
-                this.viewController.showView('dashboard');
-                // Get issues from data manager
-            const issues = this.dataManager.getIssues();
-            if (!issues || !issues.length) return;
-
-            // Transform and update state
-            const transformedIssues = issues.map(issue => this.dataTransformer.objectToIssue(issue));
-            this.refact.setState({ issues: transformedIssues }, 'App - issues');
+        } finally {
+            this.setupSubscriptions();
+            this.state.setState({ appStatus: 'initializied' }, 'App.initialize');
+            const endTime = performance.now();
+            const loadingTime = (endTime - startTime).toFixed(2);
             
-            // Calculate and update statistics
-            const statistics = StatisticManager.getFullStatistics(transformedIssues);
-            console.log('📦 Statistics:', statistics);
-            this.refact.setState({ statistics }, 'App - statistics');
+            log(`[App] Loading in: ${loadingTime} ms`);
+        }
+    }
 
-            // Show dashboard
-            this.viewController.showView('dashboard');     
 
+     setupManagers() {
+        if (this.managersInitialized) return;
+
+        log('[App.setupManagers] Setting up managers...');
+        
+        this.managers = {
+            configManager: new ConfigManager(this.appContainer),
+            dataManager: new DataManager(this.appContainer),
+            uiManager: new UiManager(this.appContainer),
+            statisticManager: new StatisticManager(this.appContainer),
+            reportManager: new ReportManager(this.appContainer)
+        };
+
+        Object.keys(this.managers).forEach(managerName => {
+            console.log(`${managerName} initialized:`, this.managers[managerName]);
+            log(`${managerName} initialized:`, this.managers[managerName]);
+        });
+
+        log('All managers initialized:', this.managers);
+        this.setupSubscriptions();
+
+        this.managersInitialized = true;
+    }
+
+    setupSubscriptions() {
+        this.state.subscribe('process', (value) => {
+            switch (value) {
+                case 'logState':
+                    log(this, 'App');
+                    log(this.state, 'App State');
+                    break;
+
+                case 'test_function':
+                    this.test();
+                    break;
+
+                case 'cleanup_local_storage_data':
+                    if (this.state?.config?.dataKeys) {
+                        this.managers.dataManager.cleanupLocalStorage(false, this.state.config.dataKeys);
+                    } else {
+                        log('Error: config.dataKeys is not defined', '[App] cleanup_local_storage_data');
+                    }
+                    break;
+                case 'cleanup_local_storage':
+                    this.managers.dataManager.cleanupLocalStorage(true);
+                    break;
+            }
+        });
+
+        this.state.subscribe('issues', (issues) => {
+            log(this.state, '🔥🔥🔥APP');
+            log('✅ Issues state changed:', issues);
+            
+            if (!issues || !Array.isArray(issues) || issues.length === 0) {
+            this.state.setState( { view: 'upload-container' }, 'App.setupSubscriptions');
+            log('Not issues found, showing upload container', 'App.setupSubscriptions');
+            this.managers.uiManager.showView('upload-container', 'App');    
+            return;
+            }
+
+            this.state.setState({ view: 'dashboard-container' }, 'App' ) , 'App.setupSubscriptions';
+            log('Issues found, showing dashboard container', 'App.setupSubscriptions');
+            this.managers.uiManager.showView('dashboard-container', 'App');
+        });
+
+    }
+
+
+    logStates() {
+        log(this, '[App] App');
+        log(this.state, '[App] App State');
+        log(localStorage, '[App] LocalStorage');
+
+    }
+
+
+    setupKeyBindings() {
+        document.addEventListener('keydown', (event) => {
+            if (event.shiftKey && ['D', 'd', 'В', 'в'].includes(event.key)) {
+                this.logDevInfo();
+                return;
+            }
+
+            if (event.shiftKey && ['C', 'c', 'C', 'c'].includes(event.key)) {
+                this.refact.setState({ process: 'cleanup_local_storage' }, 'App.setupKeyBindings');
                 return;
             }
         });
 
-        // Filters
-        this.refact.subscribe('filters', (filters) => {
-            this.config.config.filters = filters;
-            this.config.saveConfigToLocalStorage();
-            this.dataManager.loadFromLocalStorage(this.config.config.dataPrefix);
-        });
     }
 
-    showDashboard() {
-        if (!this.dashboardView) {
-            this.dashboardView = new DashboardView();
-        }
-        this.refact.setState({ currentView: 'dashboard' });
-        this.layoutView.setContent(this.dashboardView.getContainer());
-    }
-
-    showUploadView() {
-        if (!this.uploadView) {
-            this.uploadView = new UploadView();
-        }
-        this.refact.setState({ currentView: 'upload' });
-        this.layoutView.setContent(this.uploadView.getContainer());
-    }
 }
+
 
 // Entry point
 document.addEventListener("DOMContentLoaded", () => {
-    const app = new App(document.getElementById('app'));
+    const appContainer = document.getElementById('app');
+    const app = new App(appContainer);
 });
