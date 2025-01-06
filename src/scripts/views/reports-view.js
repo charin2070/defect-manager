@@ -2,7 +2,7 @@ class ReportsView extends ViewComponent {
     constructor() {
         super();
         this.container = document.createElement('div');
-        this.container.className = 'reports-view';
+        this.container.className = 'view-container';
         
         this.headers = [
             'Команда',

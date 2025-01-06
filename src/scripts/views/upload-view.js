@@ -2,30 +2,27 @@
 class UploadView extends ViewComponent {
     constructor() {
         super();
-        this.refact = Refact.getInstance();
-        this.createView();
+        this.render();
     }
 
-    createView() {
-        this.container = this.createElement('div', {
-            className: 'flex h-full w-full items-center justify-center p-8',
-            id: 'upload-view'
-        });
-
-        // Create upload card
-        const card = this.createElement('div', {
+    render() {
+    
+        this.card = this.createElement('div', {
             className: 'w-full max-w-2xl bg-white rounded-lg shadow-lg p-8'
         });
 
+        this.container.appendChild(this.card);
+        this.setContainerId('upload-container');
+
         // Create title
-        const title = this.createElement('h2', {
+        this.title = this.createElement('h2', {
             className: 'text-2xl font-bold text-gray-900 mb-6 text-center'
         });
-        title.textContent = 'Upload Data File';
-        card.appendChild(title);
+        this.title.textContent = 'Загрузите данные из Jira';
+        this.card.appendChild(this.title);
 
         // Create file input container
-        this.fileInput = new FileInputContainer(card, {
+        this.fileInput = new FileInputContainer(this.card, {
             type: 'dropzone',
             accept: '.csv,.xlsx',
             multiple: false,
@@ -33,7 +30,8 @@ class UploadView extends ViewComponent {
             containerId: 'file-input'
         });
 
-        this.container.appendChild(card);
+        this.card.appendChild(this.fileInput.getContainer());
+        this.container.appendChild(this.card);
     }
 
     getContainer() {

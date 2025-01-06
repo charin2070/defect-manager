@@ -1,88 +1,31 @@
-class DashboardView extends HtmlComponent {
+class DashboardView extends ViewComponent {
     constructor() {
         super();
-        this.refact = Refact.getInstance();
+        this.state = Refact.getInstance();
         this.setupSubscriptions();
+        this.render();
     }
 
-    getContainer() {
-        if (!this.container) {
-            this.container = this.createView();
-        }
+    render() {
+        // Charts row
+        this.chartsRow = this.createElement('div', {
+            className: 'cards-row',
+            id: 'cards-row'
+        });
+        this.getContainer().appendChild(this.chartsRow);
+
+        this.defectsCard = new ChartCard();
+        this.defectsCard.setTitle('Дефекты');
+        this.defectsCard.setValue(0);
+        this.defectsCard.setTrend(0);
+        this.defectsCard.drawDateLine([3, 9, 6, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
+        
+        this.chartsRow.appendChild(this.defectsCard.getContainer());
+
         return this.container;
     }
 
-    createView() {
-        // Main container
-        const container = this.createElement('div', {
-            id: 'dashboard-view',
-            className: 'container-fluid p-0'
-        });
-
-        // Charts row
-        const chartsRow = this.createElement('div', {
-            className: 'row'
-        });
-        container.appendChild(chartsRow);   
-        
-        // Chart column
-        const chartCol = this.createElement('div', {
-            className: 'col-12 col-xl-6'
-        });
-        chartsRow.appendChild(chartCol);
-
-        // Create chart card
-        const chartCard = this.createElement('div', {
-            className: 'card flex-fill w-100'
-        });
-        chartsRow.appendChild(chartCard);
-
-        container.appendChild(this.createElement('div', {
-                className: 'row'
-            }));
-
-        // Cards row
-        const cardsRow = this.createElement('div', {
-            className: 'row'
-        });
-        container.appendChild(this.createElement('div', {
-                className: 'row'
-            }));
-
-
-            const defectsCard = new ChartCard(cardsRow);
-            defectsCard.setTitle('Дефекты');
-            defectsCard.setValue(0);
-            defectsCard.setTrend(0);
-            defectsCard.drawDateLine([3, 9, 6, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
-        // Card column
-        const cardCol = this.createElement('div', {
-            className: 'col-12 col-md-6 col-xl-3'
-        });
-        (this.createElement('div', {
-            className: 'row'
-        })).appendChild(cardCol);
-
-        // Initialize DataCard
-        this.defectsCard = new DataCard(
-            cardCol,
-            {
-                id: 'defects-card',
-                valueSource: 'statistics.defects.total.unresolved',
-                title: 'Defects',
-                icon: 'src/image/jira-defect.svg',
-                value: 0,
-                description: '0 unresolved',
-                theme: 'light',
-                attributes: {
-                    'data-card-type': 'defect'
-                },
-                onClick: () => this.handleCardClick('defects-card')
-            }
-        );
-
-        return container;
-    }
+    
 
     updateDashboard(issues) {
         if (!issues || !Array.isArray(issues)) {
@@ -93,18 +36,16 @@ class DashboardView extends HtmlComponent {
         console.log('Updating dashboard with issues:', issues);
 
         const defects = issues.filter(issue => issue.type === 'defect');
-        const openDefects = defects.filter(d => d.status === 'unresolved');
-        
-        // Get top reported defects
-        const topReportedDefects = defects
-            .filter(d => d.status === 'unresolved')
+        const unresolvedDefects = defects.filter(d => d.status === 'unresolved');
+        // Top reported defects
+        const topReportedDefects = unresolvedDefects
             .sort((a, b) => (b.reports?.length || 0) - (a.reports?.length || 0))
             .slice(0, 5);
         
         // Update defects card
         if (this.defectsCard) {
             this.defectsCard.setValue(defects.length);
-            this.defectsCard.setDescription(`${openDefects.length} unresolved`);
+            this.defectsCard.setTitle(`${unresolvedDefects.length} открытых дефектов`);
         }
 
         // Update chart
@@ -137,16 +78,12 @@ class DashboardView extends HtmlComponent {
             .sort((a, b) => (b.reports?.length || 0) - (a.reports?.length || 0));
 
         if (defects.length > 0) {
-            // Create container for chart and table
-            const container = this.createElement('div', {
-                className: 'slide-panel-content'
-            });
 
             // Create and setup chart card
             const chartCard = this.createElement('div', {
                 className: 'card flex-fill w-100 mb-4'
             });
-            container.appendChild(chartCard);
+            this.container.appendChild(chartCard);
 
             const chartHeader = this.createElement('div', {
                 className: 'card-header'
@@ -224,8 +161,7 @@ class DashboardView extends HtmlComponent {
     }
 
     setupSubscriptions() {
-        this.refact.subscribe('issues', (issues) => {
-            console.log('Issues state changed:', issues);
+        this.state.subscribe('issues', (issues) => {
             if (!issues) return;
             this.updateDashboard(issues);
         });

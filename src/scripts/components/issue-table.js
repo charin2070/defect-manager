@@ -1,5 +1,6 @@
-class IssueTable {
+class IssueTable extends HtmlComponent {
     constructor(headers, config = {}) {
+        super();
         this.isUpperCase = config.isUpperCase ?? true;
         this.container = document.createElement('div');
         this.container.className = 'overflow-hidden rounded-lg shadow ring-1 ring-black ring-opacity-5 bg-white';
@@ -85,6 +86,23 @@ class IssueTable {
         this.initializeColumns(headers);
     }
 
+    showIssues(issues) {
+        this.container.innerHTML = '';
+        
+        const table = document.createElement('table');
+        table.className = 'min-w-full divide-y divide-gray-200';
+        
+        const tableHeader = this.createTableHeader();
+        table.appendChild(tableHeader);
+        
+        issues.forEach(issue => {
+            const tableRow = this.createTableRow(issue);
+            table.appendChild(tableRow);
+        });
+        
+        this.container.appendChild(table);
+    }
+
     initializeColumns(headers) {
         if (Array.isArray(headers)) {
             // Store just the column keys that we want to display
@@ -164,15 +182,24 @@ class IssueTable {
     render(issues) {
         this.container.innerHTML = '';
         
-        const tableWrapper = document.createElement('div');
-        tableWrapper.className = 'overflow-x-auto';
+        const tableContainer = document.createElement('div',
+            {
+                className: 'overflow-x-auto'
+            }
+        );
         
-        const table = document.createElement('table');
-        table.className = 'min-w-full divide-y divide-gray-200';
+        const table = document.createElement('table',
+            {
+                className: 'min-w-full divide-y divide-gray-200'
+            }
+        );
         
         const thead = this.createTableHeader();
-        const tbody = document.createElement('tbody');
-        tbody.className = 'bg-white divide-y divide-gray-200';
+        const tbody = document.createElement('tbody',
+            {
+                className: 'bg-white divide-y divide-gray-200'
+            }
+        );
         
         issues.forEach((issue, index) => {
             const tr = document.createElement('tr');
@@ -191,10 +218,15 @@ class IssueTable {
             tbody.appendChild(tr);
         });
         
+        
         table.appendChild(thead);
         table.appendChild(tbody);
-        tableWrapper.appendChild(table);
-        this.container.appendChild(tableWrapper);
+        tableContainer.appendChild(table);
+        this.container.appendChild(tableContainer);
+    }
+
+    getContainer() {
+        return this.container;
     }
 
     showIssues(issues, headers) {

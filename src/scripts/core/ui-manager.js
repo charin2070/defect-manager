@@ -1,188 +1,127 @@
-class UiManager extends ViewComponent {
+class UiManager {
     constructor(appContainer) {
-        super(appContainer);
-        this.refact = Refact.getInstance(appContainer);
+        this.refact = Refact.getInstance(appContainer).bind(this);
         this.appContainer = appContainer;
-        this.init();
-    }
-    
-    init() {
+        this.contentContainer = new HtmlComponent().createElement('div', { className: 'content-container' });
+        this.appContainer.appendChild(this.contentContainer); // Append to appContainer
+
         this.views = {};
-        
-        this.layoutComponent = new LayoutComponent(this.appContainer);
-        this.navbarComponent = this.createNavbar(this.navbarConfig);
-        this.layoutComponent.appendChild(this.navbarComponent.getContainer());
+        this.refact.setState({ view: 'none' }, 'UiManager');
+        this.currentViewName = 'none';
+        this.slidePanel = new SlidePanel(); // Create an instance of SlidePanel
 
-        // Create views
+        this.initializeNavbar();
         this.initializeViews();
-        
-        // Setup event listeners
-        this.setupEventListeners();
         this.setupSubscriptions();
+
+        log({ views: this.views, view: 'none' }, 'Views');
     }
 
-    createNavbar(navbarConfig) {
-        const navbar = NavbarComponent.create(navbarConfig);
-        navbar.addButton('Обновить из файла', null, () => alert('About clicked'));
-        navbar.addButton('Настройки', null, () => alert('Home clicked'));
+    initializeNavbar() {
+        const navbar = new NavbarComponent();
+        navbar.addMenuItem({ side: 'left', icon: 'src/image/jira-defect.svg', size: '1.2em', title: 'Дефекты', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
+        navbar.addMenuItem({ side: 'left', size: '1.2em', title: 'Все команды', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
+        navbar.addSearchBox(); // Add search box
+        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => this.refact.setState({ view: 'upload-container' }, 'UiManager') }, 'upload'); 
+        navbar.addMenuItem({ side: 'right', icon: 'src/image/grid-svgrepo-com.svg', callback: () => this.showSettings() });
 
-        return navbar;
+        this.appContainer.appendChild(navbar.getContainer());
     }
 
-    navbarConfig = {
-        theme: 'light',
-        mode: 'normal',
-        title: 'Refact',
-        animate: true
-    };
+    showSettings() {
+        this.showView('settings-container', 'UiManager');
+        this.slidePanel.open(this.views['settings-container'].getContainer(), 'Настройки'); // Open SlidePanel with SettingsView
+    }
+
+    showView(viewId) {
+        const viewContainers = document.getElementsByClassName('view-container');
+        for (let i = 0; i < viewContainers.length; i++) {
+            viewContainers[i].style.display = 'none';
+            if (viewContainers[i].id == viewId) {
+                viewContainers[i].style.display = 'flex'; 
+            }
+        }
+    }
+
+
+    showDashboard() {
+        this.refact.state.views.forEach((view) => {
+            view.show();
+        });
+        this.showView('dashboard-container', 'UiManager');
+    }
+
+    showUpload() {
+        this.showView('upload-container', 'UiManager');
+    }
 
     initializeViews() {
-        // Create views
-        this.uploadView = new UploadView();
-        this.dashboardView = new DashboardView();
-        this.reportsView = new ReportsView();
-        this.settingsView = new SettingsView();
-        this.toast = new ToastComponent();
-        this.chartCard = new ChartCard();
-
-        // Set view IDs
-        this.dashboardView.getContainer().id = 'dashboard-view';
-        this.uploadView.getContainer().id = 'upload-view';
-        this.reportsView.getContainer().id = 'reports-view';
-        this.settingsView.getContainer().id = 'settings-view';
-
-        // Register views
-        this.registerView('dashboard', this.dashboardView);
-        this.registerView('upload', this.uploadView);
-        this.registerView('reports', this.reportsView);
-        this.registerView('settings', this.settingsView);
-
-        const viewContainer = this.layoutComponent.getViewContainer();
-        if (viewContainer) {
-            viewContainer.appendChild(this.chartCard.getContainer());
-        } else {
-            console.error('View container not found');
-        }
+        this.views = {
+            'dashboard-container': new DashboardView(),
+            'upload-container': new UploadView(),
+            'reports-container': new ReportsView(),
+            'settings-container': new SettingsView()
+        };
+    };
+    
+    
+    renderViews() {
+        this.hideAllViews();
+        this.contentContainer.innerHTML = '';   
+        this.contentContainer.appendChild(this.views['dashboard-container'].getContainer());
+        this.contentContainer.appendChild(this.views['upload-container'].getContainer());
+        this.contentContainer.appendChild(this.views['reports-container'].getContainer());
+        this.contentContainer.appendChild(this.views['settings-container'].getContainer());
+        
     }
 
-    setupEventListeners() {
-        // Handle navigation clicks
-        const navLinks = this.layoutComponent.getContainer().querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const route = e.target.dataset.route;
-                if (route) {
-                    this.showView(route, 'navigation');
-                }
-            });
-        });
+    hideAllViews() {
+        // Hide all views
+        Object.values(this.views).forEach((view) => view.hide());
     }
 
-    setupSubscriptions(){
-        // Listen for data status changes
-        this.refact.subscribe('dataStatus', (status) => {
-            if (status === 'empty') {
-                this.showView('upload', 'dataStatus');
-            } else if (status === 'loaded') {
-                this.showView('dashboard', 'dataStatus');
+    setupSubscriptions() {
+        this.refact.subscribe('view', (viewId) => {
+            if (viewId && viewId !== this.refact.state.viewId) {
+                this.showView(viewId, 'UiManager');
+                this.refact.setState({ view: viewId }, 'UiManager');
             }
         });
 
-        // Listen for view changes from navigation
-        this.refact.subscribe('view', (viewName) => {
-            if (viewName && viewName !== this.currentViewName) {
-                this.showView(viewName, 'navigation');
-            }
+        this.refact.subscribe('appStatus', (appStatus) => {
+            this.handleAppStatus(appStatus);
         });
-
-        // Listen for toast messages
-        this.refact.subscribe('toast', (toast) => {
-            console.log('ViewController: Showing toast', toast);
-            if (toast && toast.message) {
-                this.toast.show(toast.message, toast.type || 'info', toast.duration || 3000);
-            }
-        });
-    }
-
-    registerView(name, viewComponent) {
-        this.views[name] = viewComponent;
-        const container = viewComponent.getContainer();
-        if (container && !container.parentElement) {
-            const viewContainer = this.layoutComponent.getViewContainer();
-            if (viewContainer) {
-                viewContainer.appendChild(container);
-                container.style.display = 'none';
-            }
-        }
-    }
-
-    showView(viewName, context = 'unknown') {
-        log(`${viewName}:`, 'UiManager.showView');
-        log('📺 Showing view:');
-
-        if (!this.views[viewName]) {
-            console.error(`View ${viewName} not found`);
-            return;
-        }
-
-        // Don't switch to the same view
-        if (this.currentViewName === viewName) {
-            return;
-        }
-
-        // Hide current view if exists
-        if (this.currentView) {
-            this.currentView.getContainer().style.display = 'none';
-        }
-
-        // Show new view
-        this.currentView = this.views[viewName];
-        this.currentViewName = viewName;
-        this.currentView.getContainer().style.display = 'block';
-
-        // Update state
-        this.refact.setState({ view: viewName }, `ViewController.showView(${context})`);
     }
 
     handleAppStatus(appStatus) {
-        switch (appStatus) {
-            case('loading'):
-            case('initializing'):
-                this.showLoader()
-                break;
-            case('loaded'):
-            case('initialized'):
-                this.hideLoader();
-                break;
-            case('error'):
-                this.showView('error');
-                break;
-        }
+        if (appStatus === 'initializing')
+            this.showView('upload-container', 'UiManager');
+
+        if (appStatus === 'ready' || appStatus === 'initialized')
+            this.showView('dashboard-container', 'UiManager');
     }
 
-    showLoader() {
-        log('Showing loader');
-        this.loaderView.show();
+    registerView(name, view) {
+        this.views[name] = view;
     }
 
-    hideLoader() {
-        log('Hiding loader');
-        this.loaderView.hide();
-    }
+    initializeViews() {
+        this.views = {
+            'dashboard-container': new DashboardView(),
+            'upload-container': new UploadView(),
+            'reports-container': new ReportsView(),
+            'settings-container': new SettingsView()
+        };
+    
+        Object.entries(this.views).forEach(([name, view]) => {
+            this.registerView(name, view);
+            this.contentContainer.appendChild(view.getContainer());
+            console.log(`Registered and appended view: ${name}`);
+        });
 
-    showReport(report) {
-        if (!report) return;
-
-        const reportsView = this.views['reports'];
-        const view = reportsView.render(report);
-
-        this.showView('reports');
-    }
-
-    bindEvent(name, event, handler) {
-        if (this.views[name]) {
-            this.views[name].addEventListener(event, handler);
-        }
+        log(this.views, 'Views');
+    
+        // Start by showing the dashboard view
+        this.showView('dashboard-container', 'UiManager');
     }
 }

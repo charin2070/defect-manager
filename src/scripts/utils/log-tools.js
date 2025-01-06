@@ -1,5 +1,15 @@
 function logStyled(data, style) {
+  // Check is data not contains special characters
+  if (!/[^a-zA-Z0-9\s]/.test(data)) {
+    console.log(`%c${data}`, style);
+    return;
+  }
+
   console.log(`%c${data}`, style);
+}
+
+function isSafeString(data) {
+  return typeof data === 'string' && !/[^a-zA-Z0-9\s]/.test(data);
 }
 
 function log(data, description) {
@@ -7,7 +17,11 @@ function log(data, description) {
   const functionName = getCallingFunction();
 
   // Log metadata
-  logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
+  if (isSafeString(data)) { 
+    logStyled(`${functionName} (...) | type: ${dataType}`, 'color: silver');
+  } else {
+    console.log(data);
+  }
 
   // Log description
   if (description) {
@@ -22,108 +36,23 @@ function log(data, description) {
     console.log(data);
   }
 
+}
   // Get calling function name
   function getCallingFunction() {
     let error = new Error();
     let stack = error.stack.split("\n");
     return stack[3]?.split("at ")[1]?.split(" ")[0] || "Unknown";
   }
-}
 
-function outputConsoleToDiv(cardId) {
-  const debugOutput = document.getElementById(cardId);
-  const originalConsoleLog = console.log;
 
-  let inCustomLog = false;
 
-  console.log = function (...args) {
-    if (inCustomLog) {
-      originalConsoleLog.apply(console, args);
-      return;
-    }
-
-    inCustomLog = true;
-
-    args.forEach((arg, index) => {
-      if (typeof arg === 'string' && arg.includes('%c')) {
-        const parts = arg.split('%c');
-        parts.forEach((part, i) => {
-          if (i % 2 === 0) {
-            const textSpan = document.createElement('span');
-            textSpan.textContent = part;
-            textSpan.style = args[index + i + 1] || '';
-            debugOutput.appendChild(textSpan);
-          }
-        });
-      } else {
-        const logDiv = document.createElement('div');
-        logDiv.textContent = typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
-        debugOutput.appendChild(logDiv);
-      }
-    });
-
-    debugOutput.scrollTop = debugOutput.scrollHeight;
-    originalConsoleLog.apply(console, args);
-    inCustomLog = false;
-  };
-}
-
-function subscribeForConsole(refact) {
-  const consoleMethods = ['error', 'warn'];
-  const pendingMessages = [];
-  let isProcessing = false;
-
-  function processMessages() {
-    if (isProcessing || pendingMessages.length === 0) return;
-    
-    isProcessing = true;
-    const { message, type } = pendingMessages.shift();
-    
-    try {
-      refact.setState({ 
-        toast: { message, type, duration: 5000 } 
-      }, 'console.' + type);
-    } finally {
-      isProcessing = false;
-      if (pendingMessages.length > 0) {
-        setTimeout(processMessages, 100);
-      }
-    }
+class ConsoleToast extends HtmlComponent {
+  constructor() {
+    super();
+    this.setupContainer();
+    this.errorToast = new ErrorToast(this);
+    this.logToast = new LogToast(this);
+    this.toastContainer.append(this.errorToast.element, this.logToast.element);
+    this.overrideConsoleMethods();
   }
-
-  consoleMethods.forEach(method => {
-    const original = console[method];
-    console[method] = (...args) => {
-      original.apply(console, args);
-      
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-      ).join(' ');
-      
-      if (message.includes('Данные не найдены') || 
-          message.includes('No data found') ||
-          message.includes('Preventing recursive')) {
-        return;
-      }
-      
-      pendingMessages.push({
-        message,
-        type: method === 'error' ? 'error' : 'warning'
-      });
-      
-      processMessages();
-    };
-  });
-
-  window.addEventListener('error', event => {
-    const message = `Error: ${event.message}`;
-    pendingMessages.push({ message, type: 'error' });
-    processMessages();
-  });
-
-  window.addEventListener('unhandledrejection', event => {
-    const message = `Unhandled error: ${event.reason}`;
-    pendingMessages.push({ message, type: 'error' });
-    processMessages();
-  });
 }

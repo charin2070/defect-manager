@@ -58,6 +58,45 @@ class NavbarComponent extends HtmlComponent {
         if (this.config.animate) this.#element.classList.add('animate');
     }
 
+    addMenuItem({ side, icon, title, size, callback }) {
+        const itemElement = this.createElement('div', { className: 'navbar-item' });
+        
+        if (icon) {
+            const iconElement = this.createElement('img', { src: icon, alt: title, className: 'navbar-icon' });
+            itemElement.appendChild(iconElement);
+
+            
+        if (size) {
+            iconElement.style.fontSize = size;
+            iconElement.style.width = size;
+            iconElement.style.height = size;
+        }
+        const titleElement = this.createElement('span', { className: 'navbar-title' });
+        titleElement.textContent = title;
+        itemElement.appendChild(titleElement);
+
+        
+        if (size) {
+            titleElement.style.fontSize = size;
+        }
+
+    
+    
+        if (typeof callback === 'function') {
+            itemElement.addEventListener('click', callback);
+        }
+    
+        // Add the item to the specified side
+        if (side === 'left') {
+            const leftMenu = this.#element.querySelector('.navbar-left');
+            leftMenu.appendChild(itemElement);
+        } else if (side === 'right') {
+            const rightMenu = this.#element.querySelector('.navbar-menu');
+            rightMenu.appendChild(itemElement);
+        }
+    }
+    }
+
     // Public API
     getElement() {
         return this.#element;
@@ -67,18 +106,6 @@ class NavbarComponent extends HtmlComponent {
         return this.#element;
     }
 
-    setTheme(theme) {
-        if (theme !== 'light' && theme !== 'dark') return;
-        this.#theme = theme;
-        this.#updateClasses();
-        this.#element.style.backgroundColor = theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-    }
-
-    setMode(mode) {
-        if (mode !== 'normal' && mode !== 'compact') return;
-        this.#mode = mode;
-        this.#updateClasses();
-    }
 
     addItem(itemElement) {
         const menu = this.#element.querySelector('.navbar-menu');
@@ -111,7 +138,11 @@ class NavbarComponent extends HtmlComponent {
         }
 
         if (typeof onclick === 'function') {
-            button.addEventListener('click', onclick);
+            button.addEventListener('click', () => {
+                console.log(`Button clicked: ${text}`); 
+                console.log('Button click event triggered'); // Added logging
+                onclick();
+            });
         }
 
         this.addItem(button);
@@ -152,6 +183,45 @@ class NavbarComponent extends HtmlComponent {
 
         return group;
     }
+
+    addSearchBox() {
+        const searchBox = this.createElement('input', { type: 'text', placeholder: 'Поиск', className: 'navbar-search' });
+        this.addItem(searchBox);
+        // Add icon for search
+     
+
+        searchBox.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click event from bubbling up
+            this.openSlidePanel(); // Open the slide panel on click
+        });
+        this.addItem(searchBox);
+
+        // Add icon for search
+        const searchIcon = this.createElement('img', { src: 'src/image/search.svg', alt: 'Поиск', className: 'navbar-icon' });
+        this.addItem(searchIcon);
+
+
+        searchIcon.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click event from bubbling up
+            this.openSlidePanel(); // Open the slide panel on click
+        });
+    }
+
+    openSlidePanel() {
+        const slidePanel = new SlidePanel(); // Create an instance of SlidePanel
+        const issueTable = new IssueTable(['Задача', 'Обращений']); // Create an instance of IssueTable with headers
+        const issues = Refact.getInstance().state.issues;
+    
+        log(issues, 'Issues'); // Log issues to check if they are being retrieved
+        issueTable.showIssues(issues, ['Задача', 'Обращений']); // Populate the issue table
+        log(issueTable.getContainer(), 'Issue Table Container'); // Log the container to check if it is populated
+    
+        slidePanel.setContent(issueTable.getContainer()); // Set the content of the slide panel to the issue table
+        slidePanel.open(); // Open the slide panel
+    }
+
+    
+    
 
     static create(config) {
         return new NavbarComponent(config);

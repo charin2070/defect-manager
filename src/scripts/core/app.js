@@ -7,7 +7,7 @@ class App {
         dataStatus: 'empty',
         uploadedFile: null,
         dataSource: null,
-        appStatus: 'initializing',
+        appStatus: null,
         error: null,
         process: null,
         filters: {
@@ -15,15 +15,16 @@ class App {
             dateEnd: new Date(),
             team: 'all',
         },
-        view: 'dashboard'
+        view: 'none'
     };
 
     constructor(appContainer) {
         if (!appContainer) {
             throw new Error('App container is required');
         }
+
         this.appContainer = appContainer;
-        this.refact = new Refact(appContainer);
+        this.state = new Refact(appContainer).bind(this);
         this.managersInitialized = false;
         this.initialize();
     }
@@ -31,7 +32,7 @@ class App {
 
     test() {
         log('[App] Test');
-        this.refact.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+        this.state.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
     }
 
 
@@ -39,18 +40,19 @@ class App {
         log('[App] Initializing...');
 
         const startTime = performance.now();
-        this.refact.setState({ appStatus: 'initializing' }, 'App. initialize');
+        this.state.setState({ appStatus: 'initializing' }, 'App. initialize');
 
         try {
             this.setupKeyBindings();
             this.setupManagers();
+      
 
             // Data loading
-            const issues = await this.managers.dataManager.loadFromLocalStorage();
-            this.setupSubscriptions();
-        } finally {
+            await this.managers.dataManager.loadFromLocalStorage();
 
-            this.refact.setState({ appStatus: 'initializied' }, 'App.initialize');
+        } finally {
+            this.setupSubscriptions();
+            this.state.setState({ appStatus: 'initializied' }, 'App.initialize');
             const endTime = performance.now();
             const loadingTime = (endTime - startTime).toFixed(2);
             
@@ -63,8 +65,7 @@ class App {
         if (this.managersInitialized) return;
 
         log('[App.setupManagers] Setting up managers...');
-
-        // Create managers in dependency order
+        
         this.managers = {
             configManager: new ConfigManager(this.appContainer),
             dataManager: new DataManager(this.appContainer),
@@ -73,13 +74,19 @@ class App {
             reportManager: new ReportManager(this.appContainer)
         };
 
+        Object.keys(this.managers).forEach(managerName => {
+            console.log(`${managerName} initialized:`, this.managers[managerName]);
+            log(`${managerName} initialized:`, this.managers[managerName]);
+        });
+
+        log('All managers initialized:', this.managers);
+        this.setupSubscriptions();
+
         this.managersInitialized = true;
     }
 
     setupSubscriptions() {
-        subscribeForConsole();
-
-        this.refact.subscribe('process', (value) => {
+        this.state.subscribe('process', (value) => {
             switch (value) {
                 case 'logState':
                     log(this, 'App');
@@ -103,36 +110,24 @@ class App {
             }
         });
 
-        this.refact.subscribe('issues', (issues) => {
+        this.state.subscribe('issues', (issues) => {
+            log(this.state, '🔥🔥🔥APP');
             log('✅ Issues state changed:', issues);
+            
             if (!issues || !Array.isArray(issues) || issues.length === 0) {
-            this.managers.uiManager.showView('upload');
-                return;
+            this.state.setState( { view: 'upload-container' }, 'App.setupSubscriptions');
+            log('Not issues found, showing upload container', 'App.setupSubscriptions');
+            this.managers.uiManager.showView('upload-container', 'App');    
+            return;
             }
 
-            let issueIndex = IndexManager.getStructuredIndex(issues);
-            log(issueIndex, '✅ [App] issueIndex');
-            this.managers.statisticManager.updateStatistics({ index: this.managers.dataManager.getIndex(), issues });
-            this.managers.uiManager.showView('dashboard');
+            this.state.setState({ view: 'dashboard-container' }, 'App' ) , 'App.setupSubscriptions';
+            log('Issues found, showing dashboard container', 'App.setupSubscriptions');
+            this.managers.uiManager.showView('dashboard-container', 'App');
         });
 
     }
 
-
-    setupDefaults() {
-
-        // const defaultState = {
-        //     ...App.defaultConfig,
-        //     currentView: null,
-        //     issues: null,
-        //     dataStatus: null
-        // };
-        // this.refact.setState(defaultState, 'App.setupDefaults');
-    }
-
-    getContainer() {
-        return this.appContainer;
-    }
 
     logStates() {
         log(this, '[App] App');

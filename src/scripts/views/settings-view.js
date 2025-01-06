@@ -1,7 +1,6 @@
 class SettingsView extends ViewComponent {
     constructor() {
         super();
-        this.fieldMappings = this.#getDefaultFieldMappings();
         this.dashboardLayout = this.#getDefaultDashboardLayout();
         this.#loadSettings();
         this.createView();
@@ -11,10 +10,11 @@ class SettingsView extends ViewComponent {
     createView() {
         const container = this.createElement('div', {
             id: 'settings-view',
-            className: 'settings-view p-6'
+            className: 'view-container'
         });
 
         this.setContainer(container);
+        this.setContainerId('settings-container');
         this.#renderContent();
     }
 
@@ -121,13 +121,8 @@ class SettingsView extends ViewComponent {
 
     #loadSettings() {
         try {
-            const savedMappings = localStorage.getItem('fieldMappings');
+
             const savedLayout = localStorage.getItem('dashboardLayout');
-
-            if (savedMappings) {
-                this.fieldMappings = JSON.parse(savedMappings);
-            }
-
             if (savedLayout) {
                 this.dashboardLayout = JSON.parse(savedLayout);
             }
@@ -145,15 +140,6 @@ class SettingsView extends ViewComponent {
 
     #saveSettings() {
         try {
-            // Сохраняем маппинг полей
-            const newMappings = {};
-            Object.keys(this.fieldMappings).forEach(field => {
-                const input = this.getContainer()?.querySelector(`#mapping_${field}`);
-                if (input) {
-                    newMappings[field] = input.value;
-                }
-            });
-
             // Сохраняем layout дашборда
             const newLayout = {};
             Object.keys(this.dashboardLayout).forEach(panel => {
@@ -164,16 +150,13 @@ class SettingsView extends ViewComponent {
             });
 
             // Сохраняем в localStorage
-            localStorage.setItem('fieldMappings', JSON.stringify(newMappings));
             localStorage.setItem('dashboardLayout', JSON.stringify(newLayout));
 
             // Обновляем состояние
-            this.fieldMappings = newMappings;
             this.dashboardLayout = newLayout;
 
             // Уведомляем об изменениях
             this.setState({ 
-                fieldMappings: newMappings,
                 dashboardLayout: newLayout
             }, 'SettingsView.saveSettings');
 

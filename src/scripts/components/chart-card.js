@@ -1,27 +1,22 @@
 class ChartCard extends HtmlComponent {
-    constructor(container) {
-        super(container);
+    constructor() {
+        super();
         this.container = this.createElement('div', {
             className: 'chart-card-container',
         });
 
         this.container = this.htmlToComponent(this.htmlTemplate);
-
-        const viewContainer = document.getElementById('view-container');
-        if (viewContainer) {
-            viewContainer.appendChild(this.container);
-            this.chartCanvas = this.container.querySelector('canvas'); // Select canvas after rendering
-            this.initChart(); // Initialize chart after appending to the view-container
-        } else {
-            console.error('View container not found');
-        }
+        document.body.appendChild(this.container);
 
         this.titleElement = this.container.querySelector('header .chart-card-title');
         this.valueElement = this.container.querySelector('.chart-card-value');
         this.trendElement = this.container.querySelector('.chart-card-trend');
+        this.chartCanvas = this.container.querySelector('canvas');
         this.menuButton = this.container.querySelector('header .menu-icon');
         this.menu = this.container.querySelector('header .menu-dropdown');
         this.chart = null;
+
+        this.initChart();
     }
 
     initChart() {
@@ -98,7 +93,7 @@ class ChartCard extends HtmlComponent {
     }
 
     htmlTemplate = `
-        <div class="chart-card-container">
+        <div class="card-container">
             <div class="chart-card-content">
                 <header class="chart-card-header">
                     <h2 class="chart-card-title">New Clients</h2>

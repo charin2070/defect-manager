@@ -1,7 +1,6 @@
 class HtmlComponent {
-    constructor(container) {
-        this.state = Refact.getInstance(container).state;
-        this.container = container;
+    constructor() {
+        this.state = Refact.getInstance();
     }
 
     generateId() {
