@@ -4,6 +4,7 @@
 .dropdown-container {
     position: relative;
     display: inline-block;
+    height: 100%;
   }
   
   /* Dropdown button */
@@ -11,6 +12,7 @@
     background-color: #ffffff;
     color: #333333;
     padding: 10px 16px;
+    display: inline-block;
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;

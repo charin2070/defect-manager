@@ -52,44 +52,36 @@ class DataManager {
   }
 
   // Load issues from file
-  loadFromFile(file) {
+  async loadFromFile(file) {
     log('🚀 [DataManager] Loading from file:', file.name);
-    return new Promise((resolve, reject) => {
-      if (!file) {
-        reject(new Error('File not available'));
-        return;
-      }
 
-      if (file.name.endsWith('.csv')) {
-        this.loadFromCsvFile(file).then((issues) => {
-          log(`✅ [DataManager] ${issues.length} issues loaded from CSV file`);
-          resolve({ issues, source: 'file' });
-        }).catch(reject);
-      } else {
-        reject(new Error('[DataManager] Unsupported file format'));
+    if (file.name.endsWith('.csv')) {
+      try {
+        const result = await this.loadFromCsvFile(file);
+        this.refact.setState({ dataSource: 'file' }, 'DataManager.loadFromFile');
+        return { issues: result, source: 'file' };
+      } catch (error) {
+        log('[DataManager] Error loading CSV file:', error);
+        throw error;
       }
-    });
+    } else {
+      throw new Error('[DataManager] Unsupported file format');
+    }
   }
 
 
   // Load issues from CSV file
-  loadFromCsvFile(csvFile) {
-    return new Promise((resolve, reject) => {
+  async loadFromCsvFile(csvFile) {
+    try {
       // Get lines
-      this.readFile(csvFile)
-        .then(csvLines => {
-          // Parse lines
-          CsvParser.csvLinesToObjects(csvLines)
-            .then(csvObjects => {
-              const issues = csvObjects.map(csvObject => new Issue(csvObject));
-              resolve(issues);
-            })
-            .catch(error => {
-              console.error("[DataManager.loadFromCsvFile] Error:", error);
-              reject(error);
-            });
-        });
-    });
+      const csvLines = await this.readFile(csvFile);
+      // Parse lines
+      const csvObjects = await CsvParser.csvLinesToObjects(csvLines);
+      return csvObjects.map(csvObject => new Issue(csvObject));
+    } catch (error) {
+      log('❌ [DataManager] Error parsing CSV file:', error);
+      throw error;
+    }
   }
 
   async loadFromLocalStorage(dataKeys = this.dataKeys) {

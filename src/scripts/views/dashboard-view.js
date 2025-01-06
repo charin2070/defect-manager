@@ -3,7 +3,6 @@ class DashboardView extends ViewComponent {
         super();
         this.state = Refact.getInstance();
         this.setupSubscriptions();
-        this.render();
     }
 
     render() {

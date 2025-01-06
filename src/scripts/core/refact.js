@@ -114,10 +114,15 @@ class Refact {
         changedKeys.forEach(key => {
             const callbacks = this.subscribers.get(key);
             if (callbacks) {
-                console.log(`Notifying subscribers for key: ${key}`);
                 callbacks.forEach(callback => {
                     try {
-                        callback(this.state[key], context);
+                        let callbackContext = context;
+                        if (typeof callback === 'function') {
+                            callbackContext = callbackContext || 'unknown';
+                            callback = callback.bind(this);
+                        }
+                        console.log(`⚡Notifying ${callbackContext} for key: ${key}`);
+                        callback(this.state[key], callbackContext);
                     } catch (error) {
                         console.error(`Error in subscriber for ${key}:`, error);
                     }

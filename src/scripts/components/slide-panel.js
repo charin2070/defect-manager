@@ -1,7 +1,20 @@
 class SlidePanel extends HtmlComponent {
-    constructor() {
+    static instance = null;
+
+    constructor(options = {}) {
+        if (options.isSingle && SlidePanel.instance) {
+            return SlidePanel.instance;
+        }
+
         super();
-        // Create backdrop
+        
+        this.isOpen = false;
+        this.isSingle = options.isSingle || false;
+
+        if (this.isSingle) {
+            SlidePanel.instance = this;
+        }
+
         this.backdrop = this.createElement('div',
             { className: 'fixed inset-0 bg-black/50 opacity-0 invisible transition-opacity duration-300 ease-in-out z-40 backdrop-filter backdrop-blur-sm' },
         );
@@ -53,8 +66,10 @@ class SlidePanel extends HtmlComponent {
         this.panel.appendChild(header);
         
         // Create content container
-        this.content = document.createElement('div');
-        this.content.className = 'flex-1 overflow-y-auto px-6 py-4';
+        this.content = this.createElement('div',
+            { className: 'slide-panel-container' },
+        );
+        
         this.panel.appendChild(this.content);
 
         // Bind close on backdrop click
@@ -71,6 +86,7 @@ class SlidePanel extends HtmlComponent {
     }
 
     open(content, title = '') {
+        this.isOpen = true;
         // Set content
         this.content.innerHTML = '';
         if (typeof content === 'string') {
@@ -90,6 +106,8 @@ class SlidePanel extends HtmlComponent {
     }
 
     close() {
+        this.isOpen = false;
+
         this.backdrop.classList.add('invisible', 'opacity-0');
         this.panel.style.right = '-100%';
     }

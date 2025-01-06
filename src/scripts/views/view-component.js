@@ -5,22 +5,31 @@ class ViewComponent extends HtmlComponent {
         super();
         this.state = Refact.getInstance();
         this.componentName = this.constructor.name;
-        this.container = this.createContainer();
-        this.container.style.display = 'none';
-        this.container.style.backgroundColor = 'transparent';
+        
+        // Create container first
+        this.container = this.createElement('div', {
+            className: 'view-container',
+            id: this.generateId('container')
+        });
+        
+        // Then call render if it exists
+        if (typeof this.render === 'function') {
+            this.render();
+        }
     }
 
     generateId(prefix = '') {
-        const componentName = this.componentName.toLowerCase();
+        const componentName = this.constructor.name.toLowerCase();
         return `${componentName}-${prefix}${this.constructor.idCounter++}`;
     }
 
-    createContainer(options = {}) {
+    render(options = {}) {
         this.container = this.createElement('div', {
             className: 'view-container',
             id: options.id || this.generateId('container')
         });
         return this.container;
+        
     }
 
     getContainer() {
@@ -72,22 +81,25 @@ setContainerId(id) {
         }
     }
 
+    show() {
+        log (this, 'SHOW VIEW');
+
+        this.container.style.display = 'flex';
+    }
+
     hide() {
-        log(this.container, 
-            'CONTAINER',
-        )
+        log (this, 'HIDE VIEW');
         this.container.style.display = 'none';
     }
 
-    show() {
-        const container = this.getContainer();
+    toggleVisibility() {
+        const container = this.container; 
         if (container) {
-            
-            container.style.display = 'flex';
-            container.className = 'view-container visible'
-            log(container, 
-                'CONTAINER',
-            )
+            if (container.style.display === 'none') {
+                this.show();
+            } else {
+                this.hide();
+            }
         }
     }
 }

@@ -3,25 +3,18 @@ class SettingsView extends ViewComponent {
         super();
         this.dashboardLayout = this.#getDefaultDashboardLayout();
         this.#loadSettings();
-        this.render();
+        
+        // Set container properties
+        this.container.id = 'settings-view';
+        this.container.className = 'view-container';
+        
+        // Initialize content
+        this.#renderContent();
         this.#setupEventListeners();
     }
 
-    render() {
-        const container = this.createElement('div', {
-            id: 'settings-view',
-            className: 'view-container'
-        });
-
-        this.setContainer(container);
-        this.setContainerId('settings-container');
-        this.#renderContent();
-
-        return this.container;
-    }
-
     #renderContent() {
-        this.getContainer().innerHTML = `
+        this.container.innerHTML = `
             <div class="settings-container">
                 <div class="settings-header">
                     <div class="header-with-icon">
@@ -67,15 +60,14 @@ class SettingsView extends ViewComponent {
 
                         <div class="settings-item">
                             <div class="item-main">
-                                <span class="item-title">Удалить данные</span>
-                                <span class="item-subtitle">Удалить все локальные данные приложения</span>
-                            </div>
-                            <button class="chrome-button danger" data-action="clear">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                               <button class="chrome-button danger" data-action="clear">
+                                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
-                                Удалить
+                                Удалить все данные
                             </button>
+                            </div>
+                           
                         </div>
                     </div>
 

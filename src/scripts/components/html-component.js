@@ -36,6 +36,12 @@ class HtmlComponent {
         return template.content.firstChild;
     }
 
+    setWidth(width) {
+        if (this.container) {
+            this.container.style.width = width;
+        }
+    }
+
     createContainer(className) {
         const container = this.createElement('div', {
             id: this.generateId('container-element')

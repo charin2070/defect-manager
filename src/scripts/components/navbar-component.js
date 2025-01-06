@@ -2,6 +2,7 @@ class NavbarComponent extends HtmlComponent {
     #element = null;
     #theme = 'light';
     #mode = 'normal';
+    container = null;
 
     constructor(config = {}) {
         super();
@@ -20,6 +21,7 @@ class NavbarComponent extends HtmlComponent {
 
     #createNavbar() {
         this.#element = this.createElement('nav', { className: 'navbar fluent-design' });
+        this.container = this.#element;
         this.#updateClasses();
 
         const brand = this.createElement('div', { className: 'navbar-brand fluent-acrylic' });
@@ -39,9 +41,9 @@ class NavbarComponent extends HtmlComponent {
         this.#element.style.left = '0';
         this.#element.style.right = '0';
         this.#element.style.zIndex = '1000';
-        this.#element.style.backgroundColor = 'rgba(255, 255, 255, 0.8)'; // Acrylic effect
-        this.#element.style.backdropFilter = 'blur(10px)'; // Acrylic effect
-        this.#element.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)'; // Depth effect
+        this.#element.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        this.#element.style.backdropFilter = 'blur(10px)';
+        this.#element.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
         this.#element.style.transition = 'transform 0.3s ease, background-color 0.3s ease';
     }
 
@@ -103,7 +105,7 @@ class NavbarComponent extends HtmlComponent {
     }
 
     getContainer() {
-        return this.#element;
+        return this.container;  
     }
 
 
@@ -120,6 +122,26 @@ class NavbarComponent extends HtmlComponent {
                 itemElement.style.opacity = '1';
                 itemElement.style.transform = 'translateX(0)';
             });
+        }
+    }
+
+    appendComponent(component) {
+        if (!component || !component.getContainer) {
+            console.error('Invalid component passed to appendComponent');
+            return;
+        }
+
+        const container = component.getContainer();
+        if (!(container instanceof Element)) {
+            console.error('Component container is not a valid DOM element');
+            return;
+        }
+
+        const leftMenu = this.#element.querySelector('.navbar-left');
+        if (leftMenu) {
+            leftMenu.appendChild(container);
+        } else {
+            console.error('Left menu not found in navbar');
         }
     }
 

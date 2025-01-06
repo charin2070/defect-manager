@@ -30,29 +30,26 @@
     overflow-y: auto;
 }
 
-.card-row {
+.cards-row {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    align-items: stretch;
-    padding-top: 5em;
     background-color: rgba(232, 232, 232, 0.865);
-    border-radius: 10px;
-    height: 30%;
-    width: 100vw;
+    height: fit-content;
+    width: 100%;
     flex-wrap: nowrap;
     align-content: flex-start;
 }
 
 .card-container {
     display: flex;
+    padding: 2em;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    padding-top: 5em;
-    background-color: rgba(232, 232, 232, 0.865);
+    background-color: rgb(255, 255, 255);
     border-radius: 10px;
-    height: 100vh;
+    height: 100%;
     width: 30%;
     flex-wrap: nowrap;
     align-content: flex-start;
@@ -92,6 +89,6 @@
 .view-container .visible {
     display: flex; /* Или другой стиль */
     opacity: 1;
-    z-index: 800;
+    z-index: 1;
     background-color: #559983;
 }

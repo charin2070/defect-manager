@@ -1,4 +1,12 @@
 class FileInputContainer extends ViewComponent {
+    static options = {
+        type: 'default',
+        accept: '*',
+        multiple: false,
+        containerId: 'file-input-container',
+        helperText: 'Supported formats: Excel and CSV',
+    };
+
     constructor(container, options = {}) {
         super();
         this.refact = Refact.getInstance();
@@ -8,79 +16,63 @@ class FileInputContainer extends ViewComponent {
             isDragging: false,
             uploadedFile: null
         };
-        this.render();
-    }
-
-    static options = {
-        type: 'default',
-        accept: '*',
-        multiple: false,
-        containerId: 'file-input-container',
-        helperText: 'Supported formats: Excel and CSV',
-    };
-
-    render() {
+        
         // Create main container
-        this.container = this.createElement('div', {
-            className: 'w-full h-64 relative',
-            id: this.options.containerId
-        });
-
-        // Create hidden input
+        this.container = this.createElement('div');
+        
+        // Set container ID from options
+        if (this.options.containerId) {
+            this.container.id = this.options.containerId;
+        }
+        
+        // Add base classes
+        this.container.className = 'w-full h-64 relative';
+        
+        // Create and append input
         this.inputElement = this.createHiddenInput();
         this.container.appendChild(this.inputElement);
+        
+        // Initialize the rest of the UI
+        this.initializeUI();
+    }
 
+    initializeUI() {
         // Create dropzone
-        const dropzone = this.createElement('div', {
-            className: this.getClassNames()
+        this.dropzone = this.createElement('div', {
+            className: 'absolute inset-0 flex flex-col items-center justify-center p-5 text-center transition-colors duration-200 ease-in-out border-2 border-dashed border-gray-400 rounded-lg hover:border-gray-500'
         });
 
-        // Create upload icon
+        // Add event listeners for drag and drop
+        this.setupDragAndDrop();
+        
+        // Create icon
         const icon = this.createElement('div', {
-            className: 'text-4xl mb-4 text-gray-400'
+            className: 'mb-4'
         });
-        icon.innerHTML = '📁';
-        dropzone.appendChild(icon);
+        icon.innerHTML = `<svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>`;
+        this.dropzone.appendChild(icon);
 
-        // Create text content
-        const textContent = this.createElement('div', {
-            className: 'text-center'
+        // Create text
+        const text = this.createElement('p', {
+            className: 'mb-2 text-sm text-gray-600'
         });
-        
-        const title = this.createElement('p', {
-            className: 'text-lg font-medium text-gray-900 mb-1'
-        });
-        title.innerHTML = 'Drop your file here or <span class="text-blue-500 hover:text-blue-600 cursor-pointer">browse</span>';
-        
+        text.innerHTML = '<span class="font-semibold">Click to upload</span> or drag and drop';
+        this.dropzone.appendChild(text);
+
+        // Create helper text
         const helperText = this.createElement('p', {
-            className: 'text-sm text-gray-500'
+            className: 'text-xs text-gray-500'
         });
         helperText.textContent = this.options.helperText;
+        this.dropzone.appendChild(helperText);
 
-        textContent.appendChild(title);
-        textContent.appendChild(helperText);
-        dropzone.appendChild(textContent);
-
-        // Add click handler to browse text
-        const browseText = title.querySelector('span');
-        browseText.addEventListener('click', () => this.inputElement.click());
-
-        this.container.appendChild(dropzone);
-
-        // Setup drag and drop events
-        this.setupDragAndDrop(dropzone);
-
-        // Append to parent container
-        this.parentContainer.appendChild(this.container);
-
-        this.state = Refact.getInstance();
-        this.state.subscribe('process', (value) => {
-            if (value === 'show_open_data_file_dialog') {
-                this.inputElement.click();
-            }
-        });
-
-        return this.container;
+        this.container.appendChild(this.dropzone);
+        
+        if (this.parentContainer) {
+            this.parentContainer.appendChild(this.container);
+        }
     }
 
     getClassNames() {
@@ -104,27 +96,27 @@ class FileInputContainer extends ViewComponent {
         return input;
     }
 
-    setupDragAndDrop(dropzone) {
+    setupDragAndDrop() {
         const preventDefault = (e) => {
             e.preventDefault();
             e.stopPropagation();
         };
 
-        dropzone.addEventListener('dragenter', (e) => {
+        this.dropzone.addEventListener('dragenter', (e) => {
             preventDefault(e);
             this.state.isDragging = true;
             this.render();
         });
 
-        dropzone.addEventListener('dragover', preventDefault);
+        this.dropzone.addEventListener('dragover', preventDefault);
 
-        dropzone.addEventListener('dragleave', (e) => {
+        this.dropzone.addEventListener('dragleave', (e) => {
             preventDefault(e);
             this.state.isDragging = false;
             this.render();
         });
 
-        dropzone.addEventListener('drop', (e) => {
+        this.dropzone.addEventListener('drop', (e) => {
             preventDefault(e);
             this.state.isDragging = false;
             this.handleFileSelect(e);

@@ -1,28 +1,81 @@
 class UiManager {
     constructor(appContainer) {
-        this.refact = Refact.getInstance(appContainer);
-        this.refact.bind(this);
+        this.refact = Refact.getInstance();
         this.appContainer = appContainer;
-        this.contentContainer = new HtmlComponent().createElement('div', { className: 'content-container' });
-        this.appContainer.appendChild(this.contentContainer); // Append to appContainer
-
+        
+        // Create content container
+        this.contentContainer = document.createElement('div');
+        this.contentContainer.className = 'content-container';
+        this.contentContainer.id = 'content-container';
+        this.appContainer.appendChild(this.contentContainer);
+        
         this.views = {};
-        this.refact.setState({ view: 'none' }, 'UiManager');
-        this.currentViewName = 'none';
-        this.slidePanel = new SlidePanel(); // Create an instance of SlidePanel
+        this.currentView = null;
+        this.initializeComponents();
+    }
 
+    initializeComponents() {
         this.initializeNavbar();
         this.initializeViews();
+        
+        // Mount main views to content container
+        this.contentContainer.appendChild(this.views['dashboard'].getContainer());
+        this.contentContainer.appendChild(this.views['upload'].getContainer());
+        this.contentContainer.appendChild(this.views['reports'].getContainer());
+        
+        // Initialize slide panels after views are mounted
+        this.initializeSlidePanels();
+        
         this.setupSubscriptions();
+    }
 
-        log({ views: this.views, view: 'none' }, 'Views');
+    initializeSlidePanels(){
+        // Initialize slide panels
+        this.settingsSlidePanel = new SlidePanel({ isSingle: true });
+        this.settingsView = new SettingsView();
+        this.settingsSlidePanel.setWidth(30);
+        this.settingsSlidePanel.setContent(this.settingsView.getContainer());
+        document.body.appendChild(this.settingsSlidePanel.panel);
+        this.settingsView.show();
+        
+        // Add panels to DOM
+        this.issuesSlidePanel = new SlidePanel({ isSingle: true });
+        document.body.appendChild(this.issuesSlidePanel.panel);
     }
 
     initializeNavbar() {
         const navbar = new NavbarComponent();
-        navbar.addMenuItem({ side: 'left', icon: 'src/image/jira-defect.svg', size: '1.2em', title: 'Дефекты', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
-        navbar.addMenuItem({ side: 'left', size: '1.2em', title: 'Все команды', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
-        // Search box
+        
+        // Initialize dropdown with proper options
+        this.issueTypeDropdown = new DropdownComponent({
+            id: 'issue-type-dropdown',
+            defaultItem: 0,
+            className: 'navbar-dropdown',
+            height: '100%',
+            fontSize: '1.4em',
+            items: [[
+                { 
+                    text: 'Дефекты', 
+                    callback: () => this.showDashboard(), 
+                    value: 'all',
+                    icon: 'src/image/jira-defect.svg'
+                },
+                { 
+                    text: 'Доработки', 
+                    callback: () => this.showDashboard(), 
+                    value: 'bug',
+                    icon: 'src/image/bug.svg'
+                },
+                { 
+                    text: 'Дефекты и доработки', 
+                    callback: () => this.showDashboard(), 
+                    value: 'task',
+                    icon: 'src/image/task.svg'
+                }
+            ]]
+        });
+
+        navbar.appendComponent(this.issueTypeDropdown);
         navbar.addSearchBox();
         // Upload data file
         navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => this.refact.setState({ process: 'show_open_data_file_dialog' }, 'UiManager') });
@@ -32,55 +85,75 @@ class UiManager {
     }
 
     showSettings() {
-        this.showView('settings-container', 'UiManager');
-        this.slidePanel.open(this.views['settings-container'].getContainer(), 'Настройки'); // Open SlidePanel with SettingsView
-    }
-
-    showView(viewId) {
-        const viewContainers = document.getElementsByClassName('view-container');
-        for (let i = 0; i < viewContainers.length; i++) {
-            viewContainers[i].style.display = 'none';
-            if (viewContainers[i].id == viewId) {
-                viewContainers[i].style.display = 'flex'; 
-            }
+        if (!this.settingsSlidePanel.isOpen) {
+            this.settingsSlidePanel.open(this.settingsView.getContainer(), 'Настройки'); // Open SlidePanel with SettingsView
+        } else {
+            this.settingsSlidePanel.close();
         }
     }
 
-
-    showDashboard() {
-        this.refact.state.views.forEach((view) => {
-            view.show();
-        });
-        this.showView('dashboard-container', 'UiManager');
+    showUploadView() {
+        this.hideAllViews();
+        this.views['upload'].show();
     }
 
-    showUpload() {
-        this.showView('upload-container', 'UiManager');
+    hideSettings() {
+        this.settingsSlidePanel.close();
+    }
+
+    showView(viewName) {
+        if (!this.views[viewName]) {
+            console.error(`View "${viewName}" not found`);
+            return;
+        }
+
+        // Don't rehide/reshow if it's already the current view
+        if (this.currentView === viewName) {
+            return;
+        }
+
+        this.hideAllViews();
+        this.views[viewName].show();
+        this.currentView = viewName;
+    }
+
+    hideAllViews() {
+        Object.values(this.views).forEach(view => {
+            if (view && typeof view.hide === 'function') {
+                view.hide();
+            }
+        });
+    }
+
+    setTitle(title) {
+        document.title = title;
+    }
+
+    showDashboard() {
+        this.hideAllViews();
+        log(this.views['dashboard'], 'Dashboard View');
+        this.views['dashboard'].show();
+        this.setTitle('Дэшборд');
     }
 
     initializeViews() {
+        const dashboard = new DashboardView();
+        const upload = new UploadView();
+        const reports = new ReportsView();
+
         this.views = {
-            'dashboard-container': new DashboardView(),
-            'upload-container': new UploadView(),
-            'reports-container': new ReportsView(),
-            'settings-container': new SettingsView()
+            'dashboard': dashboard,
+            'upload': upload,
+            'reports': reports,
         };
     };
-    
     
     renderViews() {
         this.hideAllViews();
         this.contentContainer.innerHTML = '';   
-        this.contentContainer.appendChild(this.views['dashboard-container'].getContainer());
-        this.contentContainer.appendChild(this.views['upload-container'].getContainer());
-        this.contentContainer.appendChild(this.views['reports-container'].getContainer());
-        this.contentContainer.appendChild(this.views['settings-container'].getContainer());
-        
-    }
-
-    hideAllViews() {
-        // Hide all views
-        Object.values(this.views).forEach((view) => view.hide());
+        this.contentContainer.appendChild(this.views['dashboard'].getContainer());
+        this.contentContainer.appendChild(this.views['upload'].getContainer());
+        this.contentContainer.appendChild(this.views['reports'].getContainer());
     }
 
     setupSubscriptions() {
@@ -97,34 +170,21 @@ class UiManager {
     }
 
     handleAppStatus(appStatus) {
-        if (appStatus === 'initializing')
-            this.showView('upload-container', 'UiManager');
-
-        if (appStatus === 'ready' || appStatus === 'initialized')
-            this.showView('dashboard-container', 'UiManager');
+        switch (appStatus) {
+            case 'initializing':
+                this.showView('upload');
+                break;
+            case 'initialized':
+            case 'ready':
+                this.showView('dashboard');
+                break;
+            default:
+                console.log(`Unhandled app status: ${appStatus}`);
+        }
     }
 
     registerView(name, view) {
         this.views[name] = view;
     }
 
-    initializeViews() {
-        this.views = {
-            'dashboard-container': new DashboardView(),
-            'upload-container': new UploadView(),
-            'reports-container': new ReportsView(),
-            'settings-container': new SettingsView()
-        };
-    
-        Object.entries(this.views).forEach(([name, view]) => {
-            this.registerView(name, view);
-            this.contentContainer.appendChild(view.getContainer());
-            console.log(`Registered and appended view: ${name}`);
-        });
-
-        log(this.views, 'Views');
-    
-        // Start by showing the dashboard view
-        this.showView('dashboard-container', 'UiManager');
-    }
 }

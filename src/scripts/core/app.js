@@ -37,26 +37,27 @@ class App {
 
 
     async initialize() {
-        log('[App] Initializing...');
-
         const startTime = performance.now();
-        this.state.setState({ appStatus: 'initializing' }, 'App. initialize');
-
+        log('[App] Initializing...', 'App.initialize');
+        
         try {
-            this.setupKeyBindings();
+            // Setup core components
             this.setupManagers();
-      
-
-            // Data loading
-            await this.managers.dataManager.loadFromLocalStorage();
-
-        } finally {
             this.setupSubscriptions();
-            this.state.setState({ appStatus: 'initializied' }, 'App.initialize');
+            this.setupKeyBindings();
+            
+            // Load data from localStorage
+            await this.managers.dataManager.loadFromLocalStorage();
+            
+            // Set app as initialized after data is loaded
+            this.state.setState({ appStatus: 'initialized' }, 'App.initialize');
+            
             const endTime = performance.now();
             const loadingTime = (endTime - startTime).toFixed(2);
-            
             log(`[App] Loading in: ${loadingTime} ms`);
+        } catch (error) {
+            console.error('[App] Error during initialization:', error);
+            this.state.setState({ error: error.message, appStatus: 'error' }, 'App.initialize');
         }
     }
 
@@ -68,8 +69,8 @@ class App {
         
         this.managers = {
             configManager: new ConfigManager(this.appContainer),
-            dataManager: new DataManager(this.appContainer),
             uiManager: new UiManager(this.appContainer),
+            dataManager: new DataManager(this.appContainer),
             statisticManager: new StatisticManager(this.appContainer),
             reportManager: new ReportManager(this.appContainer)
         };
@@ -110,22 +111,23 @@ class App {
             }
         });
 
+        // AppStatus
+        this.state.subscribe('appStatus', (appStatus) => {
+            log(`App Status changed to: ${appStatus}`, 'App.setupSubscriptions');
+        });
+
+        // Issues
         this.state.subscribe('issues', (issues) => {
-            log(this.state, '🔥🔥🔥APP');
-            log('✅ Issues state changed:', issues);
-            
             if (!issues || !Array.isArray(issues) || issues.length === 0) {
-            this.state.setState( { view: 'upload-container' }, 'App.setupSubscriptions');
-            log('Not issues found, showing upload container', 'App.setupSubscriptions');
-            this.managers.uiManager.showView('upload-container', 'App');    
-            return;
+                this.managers.uiManager.showUploadView();
+                return;
             }
 
-            this.state.setState({ view: 'dashboard-container' }, 'App' ) , 'App.setupSubscriptions';
-            log('Issues found, showing dashboard container', 'App.setupSubscriptions');
-            this.managers.uiManager.showView('dashboard-container', 'App');
+            this.managers.uiManager.showDashboard();
+            if (this.state.dataSource === 'file') {
+                this.managers.dataManager.saveToLocalStorage();
+            }
         });
-        
     }
 
 
