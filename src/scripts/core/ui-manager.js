@@ -1,6 +1,7 @@
 class UiManager {
     constructor(appContainer) {
-        this.refact = Refact.getInstance(appContainer).bind(this);
+        this.refact = Refact.getInstance(appContainer);
+        this.refact.bind(this);
         this.appContainer = appContainer;
         this.contentContainer = new HtmlComponent().createElement('div', { className: 'content-container' });
         this.appContainer.appendChild(this.contentContainer); // Append to appContainer
@@ -21,8 +22,10 @@ class UiManager {
         const navbar = new NavbarComponent();
         navbar.addMenuItem({ side: 'left', icon: 'src/image/jira-defect.svg', size: '1.2em', title: 'Дефекты', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
         navbar.addMenuItem({ side: 'left', size: '1.2em', title: 'Все команды', callback: () => this.refact.setState({ view: 'dashboard-container' }, 'UiManager') });
-        navbar.addSearchBox(); // Add search box
-        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => this.refact.setState({ view: 'upload-container' }, 'UiManager') }, 'upload'); 
+        // Search box
+        navbar.addSearchBox();
+        // Upload data file
+        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => this.refact.setState({ process: 'show_open_data_file_dialog' }, 'UiManager') });
         navbar.addMenuItem({ side: 'right', icon: 'src/image/grid-svgrepo-com.svg', callback: () => this.showSettings() });
 
         this.appContainer.appendChild(navbar.getContainer());

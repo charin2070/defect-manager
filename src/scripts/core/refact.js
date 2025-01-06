@@ -126,10 +126,23 @@ class Refact {
         });
     }
 
-    bind(selector, key) {
-        const element = this.rootElement.querySelector(selector);
+    bind(target) {
+        if (typeof target === 'object') {
+            // If target is an object, bind all its properties to state
+            Object.keys(target).forEach(key => {
+                this.subscribe(key, value => {
+                    if (target[key] !== value) {
+                        target[key] = value;
+                    }
+                });
+            });
+            return this;
+        }
+        
+        // Original selector-based binding
+        const element = this.rootElement.querySelector(target);
         if (!element) {
-            console.warn(`Element not found for selector: ${selector}`);
+            console.warn(`Element not found for selector: ${target}`);
             return;
         }
         this.subscribe(key, value => {
@@ -137,12 +150,7 @@ class Refact {
                 element.textContent = value;
             }
         });
-
-        if (key in this.state) {
-            element.textContent = this.state[key];
-        } else {
-            console.warn(`State key not found: ${key}`);
-        }
+        return this;
     }
 
     render(template) {

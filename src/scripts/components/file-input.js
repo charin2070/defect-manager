@@ -72,6 +72,15 @@ class FileInputContainer extends ViewComponent {
 
         // Append to parent container
         this.parentContainer.appendChild(this.container);
+
+        this.state = Refact.getInstance();
+        this.state.subscribe('process', (value) => {
+            if (value === 'show_open_data_file_dialog') {
+                this.inputElement.click();
+            }
+        });
+
+        return this.container;
     }
 
     getClassNames() {

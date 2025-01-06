@@ -24,7 +24,7 @@ class App {
         }
 
         this.appContainer = appContainer;
-        this.state = new Refact(appContainer).bind(this);
+        this.state = new Refact(appContainer);
         this.managersInitialized = false;
         this.initialize();
     }
@@ -125,7 +125,7 @@ class App {
             log('Issues found, showing dashboard container', 'App.setupSubscriptions');
             this.managers.uiManager.showView('dashboard-container', 'App');
         });
-
+        
     }
 
 
