@@ -45,7 +45,7 @@ class ConfigManager {
     setConfig(config) {
         log('[ConfigManager] Setting config:', config);
         
-        this.refact.setState({ config }, 'ConfigManager.setConfig');
+        this.refact.setState({ ...config }, 'ConfigManager.setConfig');
     }
 
     saveToLocalStorage(config) {

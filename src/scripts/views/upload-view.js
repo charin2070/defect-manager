@@ -17,7 +17,7 @@ class UploadView extends ViewComponent {
         });
 
         // Create file input container
-        this.fileInput = new FileInputContainer(this.card);
+        this.fileInput = new FileInputComponent(this.card);
 
         // Add card to container
         this.container.appendChild(this.card);

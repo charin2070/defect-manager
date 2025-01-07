@@ -72,14 +72,3 @@ button,
 .no-cursor-select:not(button):not([role="button"]):not(.clickable) {
     cursor: default !important;
 }
-
-/* Apply to specific components */
-.stat-card,
-.dropdown-toggle,
-.menu-item,
-.chart-container,
-.widget-card,
-.status-badge,
-.nav-item {
-    @apply no-cursor-select;
-}

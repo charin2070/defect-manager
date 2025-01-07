@@ -34,9 +34,10 @@
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    background-color: rgba(232, 232, 232, 0.865);
+    background-color: rgba(232, 232, 232, 0);
     height: fit-content;
     width: 100%;
+    max-height: 15em;
     flex-wrap: nowrap;
     align-content: flex-start;
 }
@@ -53,6 +54,10 @@
     width: 30%;
     flex-wrap: nowrap;
     align-content: flex-start;
+}
+
+.card-container .maximized-width {
+    width: 100%;
 }
 
 .view-container {

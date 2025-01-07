@@ -127,7 +127,8 @@ class Refact {
                         console.log(`⚡Notifying ${callbackContext} for key: ${key}`);
                         callback(this.state[key], callbackContext);
                     } catch (error) {
-                        console.error(`Error in subscriber for ${key}:`, error);
+                        log(this.state, 'REFACT'); 
+                        console.error(`Error in subscriber for ${key}:`, this.state, error);
                     }
                 });
             }

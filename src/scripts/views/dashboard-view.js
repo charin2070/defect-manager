@@ -2,6 +2,8 @@ class DashboardView extends ViewComponent {
     constructor() {
         super();
         this.state = Refact.getInstance();
+
+
         this.setupSubscriptions();
     }
 
@@ -32,62 +34,27 @@ class DashboardView extends ViewComponent {
         this.table.createTable({
             headers: ['Task', 'Description', 'Status', 'Priority', 'Assignee', 'Created']
         });
-        this.table.updateItems([
-            {
-                task: 'Task 1',
-                description: 'Description 1',
-                status: 'Status 1',
-                priority: 'Priority 1',
-                assignee: 'Assignee 1',
-                created: 'Created 1',
-            },
-            {
-                task: 'Task 2',
-                description: 'Description 2',
-                status: 'Status 2',
-                priority: 'Priority 2',
-                assignee: 'Assignee 2',
-                created: 'Created 2',
-            },
-            {
-                task: 'Task 3',
-                description: 'Description 3',
-                status: 'Status 3',
-                priority: 'Priority 3',
-                assignee: 'Assignee 3',
-                created: 'Created 3',
-            },
-            {
-                task: 'Task 4',
-                description: 'Description 4',
-                status: 'Status 4',
-                priority: 'Priority 4',
-                assignee: 'Assignee 4',
-                created: 'Created 4',
-            }
-        ]);
-
+        
         this.issueTableRow.appendChild(this.table.getContainer());
 
         return this.container;
     }
 
-    update(data) {
-        console.log('[DashboardView] Updating with data:', data);
-        
-        // Handle both grouped index and direct issues array
-        let issues = Array.isArray(data) ? data : (data?.defect || []);
-        
-        if (!Array.isArray(issues)) {
-            console.warn('[DashboardView] No valid data to update with');
+
+    update(indexedIssues) {
+        if (!indexedIssues['defect']) {
+            log(indexedIssues, 'Indexed defects not ready');
             return;
         }
 
-        // Update defects card
-        this.defectsCard.setValue(issues.length);
+        // Get unresolved defects from the state index
+        const unresolvedDefects = indexedIssues['defect']['state']?.unresolved || [];
         
-        // Update table with actual data
-        const tableData = issues.map(issue => ({
+        // Update defects card
+        this.defectsCard.setValue(unresolvedDefects.length);
+        
+        // Update table
+        const tableData = unresolvedDefects.map(issue => ({
             task: issue.taskId,
             description: issue.description || issue.summary,
             status: issue.status,
@@ -97,19 +64,35 @@ class DashboardView extends ViewComponent {
         }));
         
         this.table.updateItems(tableData);
+        
+        // Sort by date for the timeline
+        this.unresolvedByDate = unresolvedDefects.sort((a, b) => new Date(a.created) - new Date(b.created));
+        this.unresolvedByMonth = IndexManager.groupByMonth(this.unresolvedByDate);
+        this.defectsCard.drawMonthLine(
+            this.unresolvedByMonth
+        );
+        // Get all issues for the current month
+      
     }
+    //     this.defectsCard.drawDateLine(
+    //         this.unresolvedByMonth.map(
+    //             month => this.unresolvedByMonth[month].length
+    //         )
+    //     );
+    //     log(this.unresolvedByMonth, 'unresolvedByMonth');
+    // }
 
     setupSubscriptions() {
-        // Listen for direct issues updates
-        this.state.subscribe('issues', (issues) => {
-            if (!issues) return;
-            this.update(issues);
-        });
+        // // Listen for direct issues updates
+        // this.state.subscribe('issues', (issues) => {
+        //     if (!issues) return;
+        //     this.update(issues);
+        // });
 
-        // Listen for grouped index updates
-        this.state.subscribe('index', (index) => {
-            if (!index) return;
-            this.update(index);
-        });
+        // // Listen for grouped index updates
+        // this.state.subscribe('index', (index) => {
+        //     if (!index) return;
+        //     this.update(index);
+        // });
     }
 }

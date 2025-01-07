@@ -11,9 +11,9 @@ class App {
         error: null,
         process: null,
         filters: {
-            dateStart: new Date('2021-01-01'),
-            dateEnd: new Date(),
-            team: 'all',
+            dataRange: {dateStart: new Date('2021-01-01'), dateEnd: new Date()},
+            team: '*',
+            project: 'AI',
         },
         view: 'none'
     };
@@ -25,6 +25,7 @@ class App {
 
         this.appContainer = appContainer;
         this.refact = new Refact(appContainer);
+        this.refact.setState({app: this}, 'App.constructor');
         this.managersInitialized = false;
         this.initialize();
     }
@@ -33,6 +34,13 @@ class App {
     test() {
         log('[App] Test');
         this.refact.setState({ toast: { message: 'Toast is HERE', type: 'info', duration: 3000 } }, 'App.test');
+    }
+
+    filterIssues = async (filters, callback) => {
+        const filteredIssues = await IndexManager.filterIssues(filters, this.refact.state.issues);
+        callback(filteredIssues);
+
+        log(filteredIssues, 'APP FILTERED');
     }
 
 
@@ -44,6 +52,8 @@ class App {
             // Initialize state with default values
             this.refact.setState({
                 issues: [],
+                filters: null,
+                view: 'none',
                 index: {},
                 statistics: {},
                 groupedIssues: {},
@@ -78,7 +88,7 @@ class App {
         // Create managers in parallel
         const managerPromises = {
             configManager: new ConfigManager(this.appContainer),
-            uiManager: new UiManager(this.appContainer),
+            uiManager:  new UiManager(this.appContainer),
             dataManager: new DataManager(this.appContainer),
             indexManager: new IndexManager(),
             statisticManager: new StatisticManager(this.appContainer),
@@ -86,7 +96,7 @@ class App {
         };
 
         this.managers = {};
-
+        
         // Initialize managers in parallel
         return Promise.all(Object.entries(managerPromises).map(async ([name, manager]) => {
             this.managers[name] = manager;
@@ -96,6 +106,7 @@ class App {
             log(`${name} initialized:`, manager);
         })).then(() => {
             log('All managers initialized:', this.managers);
+            this.managers.configManager.setConfig(App.defaultConfig);
             this.managersInitialized = true;
         });
     }
@@ -172,6 +183,15 @@ class App {
             this.managers.uiManager.showDashboard(groupedIndex);
         });
 
+        // Filters
+        this.refact.subscribe('filters', async filters => {
+            log('FILTERS CHANGED');
+            const filteredIssues = IndexManager.filterIssues(filters, this.refact.state.issues);
+            this.refact.setState({filteredIssues: filteredIssues}, 'App.setupSubscriptions');
+            this.managers.uiManager.updateDashboard(filteredIssues);
+            log(filteredIssues, 'Filtered issues');
+        });
+
         // App status
         this.refact.subscribe('appStatus', appStatus => {
             if (appStatus === 'initialized') {
@@ -179,6 +199,12 @@ class App {
             }
             log(`App Status changed to: ${appStatus}`, 'App.setupSubscriptions');
         });
+
+        this.refact.subscribe('filteredIssues', filteredIssues => {
+            const indexedIssues = IndexManager.indexIssues(filteredIssues);
+            this.managers.uiManager.updateDashboard (indexedIssues);
+        });
+
     }
 
 
@@ -189,6 +215,8 @@ class App {
         log(this.refact.index, 'INDEX');
         console.log(this.refact.groupedIssues, 'GROUPED ISSUES');
         console.log(this.refact.statistics, 'STATISTICS');
+        // log(this.refact.config, 'CONFIG');
+        log(this.refact.state, 'STATE');
     }
 
 

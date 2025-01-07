@@ -1,6 +1,7 @@
 class IndexManager {
     constructor() {
         this.groupedIndex = null;
+        this.index = {};
         this.refact = Refact.getInstance();
         this.initialize();
     }
@@ -45,12 +46,97 @@ class IndexManager {
             console.warn("[IndexManager] buildIndex requires an array of issues. Current issues: " + issues);
             return null;
         }
-        
-        this.index = await IndexManager.indexBy(['taskId', 'state', 'type', 'status', 'priority', 'team', 'assignee'], issues); 
+
+        const indexByType = await IndexManager.indexBy(['type'], issues);
+        this.index['type'] = indexByType['type'];
+        // For each type, create additional indexes
+
+        const indexByKeys = {};
+        for (const [type, typeIssues] of Object.entries(indexByType['type'])) {
+            indexByKeys[type] = await IndexManager.indexBy(['taskId', 'state', 'status', 'priority', 'team', 'assignee'], typeIssues);
+        }
+
+        this.index = indexByKeys;
         this.refact.setState({ index: this.index }, 'IndexManager.buildIndex');
-        log(this.index, '[IndexManager] index');
+
         return this.index;
     }
+    static groupByMonth(issues) {
+        if (!issues || !Array.isArray(issues)) {
+            console.warn("[IndexManager] groupByMonth requires an array of issues. Current issues: " + issues);
+            return null;
+        }
+
+        return issues.reduce((acc, issue) => {
+            const yearMonth = new Date(issue.created).toISOString().slice(0, 7);
+            if (!acc[yearMonth]) {
+                acc[yearMonth] = [];
+            }
+            acc[yearMonth].push(issue);
+            return acc;
+        }, {});
+    }
+
+    static async filterIssues(filters, issues) {
+      
+
+        if (!issues || !Array.isArray(issues)) {
+            // console.warn("[IndexManager] filterIssues requires an array of issues. Current issues:", issues);
+            return [];
+        }
+
+        if (!filters || typeof filters !== 'object') {
+            // console.warn("[IndexManager] filterIssues requires a filters object. Current filters:", filters);
+            return issues; // Return unfiltered issues if no valid filters
+        }
+
+        // Normalize filter names (handle both dateRange and dataRange)
+        if (filters.dataRange && !filters.dateRange) {
+            filters.dateRange = filters.dataRange;
+            delete filters.dataRange;
+        }
+
+        const result = issues.filter(issue => {
+            if (!issue) return false;
+
+            // Check each filter
+            const matches = Object.entries(filters).every(([field, value]) => {
+                if (!field || value === undefined) return true; // Skip invalid filters
+                
+                const issueValue = issue[field];
+                // console.log('[IndexManager.filterIssues] Checking issue:', issue.taskId, 'field:', field, 'value:', value, 'issueValue:', issueValue);
+        
+                switch (field) {
+                    case 'dateRange':
+                        if (!value || !value.dateStart || !value.dateEnd) {
+                            // console.warn('[IndexManager.filterIssues] Invalid dateRange filter:', value);
+                            return true; // Skip invalid date range
+                        }
+                        const inRange = isInDateRange(issue.created, value);
+                        // console.log('[IndexManager.filterIssues] Date range check for issue', issue.taskId, ':', inRange);
+                        return inRange;
+                    default:
+                        if (value === '*' || value === undefined || value === null) {
+                            return true;
+                        }
+                        return issueValue === value;
+                }
+            });
+
+            return matches;
+        });
+        
+        console.log('[IndexManager.filterIssues] Result:', { 
+            inputCount: issues.length,
+            outputCount: result.length,
+            filters
+        });
+
+        return result;
+    }
+
+      
+    
 
     setupSubscriptions() {
         this.refact.subscribe('issues', async (issues) => {
@@ -62,7 +148,9 @@ class IndexManager {
                 this.refact.setState({ index: this.groupedIndex }, 'IndexManager.setupSubscriptions');
                 console.log(this.groupedIndex, '[IndexManager] issues');
             }
+            
         });
+
     }
 
     static async getGroupedIndex(issues) {
@@ -168,6 +256,7 @@ class IndexManager {
                             endDate: endOfMonth
                         };
                     }
+                    
                 return {
                     [field]: {
                         startDate: condition.startDate,

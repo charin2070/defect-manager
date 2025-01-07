@@ -60,10 +60,8 @@ class DataManager {
       try {
         const result = await this.loadFromCsvFile(file);
         this.refact.setState({ dataSource: 'file' }, 'DataManager.loadFromFile');
-        log('[DataManager] Issues loaded from CSV file:', result);
-        this.saveToLocalStorage({ issues: result }).then(() => {
-          log('[DataManager] Issues saved to Local Storage');
-        });
+        this.saveToLocalStorage({ issues: result });
+        
         return { issues: result, source: 'file' };
       } catch (error) {
         log('[DataManager] Error loading CSV file:', error);

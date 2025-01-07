@@ -29,6 +29,11 @@ class UiManager {
         this.setupSubscriptions();
     }
 
+    updateDashboard(indexedIssues) {
+        console.log(indexedIssues, '🔥 [UiManager] UPDATING DASHBOARD');
+        this.views['dashboard'].update(indexedIssues);
+    }
+
     initializeSlidePanels(){
         // Initialize slide panels
         this.settingsSlidePanel = new SlidePanel({ isSingle: true });
@@ -41,6 +46,11 @@ class UiManager {
         // Add panels to DOM
         this.issuesSlidePanel = new SlidePanel({ isSingle: true });
         document.body.appendChild(this.issuesSlidePanel.panel);
+    }
+
+    updateFilter(filter) {
+        this.refact.setState({ filters: { ...this.refact.state.filters, ...filter } }, 'UiManager');
+        this.refact.app.filterIssues(this.refact.state.filters, (issues) => this.updateDashboard(issues));
     }
 
     initializeNavbar() {
@@ -56,13 +66,17 @@ class UiManager {
             items: [
                 {
                     text: 'Дефекты', 
-                    callback: () => this.refact.setState({ filter: {type: 'defects'}}, 'UiManager'),  
+                    onClick: () => this.updateFilter({type: 'defect'}, 'UiManager'),  
                     value: 'defects',
                     icon: 'src/image/jira-defect.svg'
                 },
                 {
                     text: 'Доработки', 
-                    callback: () => this.refact.setState({ filters: {type: 'requests'}}, 'UiManager'), 
+                    onClick: () => 
+                        {
+                            console.log('requests selected');
+                            this.updateFilter({type: 'request'}, 'UiManager');  
+                        },
                     value: 'requests',
                     icon: 'src/image/jira-defect.svg'
                 },
@@ -73,7 +87,7 @@ class UiManager {
                 },
                 {
                     text: 'Отчёты', 
-                    callback: () => this.showReports(), 
+                    onClick: () => this.showReports(), 
                     value: 'reports',
                     icon: 'src/image/translation.svg'
                 }
@@ -83,7 +97,7 @@ class UiManager {
         this.dataRangeDropdown = new DateRangeDropdown();
         navbar.appendComponent(this.issueTypeDropdown);
         navbar.appendComponent(this.dataRangeDropdown);
-        
+
         navbar.addSearchBox();
         // Upload data file
         navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => { this.views['upload'].showDataFilePicker() } });
@@ -186,6 +200,8 @@ class UiManager {
         this.refact.subscribe('appStatus', (appStatus) => {
             this.handleAppStatus(appStatus);
         });
+
+        
     }
 
     handleAppStatus(appStatus) {

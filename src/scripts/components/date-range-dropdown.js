@@ -1,30 +1,35 @@
 class DateRangeDropdown extends DropdownComponent {
-    constructor(parent) {
+    constructor(parent, callback) {
         super({
             parent,
             id: 'date-range-dropdown',
-            items: [
-                { text: 'За всё время', value: 'all', onClick: () => this.setDateRange(null, null) },
-                { text: '2024', value: '2024', onClick: () => this.setDateRange('2024-01-01', '2024-12-31') },
-                { text: '2023', value: '2023', onClick: () => this.setDateRange('2023-01-01', '2023-12-31') },
-                { text: '2022', value: '2022', onClick: () => this.setDateRange('2022-01-01', '2022-12-31') },
-                { text: '2021', value: '2021', onClick: () => this.setDateRange('2021-01-01', '2021-12-31') }
-            ]
         });
-        
-        this.setTitle('За всё время');
+        this.callback = callback;
+        this.dateRange = 'all_time';
+        this.setupItems();
     }
 
-    setDateRange(start, end) {
-        const refact = window.app.refact;
-        const dateStart = start ? new Date(start) : null;
-        const dateEnd = end ? new Date(end) : null;
+    items = [
+        { text: 'За всё время', value: 'all', onClick: () => this.setDateRange(getDateRange('all')) },
+        { text: '2025', value: '2025', onClick: () => this.setDateRange(getDateRange('2025')) },
+        { text: '2024', value: '2024', onClick: () => this.setDateRange(getDateRange('2024')) },
+        { text: '2023', value: '2023', onClick: () => this.setDateRange(getDateRange('2023')) },
+        { text: '2022', value: '2022', onClick: () => this.setDateRange(getDateRange('2022')) },
+        { text: '2021', value: '2021', onClick: () => this.setDateRange(getDateRange('2021')) },
+    ];
 
-        refact.setState({ 
-            dateStart, 
-            dateEnd 
-        }, 'DateRangeDropdown.setDateRange');
+    setupItems() {
+        this.clearItems();
 
-        this.setTitle(start ? new Date(start).getFullYear().toString() : 'За всё время');
+        this.items.forEach(item => {
+            this.addItem(item);
+        });
+
+        this.setActiveItem(this.items[0]);
+    }
+
+    setDateRange(dateRange) {
+        this.dateRange = dateRange;
+        this.callback(dateRange);
     }
 }

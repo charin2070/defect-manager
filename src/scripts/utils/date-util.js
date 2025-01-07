@@ -1,4 +1,3 @@
-
 // Returns a Date object from '20024-11-08', '2024.11.08 17:14' etc. formats
 function stringToDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
@@ -26,6 +25,36 @@ function stringToDate(dateString) {
   return null; // Если дата не соответствует ожидаемым форматам
 }
 
+function isInDateRange(date, dateRange) {
+  if (!date || !dateRange || !dateRange.dateStart || !dateRange.dateEnd) {
+    console.warn('[isInDateRange] Invalid input:', { date, dateRange });
+    return false;
+  }
+
+  const parsedDate = date instanceof Date ? date : stringToDate(date);
+  const dateStart = dateRange.dateStart instanceof Date ? dateRange.dateStart : stringToDate(dateRange.dateStart);
+  const dateEnd = dateRange.dateEnd instanceof Date ? dateRange.dateEnd : stringToDate(dateRange.dateEnd);
+
+  if (!parsedDate || !dateStart || !dateEnd) {
+    console.warn('[isInDateRange] Failed to parse dates:', { 
+      parsedDate, 
+      dateStart, 
+      dateEnd, 
+      originalDate: date,
+      originalRange: dateRange 
+    });
+    return false;
+  }
+
+  // console.log('[isInDateRange] Comparing dates:', {
+  //   date: parsedDate.toISOString(),
+  //   start: dateStart.toISOString(),
+  //   end: dateEnd.toISOString()
+  // });
+
+  return parsedDate >= dateStart && parsedDate <= dateEnd;
+}
+
 function isInCurrentMonth(date) {
   const curr = new Date();
 
@@ -37,54 +66,27 @@ function isInCurrentMonth(date) {
 
 function getDateRange(condition) {
   if (typeof condition === 'string') {
-    // Process condiion format 'current_month', 'last_month', current_year', 'last_year'
-    if (condition === 'current_month') {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      return { dateStart: startOfMonth, dateEnd: endOfMonth };
-    }
-
-    if (condition === 'last_month') {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-      return { dateStart: startOfMonth, dateEnd: endOfMonth };
-    }
-
-    if (condition === 'current_year') {
-      const now = new Date();
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const endOfYear = new Date(now.getFullYear(), 11, 31);
+    // '2007' format
+    if (/^\d+$/.test(condition) && condition.length === 4) {
+      const year = parseInt(condition);
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31);
       return { dateStart: startOfYear, dateEnd: endOfYear };
     }
 
-    if (condition === 'last_year') {
-      const now = new Date();
-      const startOfYear = new Date(now.getFullYear() - 1, 0, 1);
-      const endOfYear = new Date(now.getFullYear() - 1, 11, 31);
-      return { dateStart: startOfYear, dateEnd: endOfYear };    
-    }
-
-    if (condition === 'all_time') {
-       // From 2021 to now
-      const startOfYear = new Date(2021, 0, 1);
-      const endOfYear = new Date();
-      return { dateStart: startOfYear, dateEnd: endOfYear };
-    }
-
-    // If condition is a number, assume it's the number of days ago
-    if (!isNaN(parseInt(condition))) {
-      const now = new Date();
-      const start = new Date(now.getTime() - condition * 24 * 60 * 60 * 1000);
-      return { dateStart: start, dateEnd: now };
+    // 'current_month' format
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);  
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    switch (condition) {
+      case 'current_month':
+        return { dateStart: startOfMonth, dateEnd: endOfMonth };
+      case 'last_month':
+        return { dateStart: startOfMonth, dateEnd: endOfMonth };
+      case 'current_year':
+        return { dateStart: startOfYear, dateEnd: endOfYear };
     }
   }
-
-  if (typeof condition === 'object' && condition.startDate && condition.endDate) {
-    if (condition.startDate instanceof Date && condition.endDate instanceof Date) {
-      return { dateStart: condition.startDate, dateEnd: condition.endDate };
-    }
-  }
-
 }

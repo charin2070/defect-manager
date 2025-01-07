@@ -1,4 +1,4 @@
-class FileInputContainer {
+class FileInputComponent {
     constructor(container) {
         this.parentContainer = container;
         this.refact = Refact.getInstance(container);
@@ -87,6 +87,10 @@ class FileInputContainer {
                 this.refact.setState({ uploadedFile: file });
             }
         });
+    }
+
+    showFilePicker(){
+        this.inputElement.click();
     }
 
     setupReactivity() {

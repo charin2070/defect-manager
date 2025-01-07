@@ -105,6 +105,15 @@ class Issue {
             );
             
             // Add calculated properties
+            if (issueProperties.taskId.includes('ADIRINC')) {
+                issueProperties.project = 'AI';
+            } else {
+                if (issueProperties.taskId.includes('GODUTY')) {
+                    issueProperties.project = 'GO';
+                }
+            }
+
+            issueProperties.taskId = issueProperties.taskId.replace('ADIRINC-', '');
             issueProperties.state = Issue.#getStateByStatus(issueProperties.status);
             issueProperties.type = this.getType(issueProperties.type);
         }
