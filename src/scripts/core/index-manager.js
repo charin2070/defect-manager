@@ -1,8 +1,86 @@
-class IndexManager extends Refact {
-    constructor(issues) {
-        super(document.body);
-        this.issues = issues;
-        this.index = null;
+class IndexManager {
+    constructor() {
+        this.groupedIndex = null;
+        this.refact = Refact.getInstance();
+        this.initialize();
+    }
+
+    initialize() {
+        this.setupSubscriptions();
+    }
+
+    static async indexBy(properties, issues) {
+        if (!properties || !Array.isArray(properties)) {
+            console.warn("[IndexManager] indexBy requires an array of properties. Current properties: " + properties);
+            return null;
+        }
+        
+        if (!issues || !Array.isArray(issues)) {
+            console.warn("[IndexManager] indexBy requires an array of issues. Current issues: " + issues);
+            return null;
+        }
+
+        const indexed = {};
+        issues.forEach(issue => {
+            properties.forEach(prop => {
+                const value = issue[prop];
+                if (value) {
+                    if (!indexed[prop]) {
+                        indexed[prop] = {};
+                    }
+                    if (!indexed[prop][value]) {
+                        indexed[prop][value] = [];
+                    }
+                    indexed[prop][value].push(issue);
+                }
+            });
+        });
+
+        return indexed;
+    }
+
+    async buildIndex(issues) {
+
+        if (!issues || !Array.isArray(issues)) {
+            console.warn("[IndexManager] buildIndex requires an array of issues. Current issues: " + issues);
+            return null;
+        }
+        
+        this.index = await IndexManager.indexBy(['taskId', 'state', 'type', 'status', 'priority', 'team', 'assignee'], issues); 
+        this.refact.setState({ index: this.index }, 'IndexManager.buildIndex');
+        log(this.index, '[IndexManager] index');
+        return this.index;
+    }
+
+    setupSubscriptions() {
+        this.refact.subscribe('issues', async (issues) => {
+            if (!issues) return;
+            
+            // Only rebuild if we don't have an index or if it's a different set of issues
+            if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
+                this.groupedIndex = await IndexManager.getGroupedIndex(issues);
+                this.refact.setState({ index: this.groupedIndex }, 'IndexManager.setupSubscriptions');
+                console.log(this.groupedIndex, '[IndexManager] issues');
+            }
+        });
+    }
+
+    static async getGroupedIndex(issues) {
+        if (!issues || !Array.isArray(issues)) {
+            console.warn("[IndexManager] getGroupedIndex requires an array of issues. Current issues: " + issues);
+            return null;
+        }
+
+        // Group issues by type
+        const groupedIssues = {};
+        issues.forEach(issue => {
+            if (!groupedIssues[issue.type]) {
+                groupedIssues[issue.type] = [];
+            }
+            groupedIssues[issue.type].push(issue);
+        });
+
+        return groupedIssues;
     }
 
     static getDateFilter(condition){
@@ -105,7 +183,7 @@ class IndexManager extends Refact {
     }
 
     static async getStructuredIndex(issues) {
-        log ('[IndexManager] Building structured index...');
+        console.log ('[IndexManager] Building structured index...');
 
         if (!issues || !Array.isArray(issues)) {
             console.warn("[IndexManager] getStructuredStatistics requires an array of issues. Current issues: " + issues);
@@ -261,7 +339,7 @@ class IndexManager extends Refact {
                                 }
                                 index.rejected[issue.resolved].push(issue.taskId);
                             } else {
-                                warn(`[IndexManager] Issue with taskId ${issue} has an invalid status: ${issue}`);
+                                console.warn(`[IndexManager] Issue with taskId ${issue} has an invalid status: ${issue}`);
                             }
 
                         }

@@ -236,6 +236,23 @@ class IssueTable extends HtmlComponent {
         return this.render(issues);
     }
 
+    createEmptyTable(options) {
+        // Create empty table
+        const table = document.createElement('table');
+        table.className = 'min-w-full divide-y divide-gray-200';
+        
+        // Create empty table header
+        const thead = this.createTableHeader();
+        table.appendChild(thead);
+        
+        // Create empty table body
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+
+        return table;
+    }
+
+
     sortByColumn(column) {
         if (!this.currentData || !column.sortable) return;
         

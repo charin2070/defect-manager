@@ -53,32 +53,41 @@ class UiManager {
             className: 'navbar-dropdown',
             height: '100%',
             fontSize: '1.4em',
-            items: [[
-                { 
+            items: [
+                {
                     text: 'Дефекты', 
-                    callback: () => this.showDashboard(), 
-                    value: 'all',
+                    callback: () => this.refact.setState({ filter: {type: 'defects'}}, 'UiManager'),  
+                    value: 'defects',
                     icon: 'src/image/jira-defect.svg'
                 },
-                { 
+                {
                     text: 'Доработки', 
-                    callback: () => this.showDashboard(), 
-                    value: 'bug',
-                    icon: 'src/image/bug.svg'
+                    callback: () => this.refact.setState({ filters: {type: 'requests'}}, 'UiManager'), 
+                    value: 'requests',
+                    icon: 'src/image/jira-defect.svg'
                 },
-                { 
-                    text: 'Дефекты и доработки', 
-                    callback: () => this.showDashboard(), 
-                    value: 'task',
-                    icon: 'src/image/task.svg'
+                // Separator
+                {
+                    type: 'separator',
+                    text: '---'
+                },
+                {
+                    text: 'Отчёты', 
+                    callback: () => this.showReports(), 
+                    value: 'reports',
+                    icon: 'src/image/translation.svg'
                 }
-            ]]
+            ]
         });
 
+        this.dataRangeDropdown = new DateRangeDropdown();
         navbar.appendComponent(this.issueTypeDropdown);
+        navbar.appendComponent(this.dataRangeDropdown);
+        
         navbar.addSearchBox();
         // Upload data file
-        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => this.refact.setState({ process: 'show_open_data_file_dialog' }, 'UiManager') });
+        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => { this.views['upload'].showDataFilePicker() } });
+        // Settings
         navbar.addMenuItem({ side: 'right', icon: 'src/image/grid-svgrepo-com.svg', callback: () => this.showSettings() });
 
         this.appContainer.appendChild(navbar.getContainer());
@@ -95,6 +104,11 @@ class UiManager {
     showUploadView() {
         this.hideAllViews();
         this.views['upload'].show();
+    }
+
+    showReports() {
+        this.hideAllViews();
+        this.views['reports'].show();
     }
 
     hideSettings() {
@@ -129,11 +143,16 @@ class UiManager {
         document.title = title;
     }
 
-    showDashboard() {
+    showDashboard(indexedIssues) {
+        console.log('[UIManager] Showing dashboard with data:', indexedIssues);
+        
         this.hideAllViews();
-        log(this.views['dashboard'], 'Dashboard View');
         this.views['dashboard'].show();
+        if (indexedIssues) {
+            this.views['dashboard'].update(indexedIssues);
+        }
         this.setTitle('Дэшборд');
+        this.currentView = 'dashboard';
     }
 
     initializeViews() {
@@ -176,7 +195,13 @@ class UiManager {
                 break;
             case 'initialized':
             case 'ready':
-                this.showView('dashboard');
+                // Check if there are any issues before showing dashboard
+                const issues = this.refact.issues;
+                if (!issues || !Array.isArray(issues) || issues.length === 0) {
+                    this.showView('upload');
+                } else {
+                    this.showView('dashboard');
+                }
                 break;
             default:
                 console.log(`Unhandled app status: ${appStatus}`);

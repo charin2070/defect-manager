@@ -11,8 +11,11 @@ class Refact {
         this.subscribers = new Map();
         this.updateQueue = [];
         this.isProcessing = false;
-        
         Refact.instance = this;
+    }
+
+    static new(rootElement) {
+        return new Refact(rootElement);
     }
 
     static getInstance(rootElement) {

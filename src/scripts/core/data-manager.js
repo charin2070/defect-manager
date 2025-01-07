@@ -16,14 +16,15 @@ class DataManager {
       }
     });
 
+    // When a file is uploaded
     this.refact.subscribe('uploadedFile', (file) => {
-      this.loadFromFile(file);
+      if (file) {
+        this.loadFromFile(file);
+      }
     });
-
   }
 
   onFileUpload(file) {
-
     this.loadFromFile(file).then(({ issues }) => {
       const index = IndexManager.getStructuredIndex(issues);
       const statistics = StatisticManager.updateStatistics({ index, issues });
@@ -59,6 +60,10 @@ class DataManager {
       try {
         const result = await this.loadFromCsvFile(file);
         this.refact.setState({ dataSource: 'file' }, 'DataManager.loadFromFile');
+        log('[DataManager] Issues loaded from CSV file:', result);
+        this.saveToLocalStorage({ issues: result }).then(() => {
+          log('[DataManager] Issues saved to Local Storage');
+        });
         return { issues: result, source: 'file' };
       } catch (error) {
         log('[DataManager] Error loading CSV file:', error);

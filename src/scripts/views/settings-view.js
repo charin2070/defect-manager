@@ -377,6 +377,23 @@ class SettingsView extends ViewComponent {
         if (saveButton) {
             saveButton.addEventListener('click', () => this.#saveSettings());
         }
+
+        // Get all buttons in settings
+        const buttons = this.container.querySelectorAll('button[data-action]');
+        
+        buttons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const action = button.dataset.action;
+                
+                switch (action) {
+                    case 'clear':
+                        // Set process to cleanup_local_storage
+                        Refact.getInstance().setState({ process: 'cleanup_local_storage' }, 'SettingsView.clear');
+                        break;
+                    // Add other cases for different buttons
+                }
+            });
+        });
     }
 
     #saveSettings() {

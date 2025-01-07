@@ -1,4 +1,3 @@
-// Date utils for Date objects
 
 // Returns a Date object from '20024-11-08', '2024.11.08 17:14' etc. formats
 function stringToDate(dateString) {
