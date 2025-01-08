@@ -1,9 +1,9 @@
 class ReportManager {
   constructor() {
     this.refact = Refact.getInstance();
-    this.refact.subscribe('reportType', (type) => {
-      this.generateReport(type);
-    });
+    // this.refact.subscribe('reportType', (type) => {
+    //   this.generateReport(type);
+    // });
   }
 
 

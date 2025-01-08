@@ -43,8 +43,9 @@ class ChartCard extends HtmlComponent {
         this.menuButton = this.container.querySelector('header .menu-icon');
         this.menu = this.container.querySelector('header .menu-dropdown');
         this.maximizeButton = this.container.querySelector('header .maximize-icon');
-        this.dateRange = this.container.querySelector('.date-range-dropdown');
-        this.dateRange.appendChild(new DateRangeDropdown().getContainer());
+        this.dateRange = new DateRangeDropdown();
+        this.container.querySelector('.date-range-dropdown').appendChild(this.dateRange.getContainer());
+        this.dateRange.setActiveItemIndex(1);
 
         this.chart = null;
 

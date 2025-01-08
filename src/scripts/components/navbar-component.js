@@ -43,7 +43,6 @@ class NavbarComponent extends HtmlComponent {
         this.#element.style.zIndex = '1000';
         this.#element.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
         this.#element.style.backdropFilter = 'blur(10px)';
-        this.#element.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
         this.#element.style.transition = 'transform 0.3s ease, background-color 0.3s ease';
     }
 

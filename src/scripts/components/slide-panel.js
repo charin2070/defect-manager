@@ -16,14 +16,14 @@ class SlidePanel extends HtmlComponent {
         }
 
         this.backdrop = this.createElement('div',
-            { className: 'fixed inset-0 bg-black/50 opacity-0 invisible transition-opacity duration-300 ease-in-out z-40 backdrop-filter backdrop-blur-sm' },
+            { className: 'fixed inset-0 bg-black/25 opacity-0 invisible transition-opacity duration-500 ease-in-out z-40 backdrop-filter backdrop-blur-sm' },
         );
         this.backdrop.id = `slide-panel-backdrop-${Math.floor(Math.random() * 10000)}`;
         document.body.appendChild(this.backdrop);
 
         // Create panel
         this.panel = this.createElement('div',
-            { className: 'fixed top-0 -right-full w-[800px] max-w-[90%] h-full bg-white shadow-2xl transition-all duration-300 ease-in-out z-50 flex flex-col' },
+            { className: 'fixed top-0 -right-full w-[30%] max-w-[90%] h-full bg-white shadow-2xl transition-all duration-300 ease-in-out z-50 flex flex-col' },
         );
         this.panel.id = `slide-panel-container-${Math.floor(Math.random() * 10000)}`;
         document.body.appendChild(this.panel);
@@ -58,7 +58,7 @@ class SlidePanel extends HtmlComponent {
         
         // Create close button
         const closeButton = document.createElement('button');
-        closeButton.className = 'inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-all duration-200';
+        closeButton.className = 'inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-all duration-200';
         closeButton.innerHTML = `...`; // SVG for close button
         closeButton.addEventListener('click', () => this.close());
         header.appendChild(closeButton);

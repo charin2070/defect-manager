@@ -25,34 +25,16 @@ function stringToDate(dateString) {
   return null; // Если дата не соответствует ожидаемым форматам
 }
 
-function isInDateRange(date, dateRange) {
-  if (!date || !dateRange || !dateRange.dateStart || !dateRange.dateEnd) {
-    console.warn('[isInDateRange] Invalid input:', { date, dateRange });
-    return false;
-  }
+function isInDateRange(dateString, range) {
+    if (!dateString || !range || !range.dateStart || !range.dateEnd) {
+        return false;
+    }
 
-  const parsedDate = date instanceof Date ? date : stringToDate(date);
-  const dateStart = dateRange.dateStart instanceof Date ? dateRange.dateStart : stringToDate(dateRange.dateStart);
-  const dateEnd = dateRange.dateEnd instanceof Date ? dateRange.dateEnd : stringToDate(dateRange.dateEnd);
+    const date = new Date(dateString);
+    const start = new Date(range.dateStart);
+    const end = new Date(range.dateEnd);
 
-  if (!parsedDate || !dateStart || !dateEnd) {
-    console.warn('[isInDateRange] Failed to parse dates:', { 
-      parsedDate, 
-      dateStart, 
-      dateEnd, 
-      originalDate: date,
-      originalRange: dateRange 
-    });
-    return false;
-  }
-
-  // console.log('[isInDateRange] Comparing dates:', {
-  //   date: parsedDate.toISOString(),
-  //   start: dateStart.toISOString(),
-  //   end: dateEnd.toISOString()
-  // });
-
-  return parsedDate >= dateStart && parsedDate <= dateEnd;
+    return date >= start && date <= end;
 }
 
 function isInCurrentMonth(date) {
@@ -89,4 +71,9 @@ function getDateRange(condition) {
         return { dateStart: startOfYear, dateEnd: endOfYear };
     }
   }
+}
+
+// Экспортируем функцию, если используется модульная система
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { isInDateRange };
 }

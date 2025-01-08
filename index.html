@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Defect Management as a Service">
     <meta name="keywords" content="defect, bug, management, jira">
-    <title>Ожидание</title>
+    <title>Обзор</title>
     <link rel="icon" href="src/image/jira-defect.svg" type="image/svg+xml">
 
     <!-- CSS -->
@@ -57,13 +57,12 @@
     <!-- Components -->
     <script src="src/scripts/views/view-component.js" defer></script>
     <script src="src/scripts/components/file-input-component.js" defer></script>
-    <script src="src/scripts/components/dropdown-component.js" defer></script>
     <script src="src/scripts/components/navbar-component.js" defer></script>
+    <script src="src/scripts/components/dropdown-component.js" defer></script>
     <script src="src/scripts/components/date-range-dropdown.js" defer></script>
-    <script src="src/scripts/components/issue-table.js" defer></script>
     <script src="src/scripts/components/slide-panel.js" defer></script>
-    <script src="src/scripts/components/issue-card.js" defer></script>
     <script src="src/scripts/components/issues-component.js" defer></script>
+    <script src="src/scripts/components/issue-table.js" defer></script>
     <script src="src/scripts/components/table-component.js" defer></script>
     <script src="src/scripts/components/data-card.js" defer></script>
     <script src="src/scripts/components/chart-card.js" defer></script>
@@ -83,8 +82,18 @@
     <script src="src/scripts/core/statistic-manager.js" defer></script>
     <script src="src/scripts/core/chart-manager.js" defer></script>
     <script src="src/scripts/core/data-manager.js" defer></script>
-    <script src="src/scripts/core/config-manager.js" defer></script>
-    <script src="src/scripts/core/app.js" defer></script> 
+    <script src="src/scripts/core/flow-manager.js" defer></script>
+    <script src="src/scripts/core/test-manager.js" defer></script>
+    <script src="src/scripts/core/app.js" defer></script>
+
+    <!-- Entry point -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const appContainer = document.getElementById('app');
+            const refact = new Refact(appContainer);
+            const app = new App(appContainer);
+        });
+    </script>
 
 </body>     
 

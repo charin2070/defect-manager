@@ -2,59 +2,29 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000;
+    z-index: 5000;
     width: 100%;
-    padding: var(--navbar-padding);
-    background: var(--navbar-bg);
+    padding: 0.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     backdrop-filter: blur(10px);
-    border-bottom: 2px solid rgba(255, 255, 255, .2);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.623);
 }
 
 .navbar-search {
-    border: none; /* Remove the border */
-    outline: none; /* Remove the outline */
-    padding: 10px; /* Add padding for better appearance */
-    border-radius: 20px; /* Optional: make it rounded */
-    background-color: rgba(255, 255, 255, 0.8); /* Light background */
-    transition: border-color 0.3s; /* Smooth transition for focus */
+    border: none;
+    outline: none;
+    padding: 10px;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    transition: border-color 0.3s;
 }
 
 .navbar-search:focus {
-    border-color: transparent; /* Ensure no border on focus */
+    border-color: transparent;
 }
 
-
-.navbar.compact {
-    --navbar-padding: 4px 12px;
-    font-size: 0.9em;
-    padding: 0.125rem 1rem;
-}
-
-.navbar.normal {
-    --navbar-padding: 8px 0.3em;
-}
-
-/* Themes */
-.navbar.light {
-    --navbar-bg: #ffffffb9;
-    --navbar-color: #070707;
-    --navbar-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --navbar-hover: #e5e5e5db;
-    --navbar-border: #ffffffef;
-}
-
-.navbar.dark {
-    --navbar-bg: #2c3e50;
-    --navbar-color: #ffffff;
-    --navbar-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    --navbar-hover: #34495e;
-    --navbar-border: #333;
-}
-
-/* Animations */
 @keyframes navbar-fade-in {
     0% {
         opacity: 0;
@@ -75,17 +45,6 @@
     display: flex;
     align-items: center;
     margin-left: auto;
-    /* gap: 1rem; */
-}
-
-.navbar-brand {
-    font-size: 1.2em;
-    font-weight: 600;
-    margin-right: 1rem;
-  
-    opacity: 0;
-    transform: translateX(-20px);
-    animation: slideIn 0.3s ease forwards 0.1s;
 }
 
 .navbar-left {
@@ -96,7 +55,6 @@
     transform: translateX(-20px);
     animation: slideIn 0.3s ease forwards 0.1s;
     width: fit-content;
-    display: flex;
     flex-direction: row;
 }
 
@@ -107,45 +65,34 @@
     }
 }
 
-.navbar .title {
-    font-weight: 600;
-    color: var(--navbar-color);
-    text-decoration: none;
-    font-size: 1.1em;
-    transition: opacity 0.4s ease;
-}
-
-.navbar .title:hover,
-.navbar button:hover {
-    opacity: 0.8;
-}
-
 .navbar button {
     display: flex;
     align-items: center;
     background: hsla(0, 0%, 100%, 0.268);
     border: 1px solid rgba(255, 255, 255, 0.261);
-    color: #000000;
+    color: #000;
     padding: 6px 12px;
     border-radius: 4px;
+    user-select: none;
     cursor: pointer;
 }
 
 .navbar-item {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
+    padding: 0.5em;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    font-size: 1em; /* Adjusted font size for balance */
-    border-radius: 4px; /* Rounded corners */
-    animation: fade-in 0.3s ease; /* Apply fade-in animation */
+    font-size: 1em;
+    border-radius: 4px;
+    animation: fade-in 0.2s ease-out;
+    user-select: none;
 }
 
 @keyframes fade-in {
     from {
         opacity: 0;
-        transform: translateY(10px); /* Slide in from below */
+        transform: translateY(10px);
     }
     to {
         opacity: 1;
@@ -154,19 +101,18 @@
 }
 
 .navbar-item:hover {
-    background-color: rgba(0, 0, 0, 0.05); /* Subtle background change */
-    transform: scale(1.02); /* Slightly scale up for emphasis */
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
 }
 
 .navbar-icon {
-    width: 20px; /* Adjusted width for a more professional look */
-    height: 20px; /* Adjusted height */
-    margin-right: 8px; /* Space between icon and title */
-    transition: transform 0.2s ease; /* Smooth transition for icon */
+    width: 1.2em;
+    height: 1.2em;
+    transition: transform 0.2s ease-out;
 }
 
 .navbar-item:hover .navbar-icon {
-    transform: rotate(0deg); /* No rotation on hover for a cleaner look */
+    transform: rotate(0deg);
 }
 
 .navbar-icon-button {
@@ -175,23 +121,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #007bff00;
-    /* border: 1px solid rgba(0, 0, 0, 0.1); */
+    background: transparent;
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.4s ease;
     margin: 0 8px;
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
 }
 
 .navbar-icon-button img {
-    width: 1em;
-    height: 1em;
+    width: 100%;
+    height: 100%;
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
 }

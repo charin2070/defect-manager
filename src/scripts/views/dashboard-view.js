@@ -2,9 +2,6 @@ class DashboardView extends ViewComponent {
     constructor() {
         super();
         this.state = Refact.getInstance();
-
-
-        this.setupSubscriptions();
     }
 
     render() {
@@ -42,57 +39,13 @@ class DashboardView extends ViewComponent {
 
 
     update(indexedIssues) {
-        if (!indexedIssues['defect']) {
-            log(indexedIssues, 'Indexed defects not ready');
-            return;
-        }
+        log(StatisticManager.getUnresolvedDefects(indexedIssues), 'StatisticManager.getUnresolvedDefects');
 
-        // Get unresolved defects from the state index
-        const unresolvedDefects = indexedIssues['defect']['state']?.unresolved || [];
-        
-        // Update defects card
-        this.defectsCard.setValue(unresolvedDefects.length);
-        
-        // Update table
-        const tableData = unresolvedDefects.map(issue => ({
-            task: issue.taskId,
-            description: issue.description || issue.summary,
-            status: issue.status,
-            priority: issue.priority,
-            assignee: issue.assignee,
-            created: new Date(issue.created).toLocaleDateString()
-        }));
-        
-        this.table.updateItems(tableData);
-        
-        // Sort by date for the timeline
-        this.unresolvedByDate = unresolvedDefects.sort((a, b) => new Date(a.created) - new Date(b.created));
-        this.unresolvedByMonth = IndexManager.groupByMonth(this.unresolvedByDate);
-        this.defectsCard.drawMonthLine(
-            this.unresolvedByMonth
-        );
-        // Get all issues for the current month
-      
-    }
-    //     this.defectsCard.drawDateLine(
-    //         this.unresolvedByMonth.map(
-    //             month => this.unresolvedByMonth[month].length
-    //         )
-    //     );
-    //     log(this.unresolvedByMonth, 'unresolvedByMonth');
-    // }
+        const backlog = StatisticManager.getBacklog(indexedIssues);
+        console.warn('backlog', backlog);
 
-    setupSubscriptions() {
-        // // Listen for direct issues updates
-        // this.state.subscribe('issues', (issues) => {
-        //     if (!issues) return;
-        //     this.update(issues);
-        // });
-
-        // // Listen for grouped index updates
-        // this.state.subscribe('index', (index) => {
-        //     if (!index) return;
-        //     this.update(index);
-        // });
+        this.defectsCard.setValue(StatisticManager.getUnresolvedDefects(indexedIssues)['count']);
+        // this.defectsCard.setTrend(0); // Можно добавить логику расчета тренда
+        this.table.updateItems(StatisticManager.getUnresolvedDefects(indexedIssues)['issues']);
     }
 }

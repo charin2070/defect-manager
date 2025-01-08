@@ -1,7 +1,6 @@
 class DateRangeDropdown extends DropdownComponent {
-    constructor(parent, callback) {
+    constructor(callback) {
         super({
-            parent,
             id: 'date-range-dropdown',
         });
         this.callback = callback;
@@ -11,6 +10,7 @@ class DateRangeDropdown extends DropdownComponent {
 
     items = [
         { text: 'За всё время', value: 'all', onClick: () => this.setDateRange(getDateRange('all')) },
+        { text: 'За месяц', value: 'this_month', onClick: () => this.setDateRange(getDateRange('current_month')) },
         { text: '2025', value: '2025', onClick: () => this.setDateRange(getDateRange('2025')) },
         { text: '2024', value: '2024', onClick: () => this.setDateRange(getDateRange('2024')) },
         { text: '2023', value: '2023', onClick: () => this.setDateRange(getDateRange('2023')) },
@@ -18,13 +18,12 @@ class DateRangeDropdown extends DropdownComponent {
         { text: '2021', value: '2021', onClick: () => this.setDateRange(getDateRange('2021')) },
     ];
 
+    setActiveItemIndex(index) {
+        this.setActiveItem(this.items[index]);
+    }
+
     setupItems() {
-        this.clearItems();
-
-        this.items.forEach(item => {
-            this.addItem(item);
-        });
-
+        this.setItems(this.items);  
         this.setActiveItem(this.items[0]);
     }
 

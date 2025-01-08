@@ -1,159 +1,81 @@
-class StatisticManager extends Refact {
+class StatisticManager {
     constructor() {
-        super(document.body);   
+       
     }
 
-    static async updateStatistics(indexedIssues) {
-        log(indexedIssues, '[StatisticManager.updateStatistics] Updating statistics with indexed issues...');
+    static getUnresolvedDefects(indexedIssues) {
+        let result = { count: 0, issues: [] };
+        result.count = indexedIssues.defect.state.unresolved.length;
+        result.issues = indexedIssues.defect.state.unresolved;
+        return result;
+    }
 
-        return new Promise((resolve, reject) => {
-            if (!indexedIssues || typeof indexedIssues !== 'object') {
-                log(indexedIssues, '[StatisticManager] updateStatistics requires a indexed issues object.');
-                reject(new Error('Invalid input data'));
-                return;
-            }
+    static getByDateRange(dateRange, indexedIssues) {
+        let result = { count: 0, issues: [] };
+        const flatIssues = Object.values(indexedIssues).flat();
 
-            const issueStatistics = {
-                currentMonth: null,
-                last30days: null,
-                last90days: null,
-                total: null
-            };
-
-            try {
-                // Получаем текущую дату и начало месяца
-                const now = new Date();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const last30Days = new Date(now.setDate(now.getDate() - 30));
-                const last90Days = new Date(now.setDate(now.getDate() - 90));
-
-                // Обрабатываем каждый период
-                issueStatistics.currentMonth = this.getIssueStatistics(indexedIssues, { 
-                    dateStart: startOfMonth,
-                    dateEnd: new Date()
-                });
-                issueStatistics.last30days = this.getIssueStatistics(indexedIssues, {
-                    dateStart: last30Days,
-                    dateEnd: new Date()
-                });
-                issueStatistics.last90days = this.getIssueStatistics(indexedIssues, {
-                    dateStart: last90Days,
-                    dateEnd: new Date()
-                });
-                issueStatistics.total = indexedIssues;
-
-                log(issueStatistics, '[StatisticManager] Statistics updated');
-                resolve(issueStatistics);
-            } catch (error) {
-                reject(error);
-            }
+        result.issues = flatIssues.filter(issue => isInDateRange(issue.creation, dateRange) || isInDateRange(issue.resolution, dateRange));
+        result.count = result.issues.length;
+        return result;
+    }
+    
+    static groupByMonth(data) {
+        const grouped = {};
+        Object.keys(data).forEach(date => {
+            const month = date.slice(0, 7); // Берём только "YYYY-MM"
+            if (!grouped[month]) grouped[month] = 0;
+            grouped[month] += data[date].length; // Суммируем количество задач
         });
+        return grouped;
     }
-
-    // Example of Issue object
-    exampleIssue = {
-        "taskId": "ADIRINC-1203",
-        "created": "2023-08-10T10:17:00.000Z",
-        "resolved": "2024-02-07T08:49:00.000Z",
-        "reports": 67,
-        "slaDate": "2023-11-01T21:00:00.000Z",
-        "status": "Закрыт",
-        "state": null,
-        "description": "10.08 по инструментам проставился запрет на торговлю инструментом, \р  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]",
-        "summary": "Изменение IdTradePeriodStatus в [AdFront].[fi].[FinInfoExt] и [AdFront].[ts].[FinInfoExt]",
-        "type": "Дефект промсреды",
-        "priority": null,
-        "assignee": "U_M00ZM",
-        "reporter": null,
-        "team": "Core",
-        "isOverdue": null,
-        "source": "ADIRINC-1203,3529833,U_M00ZM,Закрыт,10.08.2023 13:17,,,,,Дефект промсреды,07.02.2024 11:49,2023-11-02 00:00:00.0,\"10.08 по инструментам проставился запрет на торговлю инструментом, \р  подробнее в [https://rc.alfa-bank.net/channel/adir-avarii?msg=AvtnNSMQZRMhGMtdX]\",,67.0,Core,,Изменение IdTradePeriodStatus в [AdFront].[fi].[FinInfoExt] и [AdFront].[ts].[FinInfoExt],Портфель - Некорректный состав портфеля (вкл. некорректный минус по счету) (1) - critical,,,08.08.2024 23:49",
-        "notes": null,
-        "alarms": null,
-        "component": "",
-        "updated": "2024-08-08T20:49:00.000Z",
-        "Issue id": "3529833",
-        "labels": "",
-        "Custom field (description )": "",
-        "Custom field (Business Summary)": "",
-        "Custom field (Mobile application component)": ""
-    }
-
-    // Statiistics structure
-    issueStatistics = {
-            unresolved: [], // Не исправленные
-            resolved: [], // Исправленные
-            rejected: [], // Отклоненные
-            rejectedByTeam: [], // Отклонены командой сопровождени
-            created: [],  // Созданные
-            verified: [], // Приняты к исправлению
-            overdue: [], // Просроченные
-            averageResolutionTime: 0, // Среднее время исправления
-            reports: 0 // Количество обращений от пользователей на не исправленных задачах
-    }
-
-    static async getIssueStatistics(issues, dateRange) {
-        if (!issues || !issues.index || !issues.issues) {
-            log(issues, '[StatisticManager] getIssueStatistics requires an object with index and issues.'); 
-            console.error("[StatisticManager] getIssueStatistics requires an object with index and issues.");
-            return null;
-        }
-
-        return {
-            index: issues.index,
-            issues: issues.issues
-        };
-    }
-
-    static getStatisticsFromIndex(index, issues, dateRange) {
-        if (!index || !issues) {
-            log({ index, issues }, '[StatisticManager.getStatisticsFromIndex] Invalid input');
-            return null;
-        }
-
-        const statistics = {
-            unresolved: [],
-            resolved: [],
-            rejected: [],
-            created: [],
-            index: index,
-            issues: issues
-        };
-
-        // Подсчитываем статистику только если есть диапазон дат
-        if (dateRange) {
-            const { dateStart, dateEnd } = dateRange;
-            
-            // Фильтруем задачи по дате создания
-            if (index.created) {
-                Object.entries(index.created)
-                    .filter(([date]) => {
-                        const taskDate = new Date(date);
-                        return taskDate >= dateStart && taskDate <= dateEnd;
-                    })
-                    .forEach(([_, taskIds]) => {
-                        taskIds.forEach(taskId => {
-                            if (issues[taskId]) {
-                                statistics.created.push(issues[taskId]);
-                            }
-                        });
-                    });
-            }
-        }
-
-        // Добавляем общую статистику независимо от дат
-        if (index.state) {
-            ['unresolved', 'resolved', 'rejected'].forEach(state => {
-                if (index.state[state]) {
-                    index.state[state].forEach(taskId => {
-                        if (issues[taskId]) {
-                            statistics[state].push(issues[taskId]);
-                        }
-                    });
-                }
+   
+    static getBacklog(indexedIssues) {
+        const created = indexedIssues.defect.created;
+        const resolved = indexedIssues.defect.resolved;
+            // Собираем все уникальные даты из созданных и решённых задач
+        const allDates = new Set([
+        ...Object.keys(created),
+        ...Object.keys(resolved)
+        ]);
+        
+            // Сортируем даты
+        const sortedDates = Array.from(allDates).sort();
+        
+        let runningBacklog = 0; // Текущий бэклог
+        const result = {};
+        
+        sortedDates.forEach(date => {
+            const createdCount = created[date]?.length || 0;
+            const resolvedCount = resolved[date]?.length || 0;
+        
+                runningBacklog += createdCount - resolvedCount;
+        
+                result[date] = {
+                    created: createdCount,
+                    resolved: resolvedCount,
+                    backlog: runningBacklog
+                };
             });
+        
+            return result;
+        }
+        
+
+    
+
+    static compareDateRange(dateRangeA, dateRangeB, indexedIssues) {
+        const defectsA = StatisticManager.getByDateRange(dateRangeA, indexedIssues.defect);
+        const defectsB = StatisticManager.getByDateRange(dateRangeB, indexedIssues.defect);
+        
+        const result = {
+            created: {
+                a: defectsA.length,
+                b: defectsB.length,
+                trend: defectsA.length - defectsB.length
+            },
         }
 
-        return statistics;
+        return result;
     }
+
 }

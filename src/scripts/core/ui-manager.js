@@ -1,56 +1,76 @@
-class UiManager {
-    constructor(appContainer) {
-        this.refact = Refact.getInstance();
-        this.appContainer = appContainer;
-        
-        // Create content container
-        this.contentContainer = document.createElement('div');
-        this.contentContainer.className = 'content-container';
-        this.contentContainer.id = 'content-container';
-        this.appContainer.appendChild(this.contentContainer);
-        
-        this.views = {};
-        this.currentView = null;
-        this.initializeComponents();
+class UiManager extends Refact {
+    static instance;
+
+    constructor() {
+        super();
+        if (!UiManager.instance) {
+            UiManager.instance = this;
+            this.views = {};
+            this.currentView = null;
+            this.initialized = false;
+            this.#setupSubscriptions();
+        }
+        return UiManager.instance;
     }
 
-    initializeComponents() {
+    #setupSubscriptions() {
+        // Подписываемся на изменения состояния
+        this.subscribe('appContainer', (container) => {
+            if (container && !this.contentContainer) {
+                this.contentContainer = document.createElement('div');
+                this.contentContainer.className = 'content-container';
+                this.contentContainer.id = 'content-container';
+                container.appendChild(this.contentContainer);
+                
+                if (!this.initialized) {
+                    this.#initializeComponents();
+                    this.initialized = true;
+                }
+            }
+        });
+
+        // Подписываемся на изменение статуса
+        this.subscribe('appStatus', (status) => {
+            if (status === 'loading' && !this.initialized && this.contentContainer) {
+                this.#initializeComponents();
+                this.initialized = true;
+            }
+        });
+    }
+
+    #initializeComponents() {
         this.initializeNavbar();
         this.initializeViews();
         
-        // Mount main views to content container
         this.contentContainer.appendChild(this.views['dashboard'].getContainer());
         this.contentContainer.appendChild(this.views['upload'].getContainer());
         this.contentContainer.appendChild(this.views['reports'].getContainer());
         
-        // Initialize slide panels after views are mounted
-        this.initializeSlidePanels();
-        
-        this.setupSubscriptions();
-    }
-
-    updateDashboard(indexedIssues) {
-        console.log(indexedIssues, '🔥 [UiManager] UPDATING DASHBOARD');
-        this.views['dashboard'].update(indexedIssues);
-    }
-
-    initializeSlidePanels(){
-        // Initialize slide panels
-        this.settingsSlidePanel = new SlidePanel({ isSingle: true });
-        this.settingsView = new SettingsView();
-        this.settingsSlidePanel.setWidth(30);
-        this.settingsSlidePanel.setContent(this.settingsView.getContainer());
-        document.body.appendChild(this.settingsSlidePanel.panel);
-        this.settingsView.show();
-        
-        // Add panels to DOM
-        this.issuesSlidePanel = new SlidePanel({ isSingle: true });
-        document.body.appendChild(this.issuesSlidePanel.panel);
+        this.initSlidePanels();
     }
 
     updateFilter(filter) {
-        this.refact.setState({ filters: { ...this.refact.state.filters, ...filter } }, 'UiManager');
-        this.refact.app.filterIssues(this.refact.state.filters, (issues) => this.updateDashboard(issues));
+        if (!this.refact || !this.refact.state.filterIssues) {
+            console.error('Refact or FilterIssues is not initialized');
+            return;
+        }
+
+        const currentFilters = this.refact.state.filters || {};
+        
+        // Обновляем фильтры
+        const updatedFilters = { ...currentFilters, ...filter };
+
+        // Применяем фильтры через IndexManager
+        const filteredIndex = this.refact.state.filterIssues(updatedFilters, this.refact.state.issues);
+
+        // Обновляем состояние
+        this.refact.setState({ 
+            filters: updatedFilters,
+            filteredIssues: filteredIndex.issues 
+        }, 'UiManager');
+
+        // Обновляем dashboard с отфильтрованными данными
+        this.updateDashboard(filteredIndex.issues);
     }
 
     initializeNavbar() {
@@ -94,7 +114,22 @@ class UiManager {
             ]
         });
 
-        this.dataRangeDropdown = new DateRangeDropdown();
+        const projectDropdown = new DropdownComponent({ 
+            activeItem: 1,
+            itemSize: '250px',
+         });
+         
+        const projectItems = [
+            {icon: 'src/image/alfa_logo.png', size: '250px', text: ''},
+            {icon: 'src/image/go-logo.png', size: '250px', text: ''},
+        ];
+        projectDropdown.setItems(projectItems);
+        projectDropdown.setActiveItem(1);
+
+        this.dataRangeDropdown = new DateRangeDropdown(
+            (dateRange) => this.updateFilter({ dateRange: dateRange }, 'UiManager'), 'UiManager');
+            
+        navbar.appendComponent(projectDropdown);
         navbar.appendComponent(this.issueTypeDropdown);
         navbar.appendComponent(this.dataRangeDropdown);
 
@@ -189,19 +224,8 @@ class UiManager {
         this.contentContainer.appendChild(this.views['reports'].getContainer());
     }
 
-    setupSubscriptions() {
-        this.refact.subscribe('view', (viewId) => {
-            if (viewId && viewId !== this.refact.state.viewId) {
-                this.showView(viewId, 'UiManager');
-                this.refact.setState({ view: viewId }, 'UiManager');
-            }
-        });
-
-        this.refact.subscribe('appStatus', (appStatus) => {
-            this.handleAppStatus(appStatus);
-        });
-
-        
+    update(indexedIssues) {
+        this.views['dashboard'].update(indexedIssues);
     }
 
     handleAppStatus(appStatus) {
@@ -228,4 +252,19 @@ class UiManager {
         this.views[name] = view;
     }
 
+    componentWillUnmount() {
+        this.subscriptions.unsubscribe();
+    }
+
+    initSlidePanels(){
+        this.settingsSlidePanel = new SlidePanel({ isSingle: true });
+        this.settingsView = new SettingsView();
+        this.settingsSlidePanel.setWidth(30);
+        this.settingsSlidePanel.setContent(this.settingsView.getContainer());
+        document.body.appendChild(this.settingsSlidePanel.panel);
+        this.settingsView.show();
+        
+        this.issuesSlidePanel = new SlidePanel({ isSingle: true });
+        document.body.appendChild(this.issuesSlidePanel.panel);
+    }
 }

@@ -14,8 +14,12 @@ class Refact {
         Refact.instance = this;
     }
 
-    static new(rootElement) {
-        return new Refact(rootElement);
+    static update(stateUpdate, context = 'unknown') {
+        Refact.instance.setState({ [stateUpdate.stateName]: stateUpdate.stateValue }, context);
+    }
+
+    static setGlobal(stateName, stateValue) {
+        Refact.instance.setState({ [stateName]: stateValue }, 'setGlobal');
     }
 
     static getInstance(rootElement) {
@@ -91,7 +95,16 @@ class Refact {
         if (value === null) return 'null';
         if (value === undefined) return 'undefined';
         if (typeof value === 'object') {
-            return JSON.stringify(value).substring(0, 50) + '...';
+            try {
+                return JSON.stringify(value, (key, val) => {
+                    if (val !== null && typeof val === 'object') {
+                        return;
+                    }
+                    return val;
+                }).substring(0, 50) + '...';
+            } catch (error) {
+                return 'Circular structure detected';
+            }
         }
         return String(value);
     }
