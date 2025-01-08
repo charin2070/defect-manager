@@ -10,31 +10,30 @@ class FlowManager extends Refact {
         this.uiManager = uiManager;
 
         this.listen();
-        this.checkUpdates();
+        this.checkupData();
     }
 
     listen() {
-        this.subscribe('issues', (issues) => {
-            if (issues) {
-                this.indexManager.updateIndex(issues);
-            }
-        });
-
         this.subscribe('index', (index) => {
             if (index) {
+                this.logger.log('[Flow] Обновление индекса');
                 this.updateConsumers();
             }
         });
 
         this.subscribe('dataFilter', ({ issues, filters }) => {
             if (filters) {
+                this.logger.log('[Flow] Обновление фильтров');
                 this.statisticManager.filterIssues(filters);
             }
         });
     }
 
-    checkUpdates() {
-        const messages = this.state.messages || [];
+    checkupData() {
+        if (this.state.issues) return;
+        if (this.state.index && Object.keys(this.state.index).length === 0) return;
+        this.logger.log('[Flow] Загрузка данных');
+        this.dataManager.loadFromLocalStorage();
     }
 
 }
