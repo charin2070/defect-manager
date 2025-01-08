@@ -4,36 +4,34 @@ class DataManager extends Refact {
         CLEANUP_STORAGE: 'cleanup_local_storage'
     };
   
-    static instance;
-
     constructor() {
         super();
         
-        // Инициализируем обработчики команд
-        this.processHandlers = {
-            [DataManager.ProcessCommands.CLEANUP_STORAGE]: () => this.cleanupLocalStorage(true)
-        };
+        // Проверяем, что это новый инстанс
+        if (!this.constructor.instances?.[this.constructor.name]) {
+            // Инициализируем обработчики команд
+            this.processHandlers = {
+                [DataManager.ProcessCommands.CLEANUP_STORAGE]: () => this.cleanupLocalStorage(true)
+            };
 
-        // Подписываемся на события
-        this.subscribe('process', (command) => {
-            const handler = this.processHandlers[command];
-            if (handler) {
-                handler();
-            }
-        });
+            // Подписываемся на события
+            this.subscribe('process', (command) => {
+                const handler = this.processHandlers[command];
+                if (handler) {
+                    handler();
+                }
+            });
 
-        this.subscribe('issueFile', (file) => {
-            if (file) {
-                this.loadIssuesFromFile(file);
-            }
-        });
+            this.subscribe('issueFile', (file) => {
+                if (file) {
+                    this.loadIssuesFromFile(file);
+                }
+            });
+        }
     }
 
     static getInstance() {
-        if (!DataManager.instance) {
-            DataManager.instance = new DataManager();
-        }
-        return DataManager.instance;
+        return super.getInstance();
     }
 
     // Load issues from file

@@ -21,23 +21,31 @@ class App extends Refact {
     constructor(appContainer) {
         super();
         
-        // Инициализируем состояние до создания менеджеров
-        this.setState({ 
-            appStatus: 'init',
-            appContainer,
-            config: App.defaultConfig
-        }, 'App.constructor');
+        // Проверяем, что это новый инстанс
+        if (!this.constructor.instances?.[this.constructor.name]) {
+            // Инициализируем состояние до создания менеджеров
+            this.setState({ 
+                appStatus: 'init',
+                config: App.defaultConfig
+            }, 'App.constructor');
 
-        // Создаем менеджеры после инициализации состояния
-        this.managers = {
-            testManager: new TestManager(),
-            uiManager: new UiManager(),
-            dataManager: new DataManager(),
-            indexManager: new IndexManager(),
-            reportManager: new ReportManager()
-        };
+            // Создаем менеджеры
+            this.managers = {
+                testManager: TestManager.getInstance(),
+                uiManager: UiManager.getInstance(),
+                dataManager: DataManager.getInstance(),
+                indexManager: IndexManager.getInstance(),
+                reportManager: ReportManager.getInstance()
+            };
 
-        this.setState({ appStatus: 'loading' }, 'App.constructor');
+            // Устанавливаем контейнер после создания менеджеров
+            this.setState({ appContainer }, 'App.constructor');
+            this.setState({ appStatus: 'loading' }, 'App.constructor');
+        }
+    }
+
+    static getInstance(appContainer) {
+        return super.getInstance(appContainer);
     }
 }
 
@@ -45,6 +53,6 @@ class App extends Refact {
 document.addEventListener("DOMContentLoaded", () => {
     const appContainer = document.getElementById('app');
     const refact = new Refact(appContainer);
-    const app = new App(appContainer, refact);
+    const app = App.getInstance(appContainer);
     Refact.setGlobal(App, app);
 });

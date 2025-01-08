@@ -1,16 +1,40 @@
 class UiManager extends Refact {
-    static instance;
-
     constructor() {
         super();
-        if (!UiManager.instance) {
-            UiManager.instance = this;
+        
+        // Проверяем, что это новый инстанс
+        if (!this.constructor.instances?.[this.constructor.name]) {
             this.views = {};
             this.currentView = null;
             this.initialized = false;
-            this.#setupSubscriptions();
+
+            // Подписываемся на изменения состояния
+            this.subscribe('appContainer', (container) => {
+                if (container && !this.contentContainer) {
+                    this.contentContainer = document.createElement('div');
+                    this.contentContainer.className = 'content-container';
+                    this.contentContainer.id = 'content-container';
+                    container.appendChild(this.contentContainer);
+                    
+                    if (!this.initialized) {
+                        this.#initializeComponents();
+                        this.initialized = true;
+                    }
+                }
+            });
+
+            // Подписываемся на изменение статуса
+            this.subscribe('appStatus', (status) => {
+                if (status === 'loading' && !this.initialized && this.contentContainer) {
+                    this.#initializeComponents();
+                    this.initialized = true;
+                }
+            });
         }
-        return UiManager.instance;
+    }
+
+    static getInstance() {
+        return super.getInstance();
     }
 
     #setupSubscriptions() {

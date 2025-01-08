@@ -1,32 +1,52 @@
 class Refact {
-    static instance;
+    static instances;
 
     constructor() {
-        if (Refact.instance) {
-            return Refact.instance;
+        // Если уже есть инстанс этого конкретного класса, возвращаем его
+        const instanceKey = this.constructor.name;
+        if (this.constructor.instances && this.constructor.instances[instanceKey]) {
+            return this.constructor.instances[instanceKey];
         }
 
+        // Если это первый инстанс Refact, инициализируем хранилище instances
+        if (!Refact.instances) {
+            Refact.instances = {};
+        }
+
+        // Сохраняем инстанс текущего класса
+        if (!this.constructor.instances) {
+            this.constructor.instances = {};
+        }
+        this.constructor.instances[instanceKey] = this;
+
+        // Инициализируем базовые свойства только для нового инстанса
         this.rootElement = document.getElementById('app');
         this.state = {};
         this.subscribers = new Map();
         this.updateQueue = [];
         this.isProcessing = false;
-        Refact.instance = this;
     }
 
     static update(stateUpdate, context = 'unknown') {
-        Refact.instance.setState({ [stateUpdate.stateName]: stateUpdate.stateValue }, context);
+        const instanceKey = this.name;
+        if (this.instances && this.instances[instanceKey]) {
+            this.instances[instanceKey].setState({ [stateUpdate.stateName]: stateUpdate.stateValue }, context);
+        }
     }
 
     static setGlobal(stateName, stateValue) {
-        Refact.instance.setState({ [stateName]: stateValue }, 'setGlobal');
+        const instanceKey = this.name;
+        if (this.instances && this.instances[instanceKey]) {
+            this.instances[instanceKey].setState({ [stateName]: stateValue }, 'setGlobal');
+        }
     }
 
     static getInstance(rootElement) {
-        if (!Refact.instance) {
-            Refact.instance = new Refact(rootElement);
+        const instanceKey = this.name;
+        if (!this.instances || !this.instances[instanceKey]) {
+            this.instances[instanceKey] = new this(rootElement);
         }
-        return Refact.instance;
+        return this.instances[instanceKey];
     }
 
     setState(updates, context = 'unknown') {

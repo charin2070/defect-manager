@@ -1,25 +1,28 @@
 class IndexManager extends Refact {
-    static instance;
-
     constructor() {
         super();
-        if (!IndexManager.instance) {
-            IndexManager.instance = this;
+        
+        // Проверяем, что это новый инстанс
+        if (!this.constructor.instances?.[this.constructor.name]) {
             this.groupedIndex = null;
-            this.#setupSubscriptions();
+            
+            this.subscribe('issues', async (issues) => {
+                if (!issues) return;
+                
+                // Only rebuild if we don't have an index or if it's a different set of issues
+                if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
+                    this.groupedIndex = await IndexManager.getGroupedIndex(issues);
+                }
+            });
         }
-        return IndexManager.instance;
+    }
+
+    static getInstance() {
+        return super.getInstance();
     }
 
     #setupSubscriptions() {
-        this.subscribe('issues', async (issues) => {
-            if (!issues) return;
-            
-            // Only rebuild if we don't have an index or if it's a different set of issues
-            if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
-                this.groupedIndex = await IndexManager.getGroupedIndex(issues);
-            }
-        });
+        // This method is not used anymore
     }
 
     static indexBy(properties, issues) {
