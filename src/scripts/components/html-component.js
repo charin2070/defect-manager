@@ -1,4 +1,4 @@
-class HtmlComponent {
+window.HtmlComponent = class HtmlComponent {
     constructor() {
         this.state = Refact.getInstance();
     }

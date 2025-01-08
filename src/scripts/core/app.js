@@ -20,28 +20,42 @@ class App extends Refact {
 
     constructor(appContainer) {
         super();
-        
-        // Проверяем, что это новый инстанс
-        if (!this.constructor.instances?.[this.constructor.name]) {
-            // Инициализируем состояние до создания менеджеров
-            this.setState({ 
-                appStatus: 'init',
-                config: App.defaultConfig
-            }, 'App.constructor');
+        this.initialize(appContainer);
+    }
 
-            // Создаем менеджеры
-            this.managers = {
-                testManager: TestManager.getInstance(),
-                uiManager: UiManager.getInstance(),
-                dataManager: DataManager.getInstance(),
-                indexManager: IndexManager.getInstance(),
-                reportManager: ReportManager.getInstance()
-            };
-
-            // Устанавливаем контейнер после создания менеджеров
-            this.setState({ appContainer }, 'App.constructor');
-            this.setState({ appStatus: 'loading' }, 'App.constructor');
+    initialize(appContainer) {
+        if (appContainer) {
+            this.rootElement = appContainer;
         }
+        // Инициализируем базовое состояние
+        const initialState = {
+            appStatus: 'init',
+            config: App.defaultConfig,
+            appContainer
+        };
+
+        // Создаем менеджеры
+        this.managers = {
+            uiManager: UiManager.getInstance(),
+            dataManager: DataManager.getInstance(),
+            indexManager: IndexManager.getInstance(),
+            reportManager: ReportManager.getInstance()
+        };
+
+        // Создаем менеджер потоков
+        this.managers.flowManager = new FlowManager({
+            dataManager: this.managers.dataManager,
+            indexManager: this.managers.indexManager,
+            uiManager: this.managers.uiManager
+        }, console);
+
+        // Устанавливаем состояние одним вызовом
+        this.setState(initialState, 'App.initialize');
+        
+        // Переводим в состояние загрузки
+        this.setState({ appStatus: 'loading' }, 'App.initialize');
+
+        return this;
     }
 
     static getInstance(appContainer) {
@@ -49,10 +63,15 @@ class App extends Refact {
     }
 }
 
-// Entry
-document.addEventListener("DOMContentLoaded", () => {
-    const appContainer = document.getElementById('app');
-    const refact = new Refact(appContainer);
-    const app = App.getInstance(appContainer);
-    Refact.setGlobal(App, app);
-});
+// // Entry
+// document.addEventListener("DOMContentLoaded", () => {
+//     const appContainer = document.getElementById('app');
+//     const refact = new Refact(appContainer);
+//     const app = App.getInstance(appContainer);
+//     // Сохраняем только необходимые данные, а не весь класс
+//     Refact.setGlobal('app', {
+//         container: appContainer,
+//         status: app.state.appStatus,
+//         config: app.state.config
+//     });
+// }); 

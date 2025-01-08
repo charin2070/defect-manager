@@ -1,5 +1,5 @@
 class Refact {
-    static instances;
+    static instances = {};
 
     constructor() {
         // Если уже есть инстанс этого конкретного класса, возвращаем его
@@ -8,15 +8,7 @@ class Refact {
             return this.constructor.instances[instanceKey];
         }
 
-        // Если это первый инстанс Refact, инициализируем хранилище instances
-        if (!Refact.instances) {
-            Refact.instances = {};
-        }
-
         // Сохраняем инстанс текущего класса
-        if (!this.constructor.instances) {
-            this.constructor.instances = {};
-        }
         this.constructor.instances[instanceKey] = this;
 
         // Инициализируем базовые свойства только для нового инстанса
@@ -43,7 +35,7 @@ class Refact {
 
     static getInstance(rootElement) {
         const instanceKey = this.name;
-        if (!this.instances || !this.instances[instanceKey]) {
+        if (!this.instances[instanceKey]) {
             this.instances[instanceKey] = new this(rootElement);
         }
         return this.instances[instanceKey];

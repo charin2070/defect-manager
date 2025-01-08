@@ -37,64 +37,61 @@
     <div id="app"></div>
     
     <!-- Vendor -->
-    <script src="src/scripts/vendor/chart.js" defer></script>
-    <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js" defer></script>
+    <script src="src/scripts/vendor/chart.js"></script>
+    <script src="src/scripts/vendor/chartjs-adapter-date-fns@3.js"></script>
+    <script src="src/scripts/vendor/tailwind.js"></script>
 
-    <!-- Reactivity -->
+    <!-- Core and Utils -->
     <script src="src/scripts/core/refact.js"></script>
     <script src="src/scripts/core/reactive.js"></script>
-    <script src="src/scripts/vendor/tailwind.js" defer></script>
-    <script src="src/scripts/components/issue.js" defer></script>
-   
-    <!-- Utils -->
-    <script src="src/scripts/components/html-component.js"></script>
     <script src="src/scripts/utils/log-tools.js"></script>
-    <script src="src/scripts/utils/data-utils.js" defer></script>
-    <script src="src/scripts/utils/date-util.js" defer></script> 
-    <script src="src/scripts/utils/csv-parser.js" defer></script>
-    <script src="src/scripts/utils/graphic-utils.js" defer></script>
-
-    <!-- Components -->
-    <script src="src/scripts/views/view-component.js" defer></script>
-    <script src="src/scripts/components/file-input-component.js" defer></script>
-    <script src="src/scripts/components/navbar-component.js" defer></script>
-    <script src="src/scripts/components/dropdown-component.js" defer></script>
-    <script src="src/scripts/components/date-range-dropdown.js" defer></script>
-    <script src="src/scripts/components/slide-panel.js" defer></script>
-    <script src="src/scripts/components/issues-component.js" defer></script>
-    <script src="src/scripts/components/issue-table.js" defer></script>
-    <script src="src/scripts/components/table-component.js" defer></script>
-    <script src="src/scripts/components/data-card.js" defer></script>
-    <script src="src/scripts/components/chart-card.js" defer></script>
-    <script src="src/scripts/components/toast-component.js" defer></script>
-
-    <!-- Views -->
-    <script src="src/scripts/views/loader-view.js" defer></script>
-    <script src="src/scripts/views/upload-view.js" defer></script>
-    <script src="src/scripts/views/dashboard-view.js" defer></script>
-    <script src="src/scripts/views/reports-view.js" defer></script>
-    <script src="src/scripts/views/settings-view.js" defer></script>
+    <script src="src/scripts/utils/data-utils.js"></script>
+    <script src="src/scripts/utils/date-util.js"></script>
+    <script src="src/scripts/utils/csv-parser.js"></script>
+    <script src="src/scripts/utils/graphic-utils.js"></script>
 
     <!-- Managers -->
-    <script src="src/scripts/core/ui-manager.js" defer></script>
-    <script src="src/scripts/core/index-manager.js" defer></script>
-    <script src="src/scripts/core/report-manager.js" defer></script>
-    <script src="src/scripts/core/statistic-manager.js" defer></script>
-    <script src="src/scripts/core/chart-manager.js" defer></script>
-    <script src="src/scripts/core/data-manager.js" defer></script>
-    <script src="src/scripts/core/flow-manager.js" defer></script>
-    <script src="src/scripts/core/test-manager.js" defer></script>
-    <script src="src/scripts/core/app.js" defer></script>
+    <script src="src/scripts/core/ui-manager.js"></script>
+    <script src="src/scripts/core/data-manager.js"></script>
+    <script src="src/scripts/core/index-manager.js"></script>
+    <script src="src/scripts/core/report-manager.js"></script>
+    <script src="src/scripts/core/statistic-manager.js"></script>
+    <script src="src/scripts/core/chart-manager.js"></script>
+    <script src="src/scripts/core/flow-manager.js"></script>
+
+    <!-- Components -->
+    <script src="src/scripts/components/html-component.js"></script>
+    <script src="src/scripts/components/issue.js"></script>
+    <script src="src/scripts/views/view-component.js"></script>
+    <script src="src/scripts/components/file-input-component.js"></script>
+    <script src="src/scripts/components/navbar-component.js"></script>
+    <script src="src/scripts/components/dropdown-component.js"></script>
+    <script src="src/scripts/components/date-range-dropdown.js"></script>
+    <script src="src/scripts/components/slide-panel.js"></script>
+    <script src="src/scripts/components/issues-component.js"></script>
+    <script src="src/scripts/components/issue-table.js"></script>
+    <script src="src/scripts/components/table-component.js"></script>
+    <script src="src/scripts/components/data-card.js"></script>
+    <script src="src/scripts/components/chart-card.js"></script>
+    <script src="src/scripts/components/toast-component.js"></script>
+
+    <!-- Views -->
+    <script src="src/scripts/views/loader-view.js"></script>
+    <script src="src/scripts/views/upload-view.js"></script>
+    <script src="src/scripts/views/dashboard-view.js"></script>
+    <script src="src/scripts/views/reports-view.js"></script>
+    <script src="src/scripts/views/settings-view.js"></script>
+
+    <!-- App -->
+    <script src="src/scripts/core/app.js"></script>
 
     <!-- Entry point -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const appContainer = document.getElementById('app');
-            const refact = new Refact(appContainer);
             const app = new App(appContainer);
         });
     </script>
 
 </body>     
-
 </html>

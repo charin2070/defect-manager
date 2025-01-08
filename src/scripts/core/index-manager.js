@@ -1,4 +1,5 @@
-class IndexManager extends Refact {
+// class IndexManager extends Refact {
+window.IndexManager = class IndexManager extends Refact {
     constructor() {
         super();
         

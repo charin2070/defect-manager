@@ -1,6 +1,10 @@
 class FlowManager extends Refact {
-    constructor({ dataManager, indexManager, uiManager }) {
+    constructor({ dataManager, indexManager, uiManager, statisticManager }, logger = console) {
         super();
+        
+        this.logger = logger;
+        this.logger.log('☝️ [Kavkaz initialize] Запуск менеджера потоков данных');
+
         this.dataManager = dataManager;
         this.indexManager = indexManager;
         this.uiManager = uiManager;
