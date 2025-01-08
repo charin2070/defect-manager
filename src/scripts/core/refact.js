@@ -42,10 +42,40 @@ class Refact {
     }
 
     setState(updates, context = 'unknown') {
-        this.updateQueue.push({ updates, context });
+        if (!updates || typeof updates !== 'object') {
+            console.warn('[Refact.setState] Invalid updates:', updates);
+            return;
+        }
 
-        if (!this.isProcessing) {
-            this.processUpdateQueue();
+        const changedKeys = [];
+        for (const [key, newValue] of Object.entries(updates)) {
+            const currentValue = this.state[key];
+            
+            // Skip if value hasn't changed
+            if (currentValue === newValue) continue;
+
+            try {
+                // For arrays and objects, create a clean copy
+                if (Array.isArray(newValue)) {
+                    this.state[key] = [...newValue];
+                } else if (newValue && typeof newValue === 'object') {
+                    this.state[key] = {...newValue};
+                } else {
+                    this.state[key] = newValue;
+                }
+                changedKeys.push(key);
+
+                // Log state change
+                const logValue = Array.isArray(newValue) ? `Array(${newValue.length})` : 
+                    (newValue && typeof newValue === 'object' ? 'Object' : String(newValue));
+                console.log(`⚡State "${key}" => ${logValue} (by: ${context})`);
+            } catch (error) {
+                console.warn(`[Refact.setState] Error setting state for key "${key}":`, error);
+            }
+        }
+
+        if (changedKeys.length > 0) {
+            this.notifySubscribers(changedKeys, context);
         }
     }
 
@@ -85,39 +115,34 @@ class Refact {
     }
 
     hasValueChanged(currentValue, newValue) {
+        // Simple equality check for primitives
         if (currentValue === newValue) return false;
+        
+        // If either value is null/undefined, they're different
         if (!currentValue || !newValue) return true;
+        
+        // For arrays, compare length and elements
+        if (Array.isArray(currentValue) && Array.isArray(newValue)) {
+            if (currentValue.length !== newValue.length) return true;
+            return currentValue.some((val, idx) => val !== newValue[idx]);
+        }
+        
+        // For objects, do a shallow comparison of properties
         if (typeof currentValue === 'object' && typeof newValue === 'object') {
-            return !this.shallowEqual(currentValue, newValue);
+            const currentKeys = Object.keys(currentValue);
+            const newKeys = Object.keys(newValue);
+            if (currentKeys.length !== newKeys.length) return true;
+            return currentKeys.some(key => currentValue[key] !== newValue[key]);
         }
-        return true;
-    }
-
-    shallowEqual(obj1, obj2) {
-        const keys1 = Object.keys(obj1);
-        const keys2 = Object.keys(obj2);
-        if (keys1.length !== keys2.length) return false;
-        for (const key of keys1) {
-            if (obj1[key] !== obj2[key]) return false;
-        }
+        
         return true;
     }
 
     getLogValue(value) {
         if (value === null) return 'null';
         if (value === undefined) return 'undefined';
-        if (typeof value === 'object') {
-            try {
-                return JSON.stringify(value, (key, val) => {
-                    if (val !== null && typeof val === 'object') {
-                        return;
-                    }
-                    return val;
-                }).substring(0, 50) + '...';
-            } catch (error) {
-                return 'Circular structure detected';
-            }
-        }
+        if (Array.isArray(value)) return `Array(${value.length})`;
+        if (typeof value === 'object') return 'Object';
         return String(value);
     }
 

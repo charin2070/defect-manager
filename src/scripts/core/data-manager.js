@@ -58,11 +58,8 @@ class DataManager extends Refact {
             const storedData = localStorage.getItem('issues');
             if (!storedData) {
                 log('[DataManager] No data in localStorage');
-                return {
-                    issues: [],
-                    source: 'local_storage',
-                    dataStatus: 'empty'
-                };
+                this.setState({ issues: [] }, 'DataManager.loadFromLocalStorage');
+                return;
             }
 
             const issues = JSON.parse(storedData);
@@ -70,34 +67,27 @@ class DataManager extends Refact {
                 throw new Error('Invalid data format');
             }
 
-            // Only store the necessary issue data
-            const sanitizedIssues = issues.map(issue => ({
-                taskId: issue.taskId,
-                type: issue.type,
-                state: issue.state,
-                status: issue.status,
-                priority: issue.priority,
-                team: issue.team,
-                assignee: issue.assignee,
-                created: issue.created,
-                resolved: issue.resolved,
-                description: issue.description
-            }));
+            // Convert raw data to Issue instances
+            const issueInstances = issues.map(issueData => {
+                // Extract only the data properties we need
+                const {
+                    taskId, type, state, status, priority,
+                    team, assignee, created, resolved, description,
+                    project
+                } = issueData;
 
-            this.setState({ issues: sanitizedIssues }, 'DataManager.loadFromLocalStorage');
+                // Create a clean object with only the data we need
+                return {
+                    taskId, type, state, status, priority,
+                    team, assignee, created, resolved, description,
+                    project
+                };
+            });
 
-            return {
-                issues: sanitizedIssues,
-                source: 'local_storage',
-                dataStatus: 'loaded'
-            };
+            this.setState({ issues: issueInstances }, 'DataManager.loadFromLocalStorage');
         } catch (error) {
             log(`[DataManager] Error loading from localStorage: ${error.message}`);
-            return {
-                issues: [],
-                source: 'local_storage',
-                dataStatus: 'error'
-            };
+            this.setState({ issues: [] }, 'DataManager.loadFromLocalStorage');
         }
     }
 
@@ -110,7 +100,7 @@ class DataManager extends Refact {
                     throw new Error('Invalid data object');
                 }
 
-                // Only store the necessary issue data
+                // Convert Issue instances to plain objects
                 const sanitizedData = Array.isArray(dataObject) ? 
                     dataObject.map(issue => ({
                         taskId: issue.taskId,
@@ -122,7 +112,8 @@ class DataManager extends Refact {
                         assignee: issue.assignee,
                         created: issue.created,
                         resolved: issue.resolved,
-                        description: issue.description
+                        description: issue.description,
+                        project: issue.project
                     })) : dataObject;
 
                 localStorage.setItem('issues', JSON.stringify(sanitizedData));

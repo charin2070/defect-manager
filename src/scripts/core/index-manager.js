@@ -1,4 +1,11 @@
 // class IndexManager extends Refact {
+    /**
+     * @class IndexManager
+     * @extends Refact
+     * @description This class is responsible for creating and managing various indexes of issues.
+     * It listens to changes of the `issues` state and rebuilds the index accordingly.
+     * It also provides methods to filter and group issues.
+     */
 window.IndexManager = class IndexManager extends Refact {
     constructor() {
         super();
