@@ -3,7 +3,7 @@ class FlowManager extends Refact {
         super();
         
         this.logger = logger;
-        this.logger.log('☝️ [Kavkaz initialize] Запуск менеджера потоков данных');
+        this.logger.log('[Flow] Запуск менеджера потоков данных');
 
         this.dataManager = dataManager;
         this.indexManager = indexManager;

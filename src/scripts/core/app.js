@@ -39,7 +39,6 @@ class App extends Refact {
             uiManager: UiManager.getInstance(),
             dataManager: DataManager.getInstance(),
             indexManager: IndexManager.getInstance(),
-            reportManager: ReportManager.getInstance()
         };
 
         // Создаем менеджер потоков

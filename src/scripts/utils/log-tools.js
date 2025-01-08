@@ -24,21 +24,3 @@ function log(data, description) {
     console.log(data);
   }
 }
-
-// Get calling function name
-function getCallingFunction() {
-  let error = new Error();
-  let stack = error.stack.split("\n");
-  return stack[3]?.split("at ")[1]?.split(" ")[0] || "Unknown";
-}
-
-class ConsoleToast extends HtmlComponent {
-  constructor() {
-    super();
-    this.setupContainer();
-    this.errorToast = new ErrorToast(this);
-    this.logToast = new LogToast(this);
-    this.toastContainer.append(this.errorToast.element, this.logToast.element);
-    this.overrideConsoleMethods();
-  }
-}
