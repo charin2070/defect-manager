@@ -1,36 +1,39 @@
-// class IndexManager extends Refact {
-    /**
-     * @class IndexManager
-     * @extends Refact
-     * @description This class is responsible for creating and managing various indexes of issues.
-     * It listens to changes of the `issues` state and rebuilds the index accordingly.
-     * It also provides methods to filter and group issues.
-     */
-window.IndexManager = class IndexManager extends Refact {
+class IndexManager {
     constructor() {
-        super();
-        
-        // Проверяем, что это новый инстанс
-        if (!this.constructor.instances?.[this.constructor.name]) {
-            this.groupedIndex = null;
+        this.refact = null;
+        this.groupedIndex = null;
+    }
+
+    bind(refact) {
+        this.refact = refact;
+        this.setupSubscriptions();
+        return this;
+    }
+
+    setupSubscriptions() {
+        this.refact.subscribe('issues', (issues) => {
+            if (!issues) return;
             
-            this.subscribe('issues', async (issues) => {
-                if (!issues) return;
-                
-                // Only rebuild if we don't have an index or if it's a different set of issues
-                if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
-                    this.groupedIndex = await IndexManager.getGroupedIndex(issues);
-                }
-            });
-        }
+            // Only rebuild if we don't have an index or if it's a different set of issues
+            if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
+                this.groupedIndex = IndexManager.getGroupedIndex(issues);
+                this.refact.setState({ index: this.groupedIndex }, 'IndexManager');
+            }
+        });
     }
 
-    static getInstance() {
-        return super.getInstance();
-    }
+    static getGroupedIndex(issues) {
+        if (!issues || !Array.isArray(issues)) return null;
 
-    #setupSubscriptions() {
-        // This method is not used anymore
+        const index = {
+            defect: issues,
+            byStatus: IndexManager.indexBy(['status'], issues),
+            byPriority: IndexManager.indexBy(['priority'], issues),
+            byAssignee: IndexManager.indexBy(['assignee'], issues),
+            byProject: IndexManager.indexBy(['project'], issues)
+        };
+
+        return index;
     }
 
     static indexBy(properties, issues) {
@@ -64,12 +67,26 @@ window.IndexManager = class IndexManager extends Refact {
     }
 
     static getIndex(issues) {
+        if (!issues || issues.length === 0) {
+            return {
+                defect: {
+                    all: {},
+                    state: {
+                        unresolved: []
+                    },
+                    created: {},
+                    resolved: {}
+                }
+            };
+        }
+
         const indexByType = IndexManager.indexBy(['type'], issues);
+        
         // this.index['type'] = indexByType['type'];
         // For each type, create additional indexes
 
         const indexByKeys = {};
-        for (const [type, typeIssues] of Object.entries(indexByType['type'])) {
+        for (const [type, typeIssues] of Object.entries(indexByType['type'] || {})) {
             indexByKeys[type] = IndexManager.indexBy(['taskId', 'state', 'status', 'priority', 'team', 'assignee', 'created', 'resolved'], typeIssues);
         }
 

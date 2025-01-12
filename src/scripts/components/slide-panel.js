@@ -80,36 +80,52 @@ class SlidePanel extends HtmlComponent {
         this.content.innerHTML = '';
         if (typeof content === 'string') {
             this.content.innerHTML = content;
-        } else if (content instanceof HtmlComponent) {
-            this.content.appendChild(content.getContainer());
+        } else if (content instanceof Element) {
+            this.content.appendChild(content);
+        } else if (content && typeof content.getContainer === 'function') {
+            const container = content.getContainer();
+            if (container instanceof Element) {
+                this.content.appendChild(container);
+            }
         }
     }
 
     open(content, title = '') {
-        this.isOpen = true;
-        // Set content
-        this.content.innerHTML = '';
-        if (typeof content === 'string') {
-            this.content.innerHTML = content;
-        } else if (content instanceof Element) {
-            this.content.appendChild(content);
+        if (content) {
+            this.setContent(content);
         }
         
-        // Update title
-        this.title.textContent = title;
+        if (title) {
+            this.setTitle(title);
+        }
 
-        // Show panel with animation
-        requestAnimationFrame(() => {
-            this.backdrop.classList.remove('invisible', 'opacity-0');
-            this.panel.style.right = '0';
-        });
+        this.isOpen = true;
+        
+        // Показываем backdrop
+        this.backdrop.style.visibility = 'visible';
+        // Триггерим reflow для анимации
+        this.backdrop.offsetHeight;
+        this.backdrop.style.opacity = '1';
+        
+        // Показываем панель
+        this.panel.style.right = '0';
     }
 
     close() {
-        this.isOpen = false;
+        if (!this.isOpen) return;
 
-        this.backdrop.classList.add('invisible', 'opacity-0');
+        this.isOpen = false;
         this.panel.style.right = '-100%';
+        
+        // Скрываем backdrop с анимацией
+        this.backdrop.style.opacity = '0';
+        
+        // Ждем окончания анимации перед скрытием
+        setTimeout(() => {
+            if (!this.isOpen) { // Проверяем, что панель все еще закрыта
+                this.backdrop.style.visibility = 'hidden';
+            }
+        }, 500); // Время должно совпадать с CSS transition
     }
 
     setTitle(title) {

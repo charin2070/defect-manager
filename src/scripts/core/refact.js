@@ -1,7 +1,7 @@
 class Refact {
     static instances = {};
 
-    constructor() {
+    constructor(rootElement) {
         // Если уже есть инстанс этого конкретного класса, возвращаем его
         const instanceKey = this.constructor.name;
         if (this.constructor.instances && this.constructor.instances[instanceKey]) {
@@ -12,11 +12,12 @@ class Refact {
         this.constructor.instances[instanceKey] = this;
 
         // Инициализируем базовые свойства только для нового инстанса
-        this.rootElement = document.getElementById('app');
+        this.rootElement = rootElement || document.getElementById('app');
         this.state = {};
         this.subscribers = new Map();
         this.updateQueue = [];
         this.isProcessing = false;
+        this.boundInstances = new Set();
     }
 
     static update(stateUpdate, context = 'unknown') {
@@ -58,6 +59,8 @@ class Refact {
                 // For arrays and objects, create a clean copy
                 if (Array.isArray(newValue)) {
                     this.state[key] = [...newValue];
+                } else if (newValue instanceof File) {
+                    this.state[key] = newValue; // File objects should be passed as is
                 } else if (newValue && typeof newValue === 'object') {
                     this.state[key] = {...newValue};
                 } else {
@@ -76,6 +79,12 @@ class Refact {
 
         if (changedKeys.length > 0) {
             this.notifySubscribers(changedKeys, context);
+            // Notify bound instances
+            for (const instance of this.boundInstances) {
+                if (instance.onStateChange) {
+                    instance.onStateChange(changedKeys, this.state);
+                }
+            }
         }
     }
 
@@ -103,6 +112,12 @@ class Refact {
             if (hasChanges) {
                 Object.assign(this.state, updates);
                 this.notifySubscribers(changedKeys, context);
+                // Notify bound instances
+                for (const instance of this.boundInstances) {
+                    if (instance.onStateChange) {
+                        instance.onStateChange(changedKeys, this.state);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error processing state update:', error);
@@ -177,7 +192,7 @@ class Refact {
                         console.log(`⚡Notifying ${callbackContext} for key: ${key}`);
                         callback(this.state[key], callbackContext);
                     } catch (error) {
-                        log(this.state, 'REFACT'); 
+                        console.log(this.state, 'REFACT'); 
                         console.error(`Error in subscriber for ${key}:`, this.state, error);
                     }
                 });
@@ -185,31 +200,9 @@ class Refact {
         });
     }
 
-    bind(target) {
-        if (typeof target === 'object') {
-            // If target is an object, bind all its properties to state
-            Object.keys(target).forEach(key => {
-                this.subscribe(key, value => {
-                    if (target[key] !== value) {
-                        target[key] = value;
-                    }
-                });
-            });
-            return this;
-        }
-        
-        // Original selector-based binding
-        const element = this.rootElement.querySelector(target);
-        if (!element) {
-            console.warn(`Element not found for selector: ${target}`);
-            return;
-        }
-        this.subscribe(key, value => {
-            if (element.textContent !== value) {
-                element.textContent = value;
-            }
-        });
-        return this;
+    bind(instance) {
+        this.boundInstances.add(instance);
+        return instance;
     }
 
     render(template) {

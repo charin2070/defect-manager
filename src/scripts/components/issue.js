@@ -90,34 +90,39 @@ class Issue {
 
     initializeProperties(properties) {
         if (!properties) return;
-        const issueProperties = {}
-        // Rename keys
+        const issueProperties = {};
+
+        // Rename keys and parse values
         if (typeof properties === 'object') {
-            properties = Object.fromEntries(
-                Object.entries(properties).map(([key, value]) => {
-                    const propKey = Issue.#fieldMappings[key] || key;
-                    const parsedValue = Issue.parseValue(propKey, value);
-                    if (parsedValue) {
-                        issueProperties[propKey] = parsedValue;
-                    }
-                    return [propKey, parsedValue];
-                })
-            );
+            Object.entries(properties).forEach(([key, value]) => {
+                const propKey = Issue.#fieldMappings[key] || key;
+                const parsedValue = Issue.parseValue(propKey, value);
+                if (parsedValue !== undefined && parsedValue !== null) {
+                    issueProperties[propKey] = parsedValue;
+                }
+            });
             
             // Add calculated properties
-            if (issueProperties.taskId.includes('ADIRINC')) {
-                issueProperties.project = 'AI';
-            } else {
-                if (issueProperties.taskId.includes('GODUTY')) {
+            if (issueProperties.taskId) {
+                if (issueProperties.taskId.includes('ADIRINC')) {
+                    issueProperties.project = 'AI';
+                    issueProperties.taskId = issueProperties.taskId.replace('ADIRINC-', '');
+                } else if (issueProperties.taskId.includes('GODUTY')) {
                     issueProperties.project = 'GO';
+                    issueProperties.taskId = issueProperties.taskId.replace('GODUTY-', '');
                 }
             }
 
-            issueProperties.taskId = issueProperties.taskId.replace('ADIRINC-', '');
-            issueProperties.state = Issue.#getStateByStatus(issueProperties.status);
-            issueProperties.type = this.getType(issueProperties.type);
+            if (issueProperties.status) {
+                issueProperties.state = Issue.#getStateByStatus(issueProperties.status);
+            }
+
+            if (issueProperties.type) {
+                issueProperties.type = this.getType(issueProperties.type);
+            }
         }
         
+        // Assign properties to this instance
         Object.keys(issueProperties).forEach(key => {
             this[key] = issueProperties[key];
         });

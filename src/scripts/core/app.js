@@ -1,48 +1,38 @@
-class App extends Refact {
-    static defaultConfig = {
+class App {
+
+    static config = {
         mode: "dev",
-        dataKey: "defect-manager",
-        theme: "light",
-        dataKeys: ["issues", "index", "statistics", "dataUpdated"],
-        dataStatus: 'empty',
-        uploadedFile: null,
-        dataSource: null,
-        appStatus: null,
-        error: null,
-        process: null,
-        filters: {
-            dataRange: { dateStart: new Date('2021-01-01'), dateEnd: new Date() },
-            team: '*',
-            project: 'AI',
-        },
-        view: 'none'
     };
 
     constructor(appContainer) {
-        super();
-        this.setState({ appStatus: 'loading...' }, 'App');
-        this.initialize(appContainer);
+        this.refact = new Refact(appContainer);
+        this.appContainer = appContainer;
+        this.refact.setState({ appStatus: 'loading' }, 'App');
+        
+        // Managers
+        this.initializeManagers();
     }
 
-    initialize(appContainer) {
-        if (appContainer) {
-            this.rootElement = appContainer;
-        }
-        this.managers = {
-            uiManager: UiManager.getInstance(),
-            dataManager: DataManager.getInstance(),
-            indexManager: IndexManager.getInstance(),
-        };
+    initializeManagers() {
+        // Managers
+        this.uiManager = new UiManager(this.appContainer);
+        this.dataManager = new DataManager();
+        this.indexManager = new IndexManager();
+        this.statisticManager = new StatisticManager();
+        
+        this.uiManager.bind(this.refact);
+        this.dataManager.bind(this.refact);
+        this.indexManager.bind(this.refact);
+        this.statisticManager.bind(this.refact);
 
-        // Создаем менеджер потоков
-        this.managers.flowManager = new FlowManager({
-            dataManager: this.managers.dataManager,
-            indexManager: this.managers.indexManager,
-            uiManager: this.managers.uiManager
+        // Kavkaz data flow manager
+        this.flowManager = new FlowManager({
+            dataManager: this.dataManager,
+            indexManager: this.indexManager,
+            uiManager: this.uiManager,
+            statisticManager: this.statisticManager
         }, console);
-    }
-
-    static getInstance(appContainer) {
-        return super.getInstance(appContainer);
+        this.flowManager.bind(this.refact);
+        this.flowManager.run();
     }
 }

@@ -4,8 +4,12 @@ class DropdownComponent {
         this.items = items;
         this.defaultItem = defaultItem;
         this.parent = parent;
-        this.title = title;   
+        this.title = title;
+        this.hiddenTitle = false;
         this.isOpen = false;
+        this.toggleColor = '#949494E8';
+        this.activeItemIndex = 0;
+        this.iconSize = '1em';
         this.iconHeight = '1em';
         this.iconWidth = '1em';
 
@@ -51,7 +55,7 @@ class DropdownComponent {
         this.container.id = this.id;
 
         this.button = document.createElement('button');
-        this.button.className = 'inline-flex items-center h-full p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100';
+        this.button.className = 'dropdown-button inline-flex items-center h-full p-2 rounded-md text-gray-600';
         this.button.id = DropdownComponent.generateId('dropdown-button');
         this.updateButtonContent();
 
@@ -61,7 +65,7 @@ class DropdownComponent {
         this.filterInput.className = 'dropdown-filter p-2 w-full border border-gray-300 rounded-md mb-2';
         
         this.itemsContainer = document.createElement('div');
-        this.itemsContainer.className = 'dropdown-menu hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white z-50';
+        this.itemsContainer.className = 'dropdown-menu absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white z-50 opacity-0 invisible transform scale-95 transition-all duration-200 ease-out';
         this.itemsContainer.setAttribute('role', 'menu');
         this.itemsContainer.setAttribute('aria-orientation', 'vertical');
         this.itemsContainer.setAttribute('aria-labelledby', this.button.id);
@@ -73,17 +77,47 @@ class DropdownComponent {
         if (this.parent) {
             this.parent.appendChild(this.container);
         }
+    
     }
 
-    updateButtonContent() {
-        const defaultItem = this.items[this.defaultItem] || { text: 'Select' };
-        this.button.innerHTML = `
-            ${defaultItem.icon ? `<img src="${defaultItem.icon}" class="w-${this.iconWidth} h-${this.iconHeight} mr-2" alt="">` : ''}
-            <span>${defaultItem.text}</span>
+    hideToggleIcon() {
+        const toggleIcon = this.container.querySelector('.dropdown-toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.style.display = 'none';
+        }
+    }
+
+    setTitle(title) {
+        this.title = title;
+        this.updateButtonContent();
+    }
+
+
+    updateButtonContent(item) {
+        if (!item) return;
+        
+        const iconStyle = item.iconSize ? `style="width: ${item.iconSize}; height: ${item.iconSize};"` : '';
+        let content = '';
+        
+        if (item.icon) {
+            content += `<img src="${item.icon}" ${iconStyle} class="inline-block align-middle" alt="">`;
+        }
+        
+        if (item.text) {
+            if (this.hiddenTitle) {
+                content += `<span class="sr-only"></span>`;
+            } else {
+                content += `<span class="align-middle ${item.icon ? 'ml-2' : ''}">${item.text}</span>`;
+            }
+        }
+        
+        content += `
             <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" fill="${this.toggleColor}" clip-rule="evenodd"></path>
             </svg>
         `;
+        
+        this.button.innerHTML = content;
     }
 
     renderItems() {
@@ -107,11 +141,13 @@ class DropdownComponent {
         }
 
         const isSelected = this.selectedItems.has(item);
+        const iconStyle = item.iconSize ? `style="width: ${item.iconSize}; height: ${item.iconSize};"` : '';
+        
         return `
             <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900 dropdown-item ${isSelected ? 'bg-gray-200' : ''}" role="menuitem">
                 ${item.icon ? 
-                    `<img src="${item.icon}" class="w-${this.iconWidth} h-${this.iconHeight} mr-2 inline-block" alt="">` : ''}
-                ${item.text}
+                    `<img src="${item.icon}" ${iconStyle} class="inline-block align-middle" alt="">` : ''}
+                ${item.text ? `<span class="align-middle ${item.icon ? 'ml-2' : ''}">${item.text}</span>` : ''}
             </a>
         `;
     }
@@ -139,10 +175,11 @@ class DropdownComponent {
         this.renderItems();
     }
 
-    setItems(items) {
+    setItems(items, activeItemIndex = 0) {
         this.clearItems();
         items.forEach(item => this.addItem(item));
-    }
+        this.setActiveItemIndex(activeItemIndex);
+    }   
 
     setupEventListeners() {
         this.button.addEventListener('click', (e) => {
@@ -200,13 +237,18 @@ class DropdownComponent {
     }
 
     open() {
-        this.itemsContainer.classList.remove('hidden');
+        this.itemsContainer.style.display = 'block';
+        // Trigger reflow
+        this.itemsContainer.offsetHeight;
+        this.itemsContainer.classList.remove('invisible', 'opacity-0', 'scale-95');
+        this.itemsContainer.classList.add('opacity-100', 'scale-100');
         this.filterInput.focus();
         this.isOpen = true;
     }
 
     close() {
-        this.itemsContainer.classList.add('hidden');
+        this.itemsContainer.classList.remove('opacity-100', 'scale-100');
+        this.itemsContainer.classList.add('invisible', 'opacity-0', 'scale-95');
         this.isOpen = false;
     }
 

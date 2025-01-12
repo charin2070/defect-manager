@@ -1,21 +1,35 @@
 class StatisticManager {
     constructor() {
-       
+        this.refact = null;
     }
 
-    static getUnresolvedDefects(indexedIssues) {
-        let result = { count: 0, issues: [] };
-        result.count = indexedIssues.defect.state.unresolved.length;
-        result.issues = indexedIssues.defect.state.unresolved;
-        return result;
+    bind(refact) {
+        this.refact = refact;
+        return this;
     }
 
-    static getByDateRange(dateRange, indexedIssues) {
-        let result = { count: 0, issues: [] };
-        const flatIssues = Object.values(indexedIssues).flat();
+    static getUnresolvedDefects() {
+        const state = Refact.getInstance().state;
+        const issues = state.index?.defect?.state?.unresolved || [];
+        return {
+            count: issues.length,
+            issues: issues
+        };
+    }
 
-        result.issues = flatIssues.filter(issue => isInDateRange(issue.creation, dateRange) || isInDateRange(issue.resolution, dateRange));
+    static getByDateRange(dateRange) {
+        const state = Refact.getInstance().state;
+        if (!state.index?.defect?.all) return { count: 0, issues: [] };
+
+        let result = { count: 0, issues: [] };
+        const flatIssues = Object.values(state.index.defect.all);
+
+        result.issues = flatIssues.filter(issue => 
+            isInDateRange(issue.creation, dateRange) || 
+            isInDateRange(issue.resolution, dateRange)
+        );
         result.count = result.issues.length;
+
         return result;
     }
     
@@ -29,39 +43,37 @@ class StatisticManager {
         return grouped;
     }
    
-    static getBacklog(indexedIssues) {
-        const created = indexedIssues.defect.created;
-        const resolved = indexedIssues.defect.resolved;
-            // Собираем все уникальные даты из созданных и решённых задач
+    static getBacklog() {
+        const state = Refact.getInstance().state;
+        if (!state.index?.defect?.created || !state.index?.defect?.resolved) {
+            return {};
+        }
+
+        const created = state.index.defect.created;
+        const resolved = state.index.defect.resolved;
+
+        // Собираем все уникальные даты из созданных и решённых задач
         const allDates = new Set([
-        ...Object.keys(created),
-        ...Object.keys(resolved)
+            ...Object.keys(created),
+            ...Object.keys(resolved)
         ]);
-        
-            // Сортируем даты
+
+        // Сортируем даты
         const sortedDates = Array.from(allDates).sort();
-        
+
         let runningBacklog = 0; // Текущий бэклог
         const result = {};
-        
+
         sortedDates.forEach(date => {
             const createdCount = created[date]?.length || 0;
             const resolvedCount = resolved[date]?.length || 0;
-        
-                runningBacklog += createdCount - resolvedCount;
-        
-                result[date] = {
-                    created: createdCount,
-                    resolved: resolvedCount,
-                    backlog: runningBacklog
-                };
-            });
-        
-            return result;
-        }
-        
 
-    
+            runningBacklog += createdCount - resolvedCount;
+            result[date] = runningBacklog;
+        });
+
+        return result;
+    }
 
     static compareDateRange(dateRangeA, dateRangeB, indexedIssues) {
         const defectsA = StatisticManager.getByDateRange(dateRangeA, indexedIssues.defect);

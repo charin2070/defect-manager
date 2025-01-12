@@ -47,7 +47,7 @@ class FileInputComponent {
         this.uploadButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Reset input value before opening file dialog
+       
             this.inputElement.value = '';
             this.inputElement.click();
         });
@@ -84,7 +84,10 @@ class FileInputComponent {
             if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 const file = e.dataTransfer.files[0];
                 console.log('File dropped:', file.name);
-                this.refact.setState({ uploadedFile: file });
+                this.refact.setState({ 
+                    uploadedFile: file,
+                    dataSource: 'file'
+                }, 'FileInput.onDrop');
             }
         });
     }

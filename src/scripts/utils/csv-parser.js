@@ -84,7 +84,7 @@ class CsvParser {
   }
 
   static csvLinesToObjects(csvLines, indexField) {
-    console.log("🏃‍♂️‍➡️ [CsvParser.csvLinesToObjects] Processing CSV lines:", csvLines.length);
+    console.log(" [CsvParser.csvLinesToObjects] Processing CSV lines:", csvLines.length);
     
     return new Promise((resolve, reject) => {
       try {
@@ -107,29 +107,30 @@ class CsvParser {
           }
         }
 
-        console.log(`✅ [CsvParser.csvLinesToObjects] Parsed ${csvObjects.length} objects`);
+        console.log(` [CsvParser.csvLinesToObjects] Parsed ${csvObjects.length} objects`);
         resolve(csvObjects);
       } catch (error) {
-        console.error("⛔ [CsvParser.csvLinesToObjects] Error parsing CSV", error);
+        console.error(" [CsvParser.csvLinesToObjects] Error parsing CSV", error);
         reject(error);
       }
     });
   }
 
-  csvToObjects(csvData) {
-    const csvLines = this.cleanupCsvData(csvData);
+  csvToObjects(csvLines) {
+    // Clean up the lines
+    const cleanedLines = CsvParser.cleanupCsvLines(csvLines);
     const csvObjects = [];
 
-    const headers = csvLines[0].split(",");
+    const headers = cleanedLines[0].split(",");
 
     // CSV line to object
-    csvLines.forEach((line, index) => {
+    cleanedLines.forEach((line, index) => {
       if (index > 0) {
         csvObjects.push(this.csvLineToObject(line, headers, this.propsMap));
       }
     });
 
-    log(`✅ [CsvParser.parseCsvData] Parsed ${csvObjects.length} objects from CSV`);
+    console.log(` [CsvParser.csvToObjects] Parsed ${csvObjects.length} objects from CSV`);
     return csvObjects;
   }
 
@@ -155,3 +156,5 @@ class CsvParser {
     return csvObject;
   }
 }
+
+window.CsvParser = CsvParser;

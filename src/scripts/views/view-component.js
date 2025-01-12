@@ -11,11 +11,6 @@ class ViewComponent extends HtmlComponent {
             className: 'view-container',
             id: this.generateId('container')
         });
-        
-        // Then call render if it exists
-        if (typeof this.render === 'function') {
-            this.render();
-        }
     }
 
     generateId(prefix = '') {

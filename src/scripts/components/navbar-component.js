@@ -27,13 +27,13 @@ class NavbarComponent extends HtmlComponent {
         const brand = this.createElement('div', { className: 'navbar-brand fluent-acrylic' });
         brand.textContent = this.config.title;
 
-        const leftMenu = this.createElement('div', { className: 'navbar-left' });
-        leftMenu.appendChild(brand);
+        this.leftMenu = this.createElement('div', { className: 'navbar-left' });
+        this.leftMenu.appendChild(brand);
 
-        const menu = this.createElement('div', { className: 'navbar-menu' });
+        this.rightMenu = this.createElement('div', { className: 'navbar-right' });
 
-        this.#element.appendChild(leftMenu);
-        this.#element.appendChild(menu);
+        this.#element.appendChild(this.leftMenu);
+        this.#element.appendChild(this.rightMenu);
 
         // Adding styles for fixed position and Fluent Design effects
         this.#element.style.position = 'fixed';
@@ -89,11 +89,9 @@ class NavbarComponent extends HtmlComponent {
     
         // Add the item to the specified side
         if (side === 'left') {
-            const leftMenu = this.#element.querySelector('.navbar-left');
-            leftMenu.appendChild(itemElement);
+            this.leftMenu.appendChild(itemElement);
         } else if (side === 'right') {
-            const rightMenu = this.#element.querySelector('.navbar-menu');
-            rightMenu.appendChild(itemElement);
+            this.rightMenu.appendChild(itemElement);
         }
     }
     }
@@ -124,24 +122,25 @@ class NavbarComponent extends HtmlComponent {
         }
     }
 
-    appendComponent(component) {
-        if (!component || !component.getContainer) {
-            console.error('Invalid component passed to appendComponent');
+    appendComponent(component, side) {
+        let container;
+        if (!component.getContainer)
+            container = component.getContainer()
+        else
+        container = component.getContainer();
+  
+
+        if (side === 'left') {
+            this.leftMenu.appendChild(container);
             return;
         }
 
-        const container = component.getContainer();
-        if (!(container instanceof Element)) {
-            console.error('Component container is not a valid DOM element');
+        if (side === 'right') {
+            this.rightMenu.appendChild(container);
             return;
         }
 
-        const leftMenu = this.#element.querySelector('.navbar-left');
-        if (leftMenu) {
-            leftMenu.appendChild(container);
-        } else {
-            console.error('Left menu not found in navbar');
-        }
+        this.container.appendChild(container);
     }
 
     addButton(text, image, onclick) {

@@ -1,27 +1,43 @@
-class FlowManager extends Refact {
-    constructor({ dataManager, indexManager, uiManager, statisticManager }, logger = console) {
-        super();
-        
+class FlowManager {
+    constructor({ dataManager, indexManager, uiManager, statisticManager } = {}, logger = console) {
         this.logger = logger;
-        this.logger.log('[Flow] Запуск менеджера потоков данных');
-
         this.dataManager = dataManager;
         this.indexManager = indexManager;
         this.uiManager = uiManager;
+        this.statisticManager = statisticManager;
+        this.refact = null;
+    }
 
+    bind(refact) {
+        this.refact = refact;
         this.listen();
-        this.checkupData();
+        return this;
+    }
+
+    run() {
+        this.logger.log('[Flow] Запуск потоков данных. (run)');
+        // this.uiManager.showLoader('', 3, {spinnerColor: '#DB3434FF', backgroundColor: 'rgba(255, 255, 255, 0.9)', textColor: '#333'});    
+
+        if (!this.isDataExists()) {
+            this.logger.log('[Flow] Данные отсутствуют. Загрузка из LocalStorage... (run)');
+            this.dataManager.loadIssuesFromLocalStorage();
+        }
     }
 
     listen() {
-        this.subscribe('index', (index) => {
-            if (index) {
-                this.logger.log('[Flow] Обновление индекса');
-                this.updateConsumers();
+        this.refact.subscribe('issues', (issues) => {
+            if (!issues || issues.length === 0) {
+                this.logger.log(`👆 [Flow] Состояние 'issues' обновлено. Данные отсутствуют. Отображение экрана выбора файла.`);
+                this.uiManager.showUpload();
+                return;
             }
+
+            this.logger.log(`👆 [Flow] Состояние 'Issues' обновлено. Загружено ${issues.length} задач. Построение индекса...`);
+            this.refact.setState({ index: IndexManager.getIndex(issues) }, 'FlowManager');
+            this.uiManager.showDashboard();
         });
 
-        this.subscribe('dataFilter', ({ issues, filters }) => {
+        this.refact.subscribe('dataFilter', ({ issues, filters }) => {
             if (filters) {
                 this.logger.log('[Flow] Обновление фильтров');
                 this.statisticManager.filterIssues(filters);
@@ -29,11 +45,8 @@ class FlowManager extends Refact {
         });
     }
 
-    checkupData() {
-        if (this.state.issues) return;
-        if (this.state.index && Object.keys(this.state.index).length === 0) return;
-        this.logger.log('[Flow] Загрузка данных');
-        this.dataManager.loadFromLocalStorage();
+    isDataExists() {
+        // this.dataManager.cleanupLocalStorage();
+        return this.refact.state.issues ? true : (this.refact.state.index && Object.keys(this.refact.state.index).length > 0);
     }
-
 }

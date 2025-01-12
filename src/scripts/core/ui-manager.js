@@ -1,206 +1,130 @@
-class UiManager extends Refact {
-    constructor() {
-        super();
-        
-        // Проверяем, что это новый инстанс
-        if (!this.constructor.instances?.[this.constructor.name]) {
-            this.views = {};
-            this.currentView = null;
-            this.initialized = false;
-
-            // Подписываемся на изменения состояния
-            this.subscribe('appContainer', (container) => {
-                if (container && !this.contentContainer) {
-                    this.contentContainer = document.createElement('div');
-                    this.contentContainer.className = 'content-container';
-                    this.contentContainer.id = 'content-container';
-                    container.appendChild(this.contentContainer);
-                    
-                    if (!this.initialized) {
-                        this.#initializeComponents();
-                        this.initialized = true;
-                    }
-                }
-            });
-
-            // Подписываемся на изменение статуса
-            this.subscribe('appStatus', (status) => {
-                if (status === 'loading' && !this.initialized && this.contentContainer) {
-                    this.#initializeComponents();
-                    this.initialized = true;
-                }
-            });
-        }
+class UiManager {
+    constructor(appContainer) {
+        this.appContainer = appContainer;
+        this.refact = null;
+        this.views = {};
+        this.currentView = null;
+        this.initialized = false;
+        this.contentContainer = null;
+        this.loaderElement = null;
+        this.loaderTimeout = null;
+        this.navbar = null;
     }
 
-    static getInstance() {
-        return super.getInstance();
-    }
-
-    #setupSubscriptions() {
-        // Подписываемся на изменения состояния
-        this.subscribe('appContainer', (container) => {
-            if (container && !this.contentContainer) {
-                this.contentContainer = document.createElement('div');
-                this.contentContainer.className = 'content-container';
-                this.contentContainer.id = 'content-container';
-                container.appendChild(this.contentContainer);
-                
-                if (!this.initialized) {
-                    this.#initializeComponents();
-                    this.initialized = true;
-                }
-            }
-        });
-
-        // Подписываемся на изменение статуса
-        this.subscribe('appStatus', (status) => {
-            if (status === 'loading' && !this.initialized && this.contentContainer) {
-                this.#initializeComponents();
-                this.initialized = true;
-            }
-        });
-    }
-
-    #initializeComponents() {
-        this.initializeNavbar();
+    bind(refact) {
+        this.refact = refact;
+        this.setupSubscriptions();
+        this.initializeComponents();
         this.initializeViews();
-        
-        this.contentContainer.appendChild(this.views['dashboard'].getContainer());
-        this.contentContainer.appendChild(this.views['upload'].getContainer());
-        this.contentContainer.appendChild(this.views['reports'].getContainer());
-        
         this.initSlidePanels();
+        return this;
     }
 
-    updateFilter(filter) {
-        if (!this.refact || !this.refact.state.filterIssues) {
-            console.error('Refact or FilterIssues is not initialized');
+
+    setupSubscriptions() {
+     
+    }
+
+    initializeComponents() {
+        if (!this.appContainer) {
+            console.error(`[UiManager] App container not found. Skipping initialization.`);
             return;
         }
 
-        const currentFilters = this.refact.state.filters || {};
-        
-        // Обновляем фильтры
-        const updatedFilters = { ...currentFilters, ...filter };
+        this.navbar = new NavbarComponent();
+        const navbarElement = this.navbar.getContainer();
+        if (navbarElement) {
+            this.navbar.addMenuItem({side: 'right',icon: 'src/image/menu.svg',title: '',callback: () => {this.settingsSlidePanel?.open();}});
+        }
+        if (navbarElement) {
+            this.appContainer.appendChild(navbarElement);
+        }
 
-        // Применяем фильтры через IndexManager
-        const filteredIndex = this.refact.state.filterIssues(updatedFilters, this.refact.state.issues);
-
-        // Обновляем состояние
-        this.refact.setState({ 
-            filters: updatedFilters,
-            filteredIssues: filteredIndex.issues 
-        }, 'UiManager');
-
-        // Обновляем dashboard с отфильтрованными данными
-        this.updateDashboard(filteredIndex.issues);
-    }
-
-    initializeNavbar() {
-        const navbar = new NavbarComponent();
-        
-        // Initialize dropdown with proper options
-        this.issueTypeDropdown = new DropdownComponent({
-            id: 'issue-type-dropdown',
-            defaultItem: 0,
-            className: 'navbar-dropdown',
-            height: '100%',
-            fontSize: '1.4em',
-            items: [
-                {
-                    text: 'Дефекты', 
-                    onClick: () => this.updateFilter({type: 'defect'}, 'UiManager'),  
-                    value: 'defects',
-                    icon: 'src/image/jira-defect.svg'
-                },
-                {
-                    text: 'Доработки', 
-                    onClick: () => 
-                        {
-                            console.log('requests selected');
-                            this.updateFilter({type: 'request'}, 'UiManager');  
-                        },
-                    value: 'requests',
-                    icon: 'src/image/jira-defect.svg'
-                },
-                // Separator
-                {
-                    type: 'separator',
-                    text: '---'
-                },
-                {
-                    text: 'Отчёты', 
-                    onClick: () => this.showReports(), 
-                    value: 'reports',
-                    icon: 'src/image/translation.svg'
-                }
-            ]
-        });
-
-        const projectDropdown = new DropdownComponent({ 
-            activeItem: 1,
-            itemSize: '250px',
-         });
-         
+        this.projectDropdown = new DropdownComponent();
+        const projectDropdownElement = this.projectDropdown.getContainer();
         const projectItems = [
-            {icon: 'src/image/alfa_logo.png', size: '250px', text: ''},
-            {icon: 'src/image/go-logo.png', size: '250px', text: ''},
+            { text: 'Альфа Инвестиции', icon: 'src/image/alfa_logo.png', iconSize: '2em', callback: () => {console.log('Project 1 selected');}},
+            { text: 'Go Invest', icon: 'src/image/go.png', iconSize: '2em', callback: () => {console.log('Project 2 selected');}},
         ];
-        projectDropdown.setItems(projectItems);
-        projectDropdown.setActiveItem(1);
+        this.projectDropdown.setItems(projectItems);
+        this.projectDropdown.hiddenTitle = true;
+        this.projectDropdown.setActiveItemIndex(0);
+        if (projectDropdownElement) {
+            this.navbar.appendComponent(this.projectDropdown, 'left');
+        }
 
-        this.dataRangeDropdown = new DateRangeDropdown(
-            (dateRange) => this.updateFilter({ dateRange: dateRange }, 'UiManager'), 'UiManager');
-            
-        navbar.appendComponent(projectDropdown);
-        navbar.appendComponent(this.issueTypeDropdown);
-        navbar.appendComponent(this.dataRangeDropdown);
+        this.contentContainer = new HtmlComponent();
+        const contentElement = this.contentContainer.createElement('div', {
+            className: 'content-container',
+            id: 'content-container',
+        });
+        this.contentContainer.setContainer(contentElement);
+        if (contentElement) {
+            this.appContainer.appendChild(contentElement);
+        }
 
-        navbar.addSearchBox();
-        // Upload data file
-        navbar.addMenuItem({ side: 'right', icon: 'src/image/upload-svgrepo-com.svg', callback: () => { this.views['upload'].showDataFilePicker() } });
-        // Settings
-        navbar.addMenuItem({ side: 'right', icon: 'src/image/grid-svgrepo-com.svg', callback: () => this.showSettings() });
-
-        this.appContainer.appendChild(navbar.getContainer());
     }
 
-    showSettings() {
-        if (!this.settingsSlidePanel.isOpen) {
-            this.settingsSlidePanel.open(this.settingsView.getContainer(), 'Настройки'); // Open SlidePanel with SettingsView
-        } else {
-            this.settingsSlidePanel.close();
+    initializeViews() {
+        this.views = {
+            'dashboard': new DashboardView(),
+            'upload': new UploadView(),
+        };
+
+       this.renderViews(); 
+    }
+
+    renderViews() {
+        this.hideAllViews();
+        const container = this.contentContainer.getElement();
+        if (!container) return;
+
+        if (this.views.dashboard) {
+            this.views.dashboard.render();
+            const dashboardElement = this.views.dashboard.getContainer();
+            if (dashboardElement) {
+                container.appendChild(dashboardElement);
+            }
         }
     }
 
-    showUploadView() {
-        this.hideAllViews();
-        this.views['upload'].show();
+    update() {
+        const index = this.refact.state.index;
+        if (this.views.dashboard && index) {
+            this.views.dashboard.update(index);
+        }
+    }
+    
+    showUpload() {
+        this.showView('upload');
     }
 
-    showReports() {
-        this.hideAllViews();
-        this.views['reports'].show();
-    }
-
-    hideSettings() {
-        this.settingsSlidePanel.close();
+    showDashboard() {
+        this.showView('dashboard');
     }
 
     showView(viewName) {
+        log(`Showing view: ${viewName}`);
+        
         if (!this.views[viewName]) {
-            console.error(`View "${viewName}" not found`);
+            console.warn(`View ${viewName} not found`);
             return;
         }
 
-        // Don't rehide/reshow if it's already the current view
-        if (this.currentView === viewName) {
-            return;
-        }
-
+        // Скрываем текущий view
         this.hideAllViews();
-        this.views[viewName].show();
+
+        // Получаем контейнер для views
+        const container = this.contentContainer.getContainer();
+        if (!container) return;
+
+        // Очищаем контейнер
+        // container.innerHTML = '';
+
+        // Показываем новый view
+        const view = this.views[viewName];
+        this.contentContainer.appendChild(view.getContainer());
+        view.show();
         this.currentView = viewName;
     }
 
@@ -212,83 +136,84 @@ class UiManager extends Refact {
         });
     }
 
-    setTitle(title) {
-        document.title = title;
-    }
-
-    showDashboard(indexedIssues) {
-        console.log('[UIManager] Showing dashboard with data:', indexedIssues);
-        
-        this.hideAllViews();
-        this.views['dashboard'].show();
-        if (indexedIssues) {
-            this.views['dashboard'].update(indexedIssues);
-        }
-        this.setTitle('Дэшборд');
-        this.currentView = 'dashboard';
-    }
-
-    initializeViews() {
-        const dashboard = new DashboardView();
-        const upload = new UploadView();
-        const reports = new ReportsView();
-
-        this.views = {
-            'dashboard': dashboard,
-            'upload': upload,
-            'reports': reports,
-        };
-    };
-    
-    renderViews() {
-        this.hideAllViews();
-        this.contentContainer.innerHTML = '';   
-        this.contentContainer.appendChild(this.views['dashboard'].getContainer());
-        this.contentContainer.appendChild(this.views['upload'].getContainer());
-        this.contentContainer.appendChild(this.views['reports'].getContainer());
-    }
-
-    update(indexedIssues) {
-        this.views['dashboard'].update(indexedIssues);
-    }
-
-    handleAppStatus(appStatus) {
-        switch (appStatus) {
-            case 'initializing':
-                this.showView('upload');
-                break;
-            case 'initialized':
-            case 'ready':
-                // Check if there are any issues before showing dashboard
-                const issues = this.refact.issues;
-                if (!issues || !Array.isArray(issues) || issues.length === 0) {
-                    this.showView('upload');
-                } else {
-                    this.showView('dashboard');
-                }
-                break;
-            default:
-                console.log(`Unhandled app status: ${appStatus}`);
-        }
-    }
-
-    registerView(name, view) {
-        this.views[name] = view;
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.unsubscribe();
-    }
-
-    initSlidePanels(){
+    initSlidePanels() {
         this.settingsSlidePanel = new SlidePanel({ isSingle: true });
+        this.settingsSlidePanel.name = 'settings-slide-panel';
+      
         this.settingsView = new SettingsView();
         this.settingsSlidePanel.setWidth(30);
         this.settingsSlidePanel.setContent(this.settingsView.getContainer());
+
         document.body.appendChild(this.settingsSlidePanel.panel);
-        this.settingsView.show();
+    }
+
+    showLoader(text = '', duration = 2, options = {}) {
+        const defaultOptions = {
+            spinnerColor: '#3498db',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            textColor: '#333'
+        };
         
-        this.issuesSlidePanel = new SlidePanel({ isSingle: true });
-        document.body.appendChild(this.issuesSlidePanel.panel);
+        const finalOptions = { ...defaultOptions, ...options };
+        
+        // Clear any existing loader
+        if (this.loaderTimeout) {
+            clearTimeout(this.loaderTimeout);
+            this.loaderTimeout = null;
+        }
+        
+        // Create loader if it doesn't exist
+        if (!this.loaderElement) {
+            this.loaderElement = document.createElement('div');
+            this.loaderElement.className = 'global-loader';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'loader-spinner';
+            this.loaderElement.appendChild(spinner);
+            
+            const textElement = document.createElement('div');
+            textElement.className = 'loader-text';
+            this.loaderElement.appendChild(textElement);
+            
+            document.body.appendChild(this.loaderElement);
+        }
+        
+        // Update loader text and colors
+        const textElement = this.loaderElement.querySelector('.loader-text');
+        const spinner = this.loaderElement.querySelector('.loader-spinner');
+        
+        textElement.textContent = text;
+        textElement.style.color = finalOptions.textColor;
+        
+        this.loaderElement.style.background = finalOptions.backgroundColor;
+        spinner.style.borderColor = finalOptions.spinnerColor + '40'; // 40 = 25% opacity
+        spinner.style.borderTopColor = finalOptions.spinnerColor;
+        
+        // Show loader with animation
+        this.loaderElement.style.display = 'flex';
+        // Trigger reflow to ensure the transition works
+        this.loaderElement.offsetHeight;
+        this.loaderElement.classList.add('visible');
+        
+        // Hide loader after duration if specified
+        if (duration > 0) {
+            this.loaderTimeout = setTimeout(() => {
+                this.hideLoader();
+            }, duration * 1000);
+        }
+    }
+    
+    hideLoader() {
+        if (this.loaderElement) {
+            this.loaderElement.classList.remove('visible');
+            // Wait for the transition to complete before hiding
+            setTimeout(() => {
+                this.loaderElement.style.display = 'none';
+            }, 300); // Match the transition duration from CSS
+        }
+        if (this.loaderTimeout) {
+            clearTimeout(this.loaderTimeout);
+            this.loaderTimeout = null;
+        }
     }
 }

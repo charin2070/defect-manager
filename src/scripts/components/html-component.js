@@ -92,4 +92,8 @@ window.HtmlComponent = class HtmlComponent {
     getContainer() {
         return this.container;
     }
+
+    getElement() {
+        return this.element;
+    }
 }

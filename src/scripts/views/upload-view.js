@@ -3,8 +3,8 @@ class UploadView extends ViewComponent {
     constructor() {
         super();
         this.container = this.createElement('div');
+        this.container.id = 'upload-view-container';
         this.container.className = 'view-container';
-        this.setContainerId('upload-container');
         this.render();
     }
 
@@ -21,6 +21,14 @@ class UploadView extends ViewComponent {
 
         // Add card to container
         this.container.appendChild(this.card);
+    }
+
+    show() {
+        this.container.style.display = 'flex';
+    }
+
+    hide() {
+        this.container.style.display = 'none';
     }
 
     showDataFilePicker() {
