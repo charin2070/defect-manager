@@ -1,5 +1,6 @@
-class UiManager {
+class UiManager extends HtmlComponent {
     constructor(appContainer) {
+        super();
         this.appContainer = appContainer;
         this.refact = null;
         this.views = {};
@@ -40,6 +41,8 @@ class UiManager {
             this.appContainer.appendChild(navbarElement);
         }
 
+        this.createSideMenu();
+
         this.projectDropdown = new DropdownComponent();
         const projectDropdownElement = this.projectDropdown.getContainer();
         const projectItems = [
@@ -63,6 +66,29 @@ class UiManager {
             this.appContainer.appendChild(contentElement);
         }
 
+    }
+
+    createSideMenu() {
+        if (!this.sideMenuContainer) {
+            this.sideMenuContainer = this.createElement('div', {
+                className: 'side-menu-container',
+                id: 'side-menu-container'
+            });
+            this.sideMenu = new SideMenuComponent();
+            const sideMenuElement = this.sideMenu.getContainer();
+            
+            // Слушаем событие сворачивания меню
+            sideMenuElement.addEventListener('collapseChange', (e) => {
+                if (e.detail.collapsed) {
+                    this.sideMenuContainer.style.width = 'var(--menu-collapsed-width, 56px)';
+                } else {
+                    this.sideMenuContainer.style.width = 'var(--menu-width, 240px)';
+                }
+            });
+            
+            this.sideMenuContainer.appendChild(sideMenuElement);
+            this.appContainer.appendChild(this.sideMenuContainer);
+        }
     }
 
     initializeViews() {

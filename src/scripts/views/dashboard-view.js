@@ -25,20 +25,6 @@ class DashboardView extends ViewComponent {
             this.chartsRow.appendChild(this.defectsCard.getContainer());
         }
 
-        if (!this.sideMenuContainer) {
-            // Создаем side-menu как обычный div-контейнер
-            this.sideMenuContainer = this.createElement('div', {
-                className: 'side-menu-container',
-                id: 'side-menu-container'
-            });
-            
-            // Создаем компонент меню
-            this.sideMenu = new SideMenuComponent();
-            this.sideMenuContainer.appendChild(this.sideMenu.getContainer());
-            
-            this.getContainer().appendChild(this.sideMenuContainer);
-        }
-
         if (!this.issueTableRow) {
             this.issueTableRow = this.createElement('div', {
                 className: 'cards-row',

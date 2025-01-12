@@ -36,17 +36,29 @@ class SideMenuComponent extends HtmlComponent {
         ];
         
         this.container = this.createElement('nav', { className: 'side-menu' });
+        this.collapsed = false;
         this.render();
         this.setupEventListeners();
     }
 
     render() {
+        // Создаем кнопку сворачивания
+        const collapseButton = this.createElement('div', { className: 'collapse-button' });
+        const collapseIcon = this.createElement('img', {
+            src: 'src/image/chevron-left.svg',
+            alt: 'Свернуть',
+            className: 'collapse-icon'
+        });
+        collapseButton.appendChild(collapseIcon);
+        this.container.appendChild(collapseButton);
+        
         const list = this.createElement('ul', { className: 'side-menu-list' });
         
         this.items.forEach((item, index) => {
             const li = this.createElement('li', { 
                 className: `side-menu-item ${item.active ? 'active' : ''} ${item.subItems ? 'has-submenu' : ''}`,
-                'data-index': index
+                'data-index': index,
+                'data-tooltip': item.text
             });
             
             const img = this.createElement('img', {
@@ -78,7 +90,8 @@ class SideMenuComponent extends HtmlComponent {
                     const subLi = this.createElement('li', { 
                         className: 'submenu-item',
                         'data-parent-index': index,
-                        'data-sub-index': subIndex
+                        'data-sub-index': subIndex,
+                        'data-tooltip': subItem.text
                     });
                     
                     const subImg = this.createElement('img', {
@@ -107,6 +120,21 @@ class SideMenuComponent extends HtmlComponent {
     }
 
     setupEventListeners() {
+        // Обработчик для кнопки сворачивания
+        const collapseButton = this.container.querySelector('.collapse-button');
+        collapseButton.addEventListener('click', () => {
+            this.collapsed = !this.collapsed;
+            if (this.collapsed) {
+                this.container.classList.add('collapsed');
+            } else {
+                this.container.classList.remove('collapsed');
+            }
+            // Вызываем событие изменения состояния
+            this.container.dispatchEvent(new CustomEvent('collapseChange', {
+                detail: { collapsed: this.collapsed }
+            }));
+        });
+
         const items = this.container.querySelectorAll('.side-menu-item');
         const subItems = this.container.querySelectorAll('.submenu-item');
         
@@ -120,8 +148,8 @@ class SideMenuComponent extends HtmlComponent {
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const index = parseInt(item.dataset.index);
                 
-                if (hasSubmenu) {
-                    // Переключаем состояние подменю
+                if (hasSubmenu && !this.collapsed) {
+                    // Переключаем состояние подменю только если меню не свернуто
                     item.classList.toggle('expanded');
                     const submenu = item.querySelector('.submenu');
                     if (submenu) {
@@ -167,5 +195,14 @@ class SideMenuComponent extends HtmlComponent {
                 }));
             });
         });
+    }
+
+    setCollapsed(collapsed) {
+        this.collapsed = collapsed;
+        if (this.collapsed) {
+            this.container.classList.add('collapsed');
+        } else {
+            this.container.classList.remove('collapsed');
+        }
     }
 }

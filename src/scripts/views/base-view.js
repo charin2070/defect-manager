@@ -1,6 +1,9 @@
-class BaseView {
-    constructor(containerId) {
-        this.container = document.getElementById(containerId);
+class BaseView extends HtmlComponent {
+    constructor() {
+        super();
+        this.container = this.createElement('div', {
+            className: 'view-container'
+        });
         this.cards = new Map();
         this.gridCells = {
             columns: 3,

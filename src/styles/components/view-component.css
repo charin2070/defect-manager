@@ -1,0 +1,9 @@
+.view-container {
+    margin-left: var(--menu-width, 240px);
+    padding: 24px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.side-menu.collapsed + .view-container {
+    margin-left: var(--menu-collapsed-width, 56px);
+}
