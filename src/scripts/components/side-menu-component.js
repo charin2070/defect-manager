@@ -3,12 +3,17 @@ class SideMenuComponent extends HtmlComponent {
         super();
         this.items = [];
         this.itemsById = new Map(); // карта id -> item
-        this.collapsed = false;
+        this.collapsed = true;
 
         // Создаём главный контейнер
-        this.container = this.createElement('nav', { className: 'side-menu' });
+        this.container = this.createElement('nav', { className: 'side-menu collapsed' });
+        
+        // Make container focusable
+        this.container.tabIndex = -1;
 
         this.render();
+        this.setupEventListeners();
+        this.setupBlurHandler();
     }
 
     addItem(item) {
@@ -109,6 +114,9 @@ class SideMenuComponent extends HtmlComponent {
             if (typeof item.onClick === 'function') {
                 itemContent.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (this.collapsed) {
+                        this.expand();
+                    }
                     item.onClick();
                 });
             }
@@ -152,6 +160,9 @@ class SideMenuComponent extends HtmlComponent {
                     if (typeof subItem.onClick === 'function') {
                         subItemContent.addEventListener('click', (e) => {
                             e.stopPropagation();
+                            if (this.collapsed) {
+                                this.expand();
+                            }
                             subItem.onClick();
                         });
                     }
@@ -182,7 +193,24 @@ class SideMenuComponent extends HtmlComponent {
         this.container.appendChild(collapseButton);
 
         // После создания всей структуры навешиваем события
-        this.setupEventListeners();
+    }
+
+    expand() {
+        this.collapsed = false;
+        this.container.classList.remove('collapsed');
+    }
+
+    collapse() {
+        this.collapsed = true;
+        this.container.classList.add('collapsed');
+    }
+
+    toggle() {
+        if (this.collapsed) {
+            this.expand();
+        } else {
+            this.collapse();
+        }
     }
 
     /**
@@ -192,10 +220,10 @@ class SideMenuComponent extends HtmlComponent {
         // Кнопка сворачивания
         const collapseButton = this.container.querySelector('.collapse-button');
         if (collapseButton) {
-            // По клику меняем состояние collapsed
-            collapseButton.addEventListener('click', () => {
-                this.setCollapsed(!this.collapsed);
-
+            collapseButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Предотвращаем всплытие
+                this.toggle();
+                
                 // Сгенерируем событие "collapseChange"
                 this.container.dispatchEvent(new CustomEvent('collapseChange', {
                     detail: { collapsed: this.collapsed }
@@ -217,6 +245,11 @@ class SideMenuComponent extends HtmlComponent {
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const index = parseInt(item.dataset.index, 10);
 
+                // Разворачиваем меню при клике на любой пункт
+                if (this.collapsed) {
+                    this.expand();
+                }
+
                 // Если есть подменю и меню не свернуто — раскрываем/скрываем
                 if (hasSubmenu && !this.collapsed) {
                     item.classList.toggle('expanded');
@@ -224,7 +257,10 @@ class SideMenuComponent extends HtmlComponent {
                     if (submenu) {
                         submenu.classList.toggle('expanded');
                     }
-                } else {
+                } 
+                
+                // Обрабатываем клик на пункте меню
+                if (!hasSubmenu || this.collapsed) {
                     // Активный класс ставим только если нет подменю или меню свернуто
                     items.forEach(i => i.classList.remove('active'));
                     subItems.forEach(i => i.classList.remove('active'));
@@ -243,6 +279,11 @@ class SideMenuComponent extends HtmlComponent {
             subItem.addEventListener('click', (e) => {
                 e.stopPropagation();
 
+                // Разворачиваем меню при клике на подпункт
+                if (this.collapsed) {
+                    this.expand();
+                }
+
                 // Удаляем active у всех
                 items.forEach(i => i.classList.remove('active'));
                 subItems.forEach(i => i.classList.remove('active'));
@@ -257,10 +298,26 @@ class SideMenuComponent extends HtmlComponent {
                     detail: {
                         parentIndex,
                         subIndex,
-                        item: this.items[parentIndex].subItems[subIndex]
+                        item: this.items[parentIndex],
+                        subItem: this.items[parentIndex].subItems[subIndex]
                     }
                 }));
             });
+        });
+    }
+
+    setupBlurHandler() {
+        // Обработчик потери фокуса
+        document.addEventListener('click', (e) => {
+            // Проверяем, что клик был вне меню
+            if (!this.container.contains(e.target) && !this.collapsed) {
+                this.collapse();
+            }
+        });
+
+        // Предотвращаем сворачивание при клике внутри меню
+        this.container.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     }
 
@@ -269,7 +326,7 @@ class SideMenuComponent extends HtmlComponent {
      */
     setCollapsed(collapsed) {
         this.collapsed = collapsed;
-        if (this.collapsed) {
+        if (collapsed) {
             this.container.classList.add('collapsed');
         } else {
             this.container.classList.remove('collapsed');

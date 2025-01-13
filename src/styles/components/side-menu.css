@@ -48,10 +48,10 @@
     bottom: 0;
     z-index: 999;
     background: var(--surface-primary);
+    width: fit-content;
     overflow-y: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 250px;
     padding: 0;
 }
 

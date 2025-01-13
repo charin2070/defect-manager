@@ -1,0 +1,166 @@
+:root {
+    --menu-width: 240px;
+    --menu-collapsed-width: 56px;
+    --transition-timing: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.side-menu {
+    width:fit-content;
+    height: 100%;
+    margin: 0;
+    background: var(--surface-primary);
+    border-radius: 4px;
+    transition: width var(--transition-timing);
+    overflow: hidden;
+    position: relative;
+}
+
+.side-menu.collapsed {
+    width: fit-content;
+}
+
+.side-menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Menu Items */
+.side-menu-item {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    background: transparent;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.menu-item-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Icons */
+.side-menu-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+/* Text */
+.side-menu-text {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    transition: opacity var(--transition-timing);
+    flex-grow: 1;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.side-menu.collapsed .side-menu-text {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+/* Hover States */
+.side-menu-item:hover {
+    background: var(--surface-hover);
+}
+
+.side-menu-item.active {
+    background-color: #93939321;
+    font-weight: 600;
+}
+
+.side-menu-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+/* Collapse Button */
+.collapse-button {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    cursor: pointer;
+    background: var(--surface-primary);
+    border-top: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.collapse-button:hover {
+    background: var(--surface-hover);
+}
+
+.collapse-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: transform var(--transition-timing);
+}
+
+.side-menu.collapsed .collapse-icon {
+    transform: rotate(180deg);
+}
+
+/* Submenu */
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-timing);
+}
+
+.submenu.expanded {
+    max-height: 500px;
+}
+
+.submenu-item {
+    padding-left: 48px;
+    opacity: 1;
+    transition: opacity var(--transition-timing),
+                background-color 0.2s ease;
+}
+
+.side-menu.collapsed .submenu-item {
+    opacity: 0;
+}
+
+/* Tooltip for collapsed state */
+.side-menu.collapsed .menu-item-content {
+    position: relative;
+}
+
+.side-menu.collapsed .menu-item-content:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--surface-tooltip);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: 499px;
+    margin-left: 8px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 1000;
+}

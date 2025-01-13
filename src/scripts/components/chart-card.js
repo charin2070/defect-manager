@@ -258,6 +258,10 @@ class ChartCard extends HtmlComponent {
         }
     }
 
+    setChart(chart) {
+        this.chart = chart;
+    }
+
     objectToData(object) {
         return {
             labels: Object.keys(object),
