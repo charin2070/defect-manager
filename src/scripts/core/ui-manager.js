@@ -14,16 +14,21 @@ class UiManager extends HtmlComponent {
 
     bind(refact) {
         this.refact = refact;
-        this.setupSubscriptions();
+        this.listen();
         this.initializeComponents();
         this.initializeViews();
         this.initSlidePanels();
+
         return this;
     }
 
 
-    setupSubscriptions() {
-     
+    listen() {
+        this.refact.subscribe('index', (index) => {
+            if (index) {
+               
+            }
+        });
     }
 
     initializeComponents() {
@@ -76,7 +81,60 @@ class UiManager extends HtmlComponent {
             });
             this.sideMenu = new SideMenuComponent();
             const sideMenuElement = this.sideMenu.getContainer();
-            
+
+            this.sideMenuItems = [
+                {
+                    icon: 'src/image/backlog-0.svg',
+                    text: 'Бэклог',   
+                },
+                {
+                    icon: 'src/image/team-5.svg',
+                    text: 'Команды',
+                    id: 'teams'
+                },
+                {
+                    icon: 'src/image/sla-1.svg',
+                    text: 'SLA',
+                    subItems: [
+                        {
+                            // icon: 'src/image/chart.svg',
+                            text: 'За месяц'
+                        },
+                        {
+                            // icon: 'src/image/chart.svg',
+                            text: 'За всё время'
+                        }
+                    ]
+                },
+                {
+                    icon: 'src/image/user-tag.svg',
+                    text: 'Обращения',
+                },
+                { 
+                    icon: 'src/image/settings-0.svg',
+                    text: 'Настройки',
+                    subItems: [
+                        {
+                            icon: 'src/image/upload-0.svg',
+                            text: 'Загрузить файл',
+                            onClick: () => {
+                                this.views.upload.fileInput && this.views.upload.fileInput.showFilePicker();
+                            }
+                        },
+                        {
+                            icon: 'src/image/trash-bin-0.svg',
+                            text: 'Очистить данные',
+                            onClick: () => {
+                                setSvgFillColor('src/image/trash-bin-0.svg', 'red'); // Set icon
+                            }
+                        }
+                    ]
+                }
+            ];
+        
+            this.sideMenu.setItems(this.sideMenuItems);
+
+
             // Слушаем событие сворачивания меню
             sideMenuElement.addEventListener('collapseChange', (e) => {
                 if (e.detail.collapsed) {

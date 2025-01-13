@@ -33,7 +33,24 @@ class FlowManager {
             }
 
             this.logger.log(`👆 [Flow] Состояние 'Issues' обновлено. Загружено ${issues.length} задач. Построение индекса...`);
-            this.refact.setState({ index: IndexManager.getIndex(issues) }, 'FlowManager');
+            let index = IndexManager.getIndex(issues);
+            this.refact.setState({ index: index });
+
+            console.log('Index updated:', index);
+            const teamSubItems  = [];
+            
+            index.teams.forEach((team) => {
+                teamSubItems.push({
+                    text: team,
+                    onClick: () => {
+                        console.log('Team selected:', team);
+                    }
+                })
+            });
+            this.uiManager.sideMenu.addSubItems('teams', teamSubItems);
+
+            this.statisticManager.getStatistics(this.refact.state.issues, this.refact.state.index);
+            console.log(`👆 [Flow] Индекс построен. State:`, this.refact.state);
             this.uiManager.showDashboard();
         });
 

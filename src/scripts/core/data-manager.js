@@ -44,7 +44,6 @@ class DataManager {
             console.error('File is undefined');
             return;
         }
-        console.log(`File name: ${file.name}, type: ${file.type}`);
 
         // .csv
         if (file.name.endsWith('.csv')) {
@@ -52,11 +51,16 @@ class DataManager {
             const fileObjects = await this.csvParser.csvToObjects(csvFileData);
             
             // Objects to issues
-            const issues = fileObjects.map(fileObject => new Issue(fileObject));
+            let issues = [];
+            fileObjects.forEach(fileObject => {
+                const issue = new Issue(fileObject);
+                issues.push(issue);
+            });
+            
             this.refact.setState({ issues: issues, dataSource: 'file', dateStatus: 'loaded', dateUpdated: file.lastModified });
 
             // Set to state
-            this.saveToLocalStorage({ issues: issues, index: this.refact.state.index });
+            this.saveToLocalStorage({ issues: issues, dateUpdated: file.lastModified });
             return { issues: issues, source: 'file' };
         }
     }
@@ -69,23 +73,23 @@ class DataManager {
             const storedData = localStorage.getItem('issues');
             if (!storedData) {
                 console.log('No data in LocalStorage');
-                this.refact.setState({ issues: [] });
+                this.refact.setState({ issues: null });
                 return;
             }
 
             const parsedData = JSON.parse(storedData);
             if (!Array.isArray(parsedData) || parsedData.length === 0) {
                 console.log('No valid issues in LocalStorage');
-                this.refact.setState({ issues: [] });
+                this.refact.setState({ issues: null });
                 return;
             }
 
             const issues = parsedData.map(parsedObject => new Issue(parsedObject));
-            this.refact.setState({ issues });
+            this.refact.setState({ issues, dataSource: 'local_storage' });
 
         } catch (error) {
             console.error('Error loading from LocalStorage:', error);
-            this.refact.setState({ issues: [] });
+            this.refact.setState({ issues: null });
         }
     }
 
@@ -96,11 +100,6 @@ class DataManager {
             // Save issues
             if (data.issues) {
                 localStorage.setItem('issues', JSON.stringify(data.issues));
-            }
-
-            // Save index
-            if (data.index) {
-                localStorage.setItem('index', JSON.stringify(data.index));
             }
 
             return true;
@@ -130,7 +129,7 @@ class DataManager {
         // Update state with modified issues
         this.refact.setState({ issues: this.refact.state.issues }, 'DataManager.loadFromFile.updateSLA');
         this.refact.setState({ dataStatus: 'loaded' }, 'DataManager.loadFromFile');
-        await this.saveToLocalStorage({ index: this.refact.state.index, issues: this.refact.state.issues });
+        this.saveToLocalStorage({ issues: this.refact.state.issues });
         return { issues: this.refact.state.issues, source: 'file' };
     }
 
@@ -138,13 +137,12 @@ class DataManager {
         if (isAll) {
             localStorage.clear();
             console.log('🗑️ [Data Manager] All data removed from LocalStorage');
-            this.refact.setState({ dataStatus: 'empty' }, 'DataManager.removeFromLocalStorage');
+            this.refact.setState({ issues: null, dataStatus: 'empty'}, 'DataManager.removeFromLocalStorage');
             return;
         }
         
         localStorage.removeItem('issues');
-        localStorage.removeItem('index');
-        this.refact.setState({ issues: null, index: null }, 'DataManager.removeFromLocalStorage');
+        this.refact.setState({ issues: null }, 'DataManager.removeFromLocalStorage');
         console.log('🗑️ [Data Manager] Data removed from LocalStorage');
     }
 

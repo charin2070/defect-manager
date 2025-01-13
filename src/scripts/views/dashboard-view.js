@@ -19,9 +19,8 @@ class DashboardView extends ViewComponent {
         if (!this.defectsCard) {
             this.defectsCard = new ChartCard();
             this.defectsCard.setTitle('Дефекты');
-            this.defectsCard.setValue(0);
-            this.defectsCard.setTrend(0);
-            this.defectsCard.drawDateLine([3, 9, 6, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
+            // this.defectsCard.drawDateLine([3, 9, 6, 12, 15, 18, 21, 24, 27, 30, 33, 36]);
+            this.defectsCard.bind(this.state);
             this.chartsRow.appendChild(this.defectsCard.getContainer());
         }
 

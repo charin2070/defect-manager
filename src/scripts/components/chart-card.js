@@ -4,6 +4,8 @@ class ChartCard extends HtmlComponent {
         this.container = this.createElement('div', {
             className: 'chart-card-container',
         });
+        
+        this.refact = null;
 
         this.container = this.htmlToComponent(this.htmlTemplate);
         document.body.appendChild(this.container);
@@ -43,7 +45,14 @@ class ChartCard extends HtmlComponent {
         this.menuButton = this.container.querySelector('header .menu-icon');
         this.menu = this.container.querySelector('header .menu-dropdown');
         this.maximizeButton = this.container.querySelector('header .maximize-icon');
+        
         this.dateRange = new DateRangeDropdown();
+        this.dateRange.onChange = (dateRange) => {
+            console.log(this);
+            this.dateRange = dateRange;
+            this.update();
+        }
+
         this.container.querySelector('.date-range-dropdown').appendChild(this.dateRange.getContainer());
         this.dateRange.setActiveItemIndex(1);
 
@@ -169,6 +178,24 @@ class ChartCard extends HtmlComponent {
         this.hideChartElements();
     }
 
+    bind(refact) {
+        this.refact = refact;
+        this.listen();
+    }
+
+    listen() {
+        this.refact.subscribe('index', (index) => {
+            if (index) {
+                this.setValue(index.defect?.state?.unresolved?.length);
+                this.setTrend(index.defect?.state?.unresolved?.length - index.defect?.state?.resolved?.length);
+
+                const backlog = StatisticManager.getBacklog(true,index, 'month');
+                console.log(backlog, 'BACKLOG');
+                this.drawMonthLine(backlog);
+            }
+        }); 
+    }
+
     toggleMaximize() {
         if (this.isMaximized) {
             this.container.style.width = '100%';
@@ -267,14 +294,16 @@ class ChartCard extends HtmlComponent {
         this.titleElement.textContent = title;
     }
 
-    updateData(newData, animate = true) {
-        this.chart.data.datasets[0].data = newData;
+    update() {
+        let index = this.refact.state.index;
+        let unresolvedCount = StatisticManager.getUnresolvedDefects().count;
+        let backlogData = StatisticManager.getBacklog(true, index);
+        let unresolvedLostMonth = StatisticManager.getUnresolved
+        this.chart.data.datasets[0].data = index;
+        this.setValue(unresolvedCount || 0);
+        this.setTrend(trendValue);
         
-        if (animate) {
-            this.chart.update('active'); // Использует анимацию
-        } else {
-            this.chart.update('none'); // Без анимации
-        }
+        this.chart.update();
     }
 
     updateLineStyle({

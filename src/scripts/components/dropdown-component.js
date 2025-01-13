@@ -122,10 +122,32 @@ class DropdownComponent {
 
     renderItems() {
         this.itemsContainer.innerHTML = this.filteredItems.map(item => this.renderItem(item)).join('');
-        this.itemsContainer.querySelectorAll('a').forEach((link, index) => {
+        
+        // Handle regular items
+        this.itemsContainer.querySelectorAll('.dropdown-item').forEach((link) => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.handleItemClick(this.filteredItems[index]);
+                const itemIndex = Array.from(this.itemsContainer.querySelectorAll('.dropdown-item')).indexOf(link);
+                let item;
+                
+                // Find the corresponding item or subItem
+                for (const mainItem of this.filteredItems) {
+                    if (mainItem.subItems) {
+                        const subItem = mainItem.subItems.find(sub => sub.text === link.textContent.trim());
+                        if (subItem) {
+                            item = subItem;
+                            break;
+                        }
+                    } else if (mainItem.text === link.textContent.trim()) {
+                        item = mainItem;
+                        break;
+                    }
+                }
+                
+                if (item && item.onClick) {
+                    item.onClick();
+                    this.close();
+                }
             });
         });
     }
@@ -143,13 +165,26 @@ class DropdownComponent {
         const isSelected = this.selectedItems.has(item);
         const iconStyle = item.iconSize ? `style="width: ${item.iconSize}; height: ${item.iconSize};"` : '';
         
+        if (item.subItems) {
+            return `
+                <div class="dropdown-submenu">
+                    <div class="text-gray-700 block px-4 py-2 text-sm font-medium">${item.text}</div>
+                    <div class="pl-4">
+                        ${item.subItems.map(subItem => `
+                            <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900 dropdown-item ${isSelected ? 'bg-gray-200' : ''}" role="menuitem">
+                                ${subItem.icon ? `<img src="${subItem.icon}" ${iconStyle} class="inline-block align-middle" alt="">` : ''}
+                                ${subItem.text ? `<span class="align-middle ${subItem.icon ? 'ml-2' : ''}">${subItem.text}</span>` : ''}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }
+        
         return `
             <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900 dropdown-item ${isSelected ? 'bg-gray-200' : ''}" role="menuitem">
-                ${item.icon ? 
-                    `<img src="${item.icon}" ${iconStyle} class="inline-block align-middle" alt="">` : ''}
+                ${item.icon ? `<img src="${item.icon}" ${iconStyle} class="inline-block align-middle" alt="">` : ''}
                 ${item.text ? `<span class="align-middle ${item.icon ? 'ml-2' : ''}">${item.text}</span>` : ''}
-            </a>
-        `;
+            </a>`;
     }
 
     setActiveItemIndex(index) {

@@ -1,63 +1,99 @@
+:root {
+    /* Базовые цвета */
+    --apple-gray-1: #f8f9fa;
+    --apple-gray-2: #e9ecef;
+    --apple-gray-3: #dee2e6;
+    --apple-gray-4: #ced4da;
+    --apple-gray-5: #adb5bd;
+    --apple-gray-6: #6c757d;
+    --apple-gray-7: #495057;
+    --apple-gray-8: #343a40;
+    --apple-gray-9: #212529;
+
+    --accent-color: #007bff;          /* Добавили переменную, используем для активного состояния */
+    --surface-primary: var(--apple-gray-1);
+    --surface-secondary: var(--apple-gray-2);
+    --surface-hover: var(--apple-gray-3);
+    --surface-tooltip: var(--apple-gray-7, #495057);
+    --border-color: var(--apple-gray-4);
+    --text-primary: var(--apple-gray-8);
+    --text-secondary: var(--apple-gray-6);
+
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+
+    /* Можно настроить ширину меню и свёрнутого состояния */
+    --menu-width: 240px;
+    --menu-collapsed-width: 56px;
+}
+
+/* Контейнер (пример родительского) */
+.root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Фиксируем слева, пример */
 .side-menu-container {
     position: fixed;
     left: 0;
     top: 4.5rem;
     bottom: 0;
-    z-index: 10000;
+    z-index: 999;
     background: var(--surface-primary);
-    background-color: white;
-    
-    box-shadow: var(--shadow-sm);
+    overflow-y: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     width: 250px;
-    padding: 0em;
+    padding: 0;
 }
 
-.side-menu-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.profile img {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-}
-
+/* Основной nav */
 .side-menu {
-    width: var(--menu-width, 240px);
+    width: var(--menu-width);
     height: 100%;
+    margin: 0;
     background: var(--surface-primary);
     border-radius: 4px;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    position: relative;
 }
 
+/* Свернутое состояние */
 .side-menu.collapsed {
-    width: var(--menu-collapsed-width, 56px);
+    width: var(--menu-collapsed-width);
 }
 
+/* Список пунктов меню */
 .side-menu-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    width: var(--menu-width, 240px);
+    display: flex;
+    flex-direction: column;
 }
 
 /* Кнопка сворачивания */
 .collapse-button {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 12px 16px;
+    justify-content: center;
+    padding: 12px;
     cursor: pointer;
+    background: var(--surface-primary);
+    border-top: 1px solid var(--border-color);
     transition: all 0.2s ease;
 }
 
@@ -76,7 +112,7 @@
     transform: rotate(180deg);
 }
 
-/* Анимации для всех элементов меню */
+/* Анимация появления */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -88,52 +124,67 @@
     }
 }
 
-
+/* Блок основного элемента меню (li) */
 .side-menu-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    gap: 12px;
-    cursor: pointer;
+    display: flex;            /* чтобы иконка и текст шли в одну линию */
+    flex-direction: column;   /* но мы добавим .menu-item-content внутри */
     position: relative;
+    cursor: pointer;
     background: transparent;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeIn 0.3s ease-out;
+    transition: all 0.3s ease;
     white-space: nowrap;
-    width: 100%;
+    animation: fadeIn 0.3s ease-out;
 }
 
+/* Внутренний контейнер (иконка + текст + иконка подменю) в 1 строку */
+.menu-item-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ссылка внутри menu-item (если нужна) */
 .side-menu-item a {
     text-decoration: none;
     color: #333;
-    display: block;
-    padding: 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
 }
 
-.side-menu-item a:hover {
-    background-color: #e9ecef;
-}
-
+/* Ховер на основном пункте */
 .side-menu-item:hover {
     background: var(--surface-hover);
-    transform: translateX(4px);
 }
 
+/* Активный пункт */
 .side-menu-item.active {
-    background: var(--surface-active);
-    border-left: 3px solid var(--accent-color);
+    background-color: #93939321;
+    font-weight: 600;
+    position: relative;
 }
 
+/* Вертикальная полоска (accent) при active */
+.side-menu-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+/* Иконка */
 .side-menu-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     color: var(--text-secondary);
-    transition: transform 0.2s ease;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
+/* Текст */
 .side-menu-text {
     color: var(--text-primary);
     font-size: 0.9375rem;
@@ -141,34 +192,32 @@
     flex-grow: 1;
 }
 
+/* Если меню свернуто - прячем текст */
 .side-menu.collapsed .side-menu-text {
     opacity: 0;
 }
 
-/* Стили для подменю */
-.side-menu-item.has-submenu {
-    flex-wrap: wrap;
-}
-
+/* Иконка раскрытия подменю */
 .submenu-icon {
-    position: absolute;
-    right: 16px;
+    margin-left: auto; /* чтобы “увезти” её в правый край */
     width: 16px;
     height: 16px;
     color: var(--text-secondary);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s ease;
 }
 
+/* При свернутом меню - скрываем submenu-icon */
 .side-menu.collapsed .submenu-icon {
     opacity: 0;
 }
 
+/* Если подменю развернуто */
 .side-menu-item.has-submenu.expanded .submenu-icon {
     transform: rotate(-180deg);
 }
 
+/* Подменю */
 .submenu {
-    width: 100%;
     list-style: none;
     padding: 0;
     margin: 0;
@@ -176,39 +225,61 @@
     overflow: hidden;
     max-height: 0;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
+/* При свёрнутом меню подменю не отображаем */
 .side-menu.collapsed .submenu {
     display: none;
 }
 
+/* Подменю развернуто */
 .submenu.expanded {
-    max-height: 200px;
+    max-height: 400px;
     opacity: 1;
-    margin-top: 8px;
 }
 
+/* Пункт подменю */
 .submenu-item {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Внутренний контейнер подменю (иконка + текст) в одну строку */
+.submenu-item-content {
     display: flex;
     align-items: center;
-    padding: 10px 16px 10px 48px;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
+    gap: 8px;
+    padding: 10px 16px 10px 48px; /* дополнение слева для “отступа” */
+    box-sizing: border-box;
 }
 
+/* Ховер подменю */
 .submenu-item:hover {
     background: var(--surface-hover);
-    padding-left: 56px;
 }
 
+/* Активное подменю */
 .submenu-item.active {
-    background: var(--surface-active);
+    background-color: var(--surface-hover);
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
-/* Тултипы для свернутого состояния */
+/* Вертикальная полоска в активном подменю */
+.submenu-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+/* Тултип при свернутом меню */
 .side-menu.collapsed .side-menu-item {
     position: relative;
 }
@@ -216,7 +287,7 @@
 .side-menu.collapsed .side-menu-item:hover::after {
     content: attr(data-tooltip);
     position: absolute;
-    left: calc(100% + 8px);
+    left: calc(100% + 6px);
     top: 50%;
     transform: translateY(-50%);
     background: var(--surface-tooltip);
@@ -229,40 +300,7 @@
     animation: fadeIn 0.2s ease-out;
 }
 
-/* Анимация для активного состояния */
-.side-menu-item.active,
-.submenu-item.active {
-    position: relative;
-    overflow: hidden;
-}
-
-.side-menu-item.active::before,
-.submenu-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 3px;
-    background: var(--accent-color);
-    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(-100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
-/* Анимация для иконки в активном состоянии */
-.side-menu-item.active .side-menu-icon,
-.submenu-item.active .side-menu-icon {
-    animation: pulse 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
+/* Пульс анимация для иконки при active (при желании можно убрать) */
 @keyframes pulse {
     0% {
         transform: scale(1);
@@ -273,4 +311,8 @@
     100% {
         transform: scale(1);
     }
+}
+.side-menu-item.active .side-menu-icon,
+.submenu-item.active .side-menu-icon {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

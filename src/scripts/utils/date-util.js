@@ -66,7 +66,26 @@ function getDateRange(condition) {
       case 'current_month':
         return { dateStart: startOfMonth, dateEnd: endOfMonth };
       case 'last_month':
-        return { dateStart: startOfMonth, dateEnd: endOfMonth };
+        startOfMonth.setMonth(startOfMonth.getMonth() - 1);
+        endOfMonth.setMonth(endOfMonth.getMonth() - 1);
+      case 'next_month':
+        startOfMonth.setMonth(startOfMonth.getMonth() + 1);
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      case 'previous_year':
+        startOfYear.setFullYear(startOfYear.getFullYear() - 1);
+        endOfYear.setFullYear(endOfYear.getFullYear() - 1);
+      case 'next_year':
+        startOfYear.setFullYear(startOfYear.getFullYear() + 1);
+        endOfYear.setFullYear(endOfYear.getFullYear() + 1);
+      case 'last_3_months':
+        startOfMonth.setMonth(startOfMonth.getMonth() - 3);
+        endOfMonth.setMonth(endOfMonth.getMonth() - 3);
+      case 'next_3_months':
+        startOfMonth.setMonth(startOfMonth.getMonth() + 3);
+        endOfMonth.setMonth(endOfMonth.getMonth() + 3);
+      case 'previous_3_months':
+        startOfMonth.setMonth(startOfMonth.getMonth() - 3);
+        endOfMonth.setMonth(endOfMonth.getMonth() - 3);
       case 'current_year':
         return { dateStart: startOfYear, dateEnd: endOfYear };
     }

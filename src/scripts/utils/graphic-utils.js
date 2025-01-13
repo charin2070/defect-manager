@@ -32,6 +32,23 @@ function generateHarmoniousColors(baseColor, count = 5) {
     return colors;
 }
 
+function setSvgFillColor(svgElement, color) {
+    // if svgElement is path to SVG file
+    if (svgElement instanceof SVGElement) {
+        svgElement.style.fill = color;
+        return svgElement;
+    }
+
+    // if svgElement is string (path to SVG file)
+    return fetch(svgElement)
+        .then(response => response.text())
+        .then(data => {
+            const svg = new DOMParser().parseFromString(data, "image/svg+xml");
+            return svg.querySelector("svg").cloneNode(true);
+        });
+        
+}
+
 function getRandomColorFromPalette() {
     const paletteColors = [
       "#66bb6a",

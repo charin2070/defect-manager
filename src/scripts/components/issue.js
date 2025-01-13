@@ -10,6 +10,7 @@ class Issue {
         "Status": "Закрыт",
         "Created": "25.11.2021 10:59",
         "Labels": "",
+        "Resolution": "resolution",
         "Issue Type": "Дефект промсреды",
         "Resolved": "24.01.2022 14:46",
         "Custom field (SLA дата наступления просрочки)": "2022-02-03 00:00:00.0",
@@ -28,7 +29,9 @@ class Issue {
     // Properies mapping
     static #fieldMappings = {
         "Issue key": "taskId",
+        "Issue id": "issueId",
         "Номер драфта": "taskId",
+        "Resolution": "resolution",
         "Summary": "summary",
         "Description": "description",
         "Created": "created",
@@ -47,6 +50,7 @@ class Issue {
         "Custom field (Количество обращений)": "reports",
         "reports": "reports",
         "Labels": "labels",
+        "id": "taskId",
         "Status": "status",
         "status": "status",
         "Issue Type": "type",
@@ -88,9 +92,29 @@ class Issue {
         }
     };
 
+defaultIssueProperties = {
+    taskId: null,
+    project: null,
+    state: null,
+    summary: null,
+    description: null,
+    created: null,
+    updated: null,
+    resolved: null,
+    slaDate: null,
+    assignee: null,
+    reporter: null,
+    team: null,
+    component: null,
+    reports: null,
+    labels: [],
+    status: null,
+    type: null
+}
+
     initializeProperties(properties) {
-        if (!properties) return;
-        const issueProperties = {};
+        if (!properties) properties = defaultIssueProperties;
+        let issueProperties = {};
 
         // Rename keys and parse values
         if (typeof properties === 'object') {
@@ -102,30 +126,37 @@ class Issue {
                 }
             });
             
-            // Add calculated properties
-            if (issueProperties.taskId) {
-                if (issueProperties.taskId.includes('ADIRINC')) {
-                    issueProperties.project = 'AI';
-                    issueProperties.taskId = issueProperties.taskId.replace('ADIRINC-', '');
-                } else if (issueProperties.taskId.includes('GODUTY')) {
-                    issueProperties.project = 'GO';
-                    issueProperties.taskId = issueProperties.taskId.replace('GODUTY-', '');
-                }
-            }
-
-            if (issueProperties.status) {
-                issueProperties.state = Issue.#getStateByStatus(issueProperties.status);
-            }
-
-            if (issueProperties.type) {
-                issueProperties.type = this.getType(issueProperties.type);
-            }
+            issueProperties = this.calculateProperties(issueProperties);
         }
         
         // Assign properties to this instance
         Object.keys(issueProperties).forEach(key => {
             this[key] = issueProperties[key];
         });
+    }
+
+
+    calculateProperties(properties) {
+        // Add calculated properties
+        if (properties.taskId) {
+            if (properties.taskId.includes('ADIRINC')) {
+                properties.project = 'AI';
+                properties.taskId = properties.taskId.replace('ADIRINC-', '');
+            } else if (properties.taskId.includes('GODUTY')) {
+                properties.project = 'GO';
+                properties.taskId = properties.taskId.replace('GODUTY-', '');
+            }
+        }
+
+        if (properties.status) {
+            properties.state = Issue.#getStateByStatus(properties.status);
+        }
+
+        if (properties.type) {
+            properties.type = this.getType(properties.type);
+        }
+
+        return properties;
     }
 
     static parseValue(key, value) {

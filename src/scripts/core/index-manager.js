@@ -12,29 +12,10 @@ class IndexManager {
 
     setupSubscriptions() {
         this.refact.subscribe('issues', (issues) => {
-            if (!issues) return;
-            
-            // Only rebuild if we don't have an index or if it's a different set of issues
-            if (!this.groupedIndex || issues.length !== this.groupedIndex.defect?.length) {
-                this.groupedIndex = IndexManager.getGroupedIndex(issues);
-                this.refact.setState({ index: this.groupedIndex }, 'IndexManager');
-            }
+      
         });
     }
 
-    static getGroupedIndex(issues) {
-        if (!issues || !Array.isArray(issues)) return null;
-
-        const index = {
-            defect: issues,
-            byStatus: IndexManager.indexBy(['status'], issues),
-            byPriority: IndexManager.indexBy(['priority'], issues),
-            byAssignee: IndexManager.indexBy(['assignee'], issues),
-            byProject: IndexManager.indexBy(['project'], issues)
-        };
-
-        return index;
-    }
 
     static indexBy(properties, issues) {
         if (!properties || !Array.isArray(properties)) {
@@ -68,55 +49,19 @@ class IndexManager {
 
     static getIndex(issues) {
         if (!issues || issues.length === 0) {
-            return {
-                defect: {
-                    all: {},
-                    state: {
-                        unresolved: []
-                    },
-                    created: {},
-                    resolved: {}
-                }
-            };
+            return null;
         }
 
         const indexByType = IndexManager.indexBy(['type'], issues);
         
-        // this.index['type'] = indexByType['type'];
-        // For each type, create additional indexes
-
         const indexByKeys = {};
         for (const [type, typeIssues] of Object.entries(indexByType['type'] || {})) {
-            indexByKeys[type] = IndexManager.indexBy(['taskId', 'state', 'status', 'priority', 'team', 'assignee', 'created', 'resolved'], typeIssues);
+            indexByKeys[type] = IndexManager.indexBy(['taskId', 'state', 'status', 'priority', 'team', 'assignee', 'created', 'resolved', 'project', 'type'], typeIssues);
         }
 
+        indexByKeys['teams'] = Object.keys(indexByKeys.defect.team || {});
+        // const indexByProject = IndexManager.indexBy(['project'], issues);
         return indexByKeys;
-    }
-
-    static getStructuredIndex(rootKeys, childKeys, objects) {
-        const result = {};
-        rootKeys.forEach((rootKey) =>{
-            result[rootKey] = {};
-            childKeys.forEach((childKey) => {
-                result[rootKey][childKey] = {};
-                objects.forEach((object) => {
-                    const rootValue = object[rootKey];
-                    const childValue = object[childKey];
-                    if (rootValue && childValue) {
-                        if (!result[rootKey][childKey][rootValue]) {
-                            result[rootKey][childKey][rootValue] = [];
-                        }
-                        result[rootKey][childKey][rootValue].push(object);
-                    }
-                });
-            });
-        })
-
-        return result;
-    }
-
-    buildIndex(issues) {
-        
     }
 
 

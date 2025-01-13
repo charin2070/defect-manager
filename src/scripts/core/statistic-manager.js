@@ -8,6 +8,23 @@ class StatisticManager {
         return this;
     }
 
+    getStatistics(issues, index) {
+        let statistics = {
+            total: null,
+            currentMonth: null,
+            lastMonth: null,
+        };
+
+        const currentMonthDateRange = getDateRange('current_month');
+        const lastMonthDateRange = getDateRange('last_month');
+        console.log('lastMonthDateRange', lastMonthDateRange);
+        let currntMonthIssues = StatisticManager.getIssuesInDateRange(getDateRange('current_month'), index.defect.created);
+        console.log('currntMonthIssues (by StatisticManager)', currntMonthIssues);
+        statistics.currentMonth = {
+        }
+    }
+
+
     static getUnresolvedDefects() {
         const state = Refact.getInstance().state;
         const issues = state.index?.defect?.state?.unresolved || [];
@@ -16,23 +33,35 @@ class StatisticManager {
             issues: issues
         };
     }
+    
 
-    static getByDateRange(dateRange) {
-        const state = Refact.getInstance().state;
-        if (!state.index?.defect?.all) return { count: 0, issues: [] };
-
-        let result = { count: 0, issues: [] };
-        const flatIssues = Object.values(state.index.defect.all);
-
-        result.issues = flatIssues.filter(issue => 
-            isInDateRange(issue.creation, dateRange) || 
-            isInDateRange(issue.resolution, dateRange)
-        );
-        result.count = result.issues.length;
-
+    static getIssuesInDateRange(dateRange, issuesDates) {
+        if (!dateRange || !issuesDates) return [];
+        
+        const { dateStart, dateEnd } = dateRange;
+        const start = new Date(dateStart);
+        const end = new Date(dateEnd);
+        
+        let result = [];
+        
+        // Перебираем все даты и их задачи
+        for (const [dateStr, issues] of Object.entries(issuesDates)) {
+            const date = new Date(dateStr);
+            
+            // Проверяем, попадает ли дата в диапазон
+            if (date >= start && date <= end) {
+                // Если дата в диапазоне, добавляем все задачи за эту дату
+                if (Array.isArray(issues)) {
+                    result = result.concat(issues);
+                } else {
+                    result.push(issues);
+                }
+            }
+        }
+        
         return result;
     }
-    
+   
     static groupByMonth(data) {
         const grouped = {};
         Object.keys(data).forEach(date => {
@@ -43,7 +72,7 @@ class StatisticManager {
         return grouped;
     }
    
-    static getBacklog() {
+    static getBacklog(isDefects = true, index) {
         const state = Refact.getInstance().state;
         if (!state.index?.defect?.created || !state.index?.defect?.resolved) {
             return {};
@@ -69,7 +98,9 @@ class StatisticManager {
             const resolvedCount = resolved[date]?.length || 0;
 
             runningBacklog += createdCount - resolvedCount;
-            result[date] = runningBacklog;
+            result[date] = { backlog: runningBacklog,
+                             created: createdCount,
+                         resolved: resolvedCount };
         });
 
         return result;
