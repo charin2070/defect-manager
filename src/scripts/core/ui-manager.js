@@ -18,15 +18,13 @@ class UiManager extends HtmlComponent {
         this.initializeComponents();
         this.initializeViews();
         this.initSlidePanels();
-
         return this;
     }
-
 
     listen() {
         this.refact.subscribe('index', (index) => {
             if (index) {
-               
+                // Handle index updates
             }
         });
     }
@@ -40,9 +38,12 @@ class UiManager extends HtmlComponent {
         this.navbar = new NavbarComponent();
         const navbarElement = this.navbar.getContainer();
         if (navbarElement) {
-            this.navbar.addMenuItem({side: 'right',icon: 'src/image/menu.svg',title: '',callback: () => {this.settingsSlidePanel?.open();}});
-        }
-        if (navbarElement) {
+            this.navbar.addMenuItem({
+                side: 'right',
+                icon: 'src/image/menu.svg',
+                title: '',
+                callback: () => { this.settingsSlidePanel?.open(); }
+            });
             this.appContainer.appendChild(navbarElement);
         }
 
@@ -51,8 +52,8 @@ class UiManager extends HtmlComponent {
         this.projectDropdown = new DropdownComponent();
         const projectDropdownElement = this.projectDropdown.getContainer();
         const projectItems = [
-            { text: 'Альфа Инвестиции', icon: 'src/image/alfa_logo.png', iconSize: '2em', callback: () => {console.log('Project 1 selected');}},
-            { text: 'Go Invest', icon: 'src/image/go.png', iconSize: '2em', callback: () => {console.log('Project 2 selected');}},
+            { text: 'Альфа Инвестиции', icon: 'src/image/alfa_logo.png', iconSize: '2em', callback: () => { console.log('Project 1 selected'); } },
+            { text: 'Go Invest', icon: 'src/image/go.png', iconSize: '2em', callback: () => { console.log('Project 2 selected'); } },
         ];
         this.projectDropdown.setItems(projectItems);
         this.projectDropdown.hiddenTitle = true;
@@ -70,7 +71,6 @@ class UiManager extends HtmlComponent {
         if (contentElement) {
             this.appContainer.appendChild(contentElement);
         }
-
     }
 
     createSideMenu() {
@@ -85,7 +85,7 @@ class UiManager extends HtmlComponent {
             this.sideMenuItems = [
                 {
                     icon: 'src/image/backlog-0.svg',
-                    text: 'Бэклог',   
+                    text: 'Бэклог',
                 },
                 {
                     icon: 'src/image/team-5.svg',
@@ -97,11 +97,9 @@ class UiManager extends HtmlComponent {
                     text: 'SLA',
                     subItems: [
                         {
-                            // icon: 'src/image/chart.svg',
                             text: 'За месяц'
                         },
                         {
-                            // icon: 'src/image/chart.svg',
                             text: 'За всё время'
                         }
                     ]
@@ -110,7 +108,7 @@ class UiManager extends HtmlComponent {
                     icon: 'src/image/user-tag.svg',
                     text: 'Обращения',
                 },
-                { 
+                {
                     icon: 'src/image/settings-0.svg',
                     text: 'Настройки',
                     subItems: [
@@ -125,17 +123,15 @@ class UiManager extends HtmlComponent {
                             icon: 'src/image/trash-bin-0.svg',
                             text: 'Очистить данные',
                             onClick: () => {
-                                setSvgFillColor('src/image/trash-bin-0.svg', 'red'); // Set icon
+                                setSvgFillColor('src/image/trash-bin-0.svg', 'red');
                             }
                         }
                     ]
                 }
             ];
-        
+
             this.sideMenu.setItems(this.sideMenuItems);
 
-
-            // Слушаем событие сворачивания меню
             sideMenuElement.addEventListener('collapseChange', (e) => {
                 if (e.detail.collapsed) {
                     this.sideMenuContainer.style.width = 'var(--menu-collapsed-width, 56px)';
@@ -143,7 +139,7 @@ class UiManager extends HtmlComponent {
                     this.sideMenuContainer.style.width = 'var(--menu-width, 240px)';
                 }
             });
-            
+
             this.sideMenuContainer.appendChild(sideMenuElement);
             this.appContainer.appendChild(this.sideMenuContainer);
         }
@@ -152,10 +148,9 @@ class UiManager extends HtmlComponent {
     initializeViews() {
         this.views = {
             'dashboard': new DashboardView(),
-            'upload': new UploadView(),
+            'upload': new UploadView()
         };
-
-       this.renderViews(); 
+        this.renderViews();
     }
 
     renderViews() {
@@ -178,7 +173,7 @@ class UiManager extends HtmlComponent {
             this.views.dashboard.update(index);
         }
     }
-    
+
     showUpload() {
         this.showView('upload');
     }
@@ -189,23 +184,17 @@ class UiManager extends HtmlComponent {
 
     showView(viewName) {
         log(`Showing view: ${viewName}`);
-        
+
         if (!this.views[viewName]) {
             console.warn(`View ${viewName} not found`);
             return;
         }
 
-        // Скрываем текущий view
         this.hideAllViews();
 
-        // Получаем контейнер для views
         const container = this.contentContainer.getContainer();
         if (!container) return;
 
-        // Очищаем контейнер
-        // container.innerHTML = '';
-
-        // Показываем новый view
         const view = this.views[viewName];
         this.contentContainer.appendChild(view.getContainer());
         view.show();
@@ -223,7 +212,7 @@ class UiManager extends HtmlComponent {
     initSlidePanels() {
         this.settingsSlidePanel = new SlidePanel({ isSingle: true });
         this.settingsSlidePanel.name = 'settings-slide-panel';
-      
+
         this.settingsView = new SettingsView();
         this.settingsSlidePanel.setWidth(30);
         this.settingsSlidePanel.setContent(this.settingsView.getContainer());
@@ -237,63 +226,56 @@ class UiManager extends HtmlComponent {
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             textColor: '#333'
         };
-        
+
         const finalOptions = { ...defaultOptions, ...options };
-        
-        // Clear any existing loader
+
         if (this.loaderTimeout) {
             clearTimeout(this.loaderTimeout);
             this.loaderTimeout = null;
         }
-        
-        // Create loader if it doesn't exist
+
         if (!this.loaderElement) {
             this.loaderElement = document.createElement('div');
             this.loaderElement.className = 'global-loader';
-            
+
             const spinner = document.createElement('div');
             spinner.className = 'loader-spinner';
             this.loaderElement.appendChild(spinner);
-            
+
             const textElement = document.createElement('div');
             textElement.className = 'loader-text';
             this.loaderElement.appendChild(textElement);
-            
+
             document.body.appendChild(this.loaderElement);
         }
-        
-        // Update loader text and colors
+
         const textElement = this.loaderElement.querySelector('.loader-text');
         const spinner = this.loaderElement.querySelector('.loader-spinner');
-        
+
         textElement.textContent = text;
         textElement.style.color = finalOptions.textColor;
-        
+
         this.loaderElement.style.background = finalOptions.backgroundColor;
-        spinner.style.borderColor = finalOptions.spinnerColor + '40'; // 40 = 25% opacity
+        spinner.style.borderColor = finalOptions.spinnerColor + '40';
         spinner.style.borderTopColor = finalOptions.spinnerColor;
-        
-        // Show loader with animation
+
         this.loaderElement.style.display = 'flex';
-        // Trigger reflow to ensure the transition works
         this.loaderElement.offsetHeight;
         this.loaderElement.classList.add('visible');
-        
-        // Hide loader after duration if specified
+
         if (duration > 0) {
             this.loaderTimeout = setTimeout(() => {
                 this.hideLoader();
             }, duration * 1000);
         }
     }
-    
+
     hideLoader() {
         if (this.loaderElement) {
             this.loaderElement.classList.remove('visible');
-            // Wait for the transition to complete before hiding
             setTimeout(() => {
                 this.loaderElement.style.display = 'none';
-            }, 300); // Match the transition duration from CSS
+            }, 300);
         }
         if (this.loaderTimeout) {
             clearTimeout(this.loaderTimeout);

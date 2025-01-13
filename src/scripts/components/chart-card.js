@@ -186,12 +186,7 @@ class ChartCard extends HtmlComponent {
     listen() {
         this.refact.subscribe('index', (index) => {
             if (index) {
-                this.setValue(index.defect?.state?.unresolved?.length);
-                this.setTrend(index.defect?.state?.unresolved?.length - index.defect?.state?.resolved?.length);
-
-                const backlog = StatisticManager.getBacklog(true,index, 'month');
-                console.log(backlog, 'BACKLOG');
-                this.drawMonthLine(backlog);
+                this.update();
             }
         }); 
     }
@@ -214,20 +209,53 @@ class ChartCard extends HtmlComponent {
     }
 
     drawDateLine(values) {
+        if (!values || !Array.isArray(values)) return;
+        
         this.chart.data.labels = values.map((_, index) => index + 1);
         this.chart.data.datasets[0].data = values;
         this.chart.update();
     }
 
     drawMonthLine(monthlyValues) {
-        console.log(monthlyValues, 'MONTHLY VALUES');
+        if (!monthlyValues || typeof monthlyValues !== 'object') {
+            console.warn('Invalid monthly values:', monthlyValues);
+            return;
+        }
 
-        const data = this.objectToData(monthlyValues);
-        this.chart.data.labels = data.labels;
-        this.chart.data.datasets[0].data = data.values;
+        this.chart.data.labels = monthlyValues.labels || [];
+        this.chart.data.datasets[0].data = monthlyValues.values || [];
         this.chart.update();
+    }
 
-        console.log(`Chart Labels: ${this.chart.data.labels}, Chart Values: ${this.chart.data.datasets[0].data}`);
+    update() {
+        let index = this.refact.state.index;
+        if (index) {
+            let backlogData = StatisticManager.getBacklog(true, index);
+            let groupedData = StatisticManager.groupBacklog(backlogData, 'month');
+            
+            if (groupedData && typeof groupedData === 'object') {
+                const monthlyData = {
+                    labels: groupedData.labels || [],
+                    values: groupedData.data.map(item => item.backlog) || []
+                };
+                this.drawMonthLine(monthlyData);
+            }
+        }
+    }
+
+    updateLineStyle({
+        borderColor = 'rgba(54, 162, 235, 1)',
+        backgroundColor = 'rgba(54, 162, 235, 0.1)',
+        tension = 0.4,
+        borderWidth = 2
+    } = {}) {
+        if (this.chart && this.chart.data.datasets[0]) {
+            this.chart.data.datasets[0].borderColor = borderColor;
+            this.chart.data.datasets[0].backgroundColor = backgroundColor;
+            this.chart.data.datasets[0].borderWidth = borderWidth;
+            this.chart.data.datasets[0].tension = tension;
+            this.chart.update();
+        }
     }
 
     objectToData(object) {
@@ -292,38 +320,6 @@ class ChartCard extends HtmlComponent {
 
     setTitle(title) {
         this.titleElement.textContent = title;
-    }
-
-    update() {
-        let index = this.refact.state.index;
-        let unresolvedCount = StatisticManager.getUnresolvedDefects().count;
-        let backlogData = StatisticManager.getBacklog(true, index);
-        let unresolvedLostMonth = StatisticManager.getUnresolved
-        this.chart.data.datasets[0].data = index;
-        this.setValue(unresolvedCount || 0);
-        this.setTrend(trendValue);
-        
-        this.chart.update();
-    }
-
-    updateLineStyle({
-        color = 'rgba(54, 162, 235, 1)',
-        width = 2,
-        tension = 0.4
-    } = {}) {
-        this.chart.data.datasets[0].borderColor = color;
-        this.chart.data.datasets[0].borderWidth = width;
-        this.chart.data.datasets[0].tension = tension;
-        
-        // Обновляем градиент
-        const ctx = this.chartCanvas.getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 160);
-        const rgba = color.replace(')', ', 0.2)').replace('rgb', 'rgba');
-        gradient.addColorStop(0, rgba);
-        gradient.addColorStop(1, rgba.replace('0.2', '0'));
-        this.chart.data.datasets[0].backgroundColor = gradient;
-        
-        this.chart.update();
     }
 
     htmlTemplate = `

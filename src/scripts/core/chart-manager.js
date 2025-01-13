@@ -135,12 +135,59 @@ class ChartManager {
       }));
   }
 
-  createTeamsBacklogChart(container, statusByMonth) {
-      if (!statusByMonth) {
-          return;
-      }
-      this.createChart(container, statusByMonth, 'type');
-  }
+  createTeamsBacklogChart(container, index) {
+        if (!index || !index.teams || !index.tasks) {
+            return;
+        }
+
+        const teamStats = index.teams.reduce((acc, team) => {
+            acc[team.name] = index.tasks.filter(task => 
+                task.teamId === team.id && task.state === 'unresolved'
+            ).length;
+            return acc;
+        }, {});
+
+        const data = {
+            labels: Object.keys(teamStats),
+            datasets: [{
+                label: 'Unresolved Tasks',
+                data: Object.values(teamStats),
+                backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                borderColor: 'rgba(76, 175, 80, 1)',
+                borderWidth: 1,
+                barThickness: 30
+            }]
+        };
+
+        const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Unresolved Tasks'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Teams'
+                        }
+                    }
+                }
+            }
+        };
+
+        if (this.charts[container]) {
+            this.charts[container].destroy();
+        }
+        this.charts[container] = new Chart(container, config);
+    }
 
   createBacklogLineChart(container, data) {
       if (!data) {

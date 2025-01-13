@@ -11,12 +11,15 @@
 .content-container {
     display: flex;
     flex-direction: column;
+
     justify-content: flex-start;
     align-items: stretch;
     padding-top: 5em;
     background-color: rgba(232, 232, 232, 0.865);
     border-radius: 10px;
     height: 100vh;
+    padding-left: 3em;
+    padding-right: 3em;
     width: 100vw;
     flex-wrap: nowrap;
     align-content: flex-start;

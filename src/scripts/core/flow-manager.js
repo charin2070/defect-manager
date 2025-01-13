@@ -6,6 +6,8 @@ class FlowManager {
         this.uiManager = uiManager;
         this.statisticManager = statisticManager;
         this.refact = null;
+
+        this.teamAnalytics = null;
     }
 
     bind(refact) {
@@ -35,6 +37,8 @@ class FlowManager {
             this.logger.log(`👆 [Flow] Состояние 'Issues' обновлено. Загружено ${issues.length} задач. Построение индекса...`);
             let index = IndexManager.getIndex(issues);
             this.refact.setState({ index: index });
+            this.teamAnalytics = new TeamAnalytics(index);
+
 
             console.log('Index updated:', index);
             const teamSubItems  = [];
@@ -44,6 +48,9 @@ class FlowManager {
                     text: team,
                     onClick: () => {
                         console.log('Team selected:', team);
+                        let teamAnalytics = this.teamAnalytics.getTeamAnalytics(team);
+             
+                        console.log('Team analytics updated:', teamAnalytics);
                     }
                 })
             });
@@ -52,7 +59,7 @@ class FlowManager {
             this.statisticManager.getStatistics(this.refact.state.issues, this.refact.state.index);
             console.log(`👆 [Flow] Индекс построен. State:`, this.refact.state);
             this.uiManager.showDashboard();
-        });
+        }); 
 
         this.refact.subscribe('dataFilter', ({ issues, filters }) => {
             if (filters) {
